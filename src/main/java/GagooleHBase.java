@@ -27,4 +27,21 @@ public class GagooleHBase
         Result result = table.get(get);
         return result.getRow() != null;
     }
+
+    public void put(URLData urlData) throws IOException
+    {
+        byte[] urlBytes = Bytes.toBytes(urlData.getUrl());
+
+        put(urlBytes, Bytes.toBytes(urlData.getMeta()), Bytes.toBytes("meta"));
+        put(urlBytes, Bytes.toBytes(urlData.getPassage()), Bytes.toBytes("passage"));
+        put(urlBytes, Bytes.toBytes(urlData.getTitle()), Bytes.toBytes("title"));
+        put(urlBytes, Bytes.toBytes(urlData.getInsideLinks()), Bytes.toBytes("links"));
+    }
+
+    private void put(byte[] urlBytes, byte[] inputBytes, byte[] columnName) throws IOException
+    {
+        Put put = new Put(urlBytes);
+        put.addColumn(columnFamily, columnName, inputBytes);
+        table.put(put);
+    }
 }
