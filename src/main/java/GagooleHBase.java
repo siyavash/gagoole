@@ -21,4 +21,10 @@ public class GagooleHBase
         System.out.println();
     }
 
+    public boolean exists(String url) throws IOException
+    {
+        Get get = new Get(Bytes.toBytes(url));
+        Result result = table.get(get);
+        return result.getRow() != null;
+    }
 }
