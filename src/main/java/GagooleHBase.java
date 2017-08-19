@@ -8,37 +8,41 @@ import java.io.IOException;
 
 public class GagooleHBase
 {
-    private Table table;
-    private byte[] columnFamily = Bytes.toBytes("columnFamily");
+    private Connection hbaseConnection;
+    private TableName tableName;
+    private byte[] columnFamily;
 
-    public GagooleHBase(String tableStrName) throws IOException
+    public GagooleHBase(String tableStringName, String columnFamilyName) throws IOException
     {
         Configuration configuration = HBaseConfiguration.create();
-        Connection hbaseConnection = ConnectionFactory.createConnection(configuration);
-
-        TableName tableName = TableName.valueOf(tableStrName);
-        table = hbaseConnection.getTable(tableName);
-        System.out.println();
+        hbaseConnection = ConnectionFactory.createConnection(configuration);
+        tableName = TableName.valueOf(tableStringName);
+        columnFamily = Bytes.toBytes(columnFamilyName);
     }
 
-    public boolean exists(String url) throws IOException
+    public boolean exists(String url, Table table) throws IOException
     {
         Get get = new Get(Bytes.toBytes(url));
         Result result = table.get(get);
         return result.getRow() != null;
     }
 
-    public void put(URLData urlData) throws IOException
+    public Table getTable() throws IOException
+    {
+        return hbaseConnection.getTable(tableName);
+    }
+
+    public void put(URLData urlData, Table table) throws IOException
     {
         byte[] urlBytes = Bytes.toBytes(urlData.getUrl());
 
-        put(urlBytes, Bytes.toBytes(urlData.getMeta()), Bytes.toBytes("meta"));
-        put(urlBytes, Bytes.toBytes(urlData.getPassage()), Bytes.toBytes("passage"));
-        put(urlBytes, Bytes.toBytes(urlData.getTitle()), Bytes.toBytes("title"));
-        put(urlBytes, Bytes.toBytes(urlData.getInsideLinks()), Bytes.toBytes("links"));
+        put(table, urlBytes, Bytes.toBytes(urlData.getMeta()), Bytes.toBytes("meta")); //TODO column names?
+        put(table, urlBytes, Bytes.toBytes(urlData.getPassage()), Bytes.toBytes("passage"));
+        put(table, urlBytes, Bytes.toBytes(urlData.getTitle()), Bytes.toBytes("title"));
+        put(table, urlBytes, Bytes.toBytes(urlData.getInsideLinks()), Bytes.toBytes("links"));
     }
 
-    private void put(byte[] urlBytes, byte[] inputBytes, byte[] columnName) throws IOException
+    private void put(Table table, byte[] urlBytes, byte[] inputBytes, byte[] columnName) throws IOException
     {
         Put put = new Put(urlBytes);
         put.addColumn(columnFamily, columnName, inputBytes);
