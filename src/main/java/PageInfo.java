@@ -6,11 +6,12 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 
-public class URLData
+public class PageInfo
 {
+    
     private String url = ""; //TODO shorten the url
-    private String passage = "";
-    private String meta = "";
+    private String bodyText = "";
+    private String meta = ""; //TODO create different fields for different metas
     private String title = "";
     private String insideLinks = "";
 
@@ -24,14 +25,14 @@ public class URLData
         this.url = url;
     }
 
-    public String getPassage()
+    public String getBodyText()
     {
-        return passage;
+        return bodyText;
     }
 
-    public void setPassage(String passage)
+    public void setBodyText(String bodyText)
     {
-        this.passage = passage;
+        this.bodyText = bodyText;
     }
 
     public String getMeta()

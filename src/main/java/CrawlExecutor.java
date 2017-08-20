@@ -18,7 +18,7 @@ public class CrawlExecutor extends Thread {
     private final KafkaSubscribe kafkaSubscribe;
     private final KafkaPublish publisher = KafkaPublish.getInstance();
     private final LruCache cache;
-    private final GagooleHBase hbase;
+    private final PageInfoDataStore hbase;
     private Table table = null;
 
     public void run() {
@@ -60,7 +60,7 @@ public class CrawlExecutor extends Thread {
                 Connector connector = new Connector(linkToVisit);
                 Document document = connector.getDocument();
                 PageProcessor pageProcessor = new PageProcessor(linkToVisit, document);
-                URLData data = pageProcessor.getUrlData();
+                PageInfo data = pageProcessor.getUrlData();
                 hbase.put(data, table);
 
                 Logger.processed();
@@ -108,7 +108,7 @@ public class CrawlExecutor extends Thread {
 //        }
     }
 
-    public CrawlExecutor(KafkaSubscribe kafkaSubscribe, LruCache lruCache, GagooleHBase hbase) {
+    public CrawlExecutor(KafkaSubscribe kafkaSubscribe, LruCache lruCache, PageInfoDataStore hbase) {
         this.hbase = hbase;
         this.cache = lruCache;
         this.kafkaSubscribe = kafkaSubscribe;
