@@ -88,16 +88,13 @@ public class GagooleHBase
     {
         byte[] urlBytes = Bytes.toBytes(urlData.getUrl());
 
-        put(table, urlBytes, Bytes.toBytes(urlData.getMeta()), Bytes.toBytes("meta")); //TODO column names?
-        put(table, urlBytes, Bytes.toBytes(urlData.getPassage()), Bytes.toBytes("passage"));
-        put(table, urlBytes, Bytes.toBytes(urlData.getTitle()), Bytes.toBytes("title"));
-        put(table, urlBytes, Bytes.toBytes(urlData.getInsideLinks()), Bytes.toBytes("links"));
-    }
-
-    private void put(Table table, byte[] urlBytes, byte[] inputBytes, byte[] columnName)
-    {
         Put put = new Put(urlBytes);
-        put.addColumn(columnFamily, columnName, inputBytes);
+
+        put.addColumn(columnFamily, Bytes.toBytes("meta"), Bytes.toBytes(urlData.getMeta()));
+        put.addColumn(columnFamily, Bytes.toBytes("passage"), Bytes.toBytes(urlData.getPassage()));
+        put.addColumn(columnFamily, Bytes.toBytes("title"), Bytes.toBytes(urlData.getTitle()));
+        put.addColumn(columnFamily, Bytes.toBytes("links"), Bytes.toBytes(urlData.getInsideLinks()));
+
         putChangesToTable(put, table);
         closeTable(table);
     }
