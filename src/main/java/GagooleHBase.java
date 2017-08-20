@@ -16,24 +16,75 @@ public class GagooleHBase
     {
         Configuration configuration = HBaseConfiguration.create();
         //set configuration if needed
-        hbaseConnection = ConnectionFactory.createConnection(configuration);
+        createConnection(configuration);
         tableName = TableName.valueOf(tableStringName);
         columnFamily = Bytes.toBytes(columnFamilyName);
+    }
+
+    private Table createTable(TableName tableName)
+    {
+        Table table;
+
+        while (true)
+        {
+            try
+            {
+                table = hbaseConnection.getTable(tableName);
+                return table;
+            } catch (IOException ignored)
+            {
+
+            }
+        }
+    }
+
+    private void createConnection(Configuration configuration) throws IOException
+    {
+        for (int i = 0; i < 50; i++)
+        {
+            try
+            {
+                hbaseConnection = ConnectionFactory.createConnection(configuration);
+                return;
+            } catch (IOException ignored)
+            {
+
+            }
+        }
+
+        throw new IOException();
     }
 
     public boolean exists(String url, Table table) throws IOException
     {
         Get get = new Get(Bytes.toBytes(url));
-        Result result = table.get(get);
+        Result result = getResultFromTable(get, table);
         return result.getRow() != null;
+    }
+
+    private Result getResultFromTable(Get get, Table table)
+    {
+        Result result;
+
+        while (true)
+        {
+            try
+            {
+                result = table.get(get);
+                return result;
+            } catch (IOException ignored)
+            {
+
+            }
+        }
     }
 
     public Table getTable() throws IOException
     {
-        return hbaseConnection.getTable(tableName);
+        return createTable(tableName);
     }
 
-    public void put(URLData urlData, Table table) throws IOException
+    public void put(URLData urlData, Table table)
     {
         byte[] urlBytes = Bytes.toBytes(urlData.getUrl());
 
@@ -43,11 +94,41 @@ public class GagooleHBase
         put(table, urlBytes, Bytes.toBytes(urlData.getInsideLinks()), Bytes.toBytes("links"));
     }
 
-    private void put(Table table, byte[] urlBytes, byte[] inputBytes, byte[] columnName) throws IOException
+    private void put(Table table, byte[] urlBytes, byte[] inputBytes, byte[] columnName)
     {
         Put put = new Put(urlBytes);
         put.addColumn(columnFamily, columnName, inputBytes);
-        table.put(put);
-        table.close();
+        putChangesToTable(put, table);
+        closeTable(table);
+    }
+
+    private void closeTable(Table table)
+    {
+        while (true)
+        {
+            try
+            {
+                table.close();
+                return;
+            } catch (IOException ignored)
+            {
+
+            }
+        }
+    }
+
+    private void putChangesToTable(Put put, Table table)
+    {
+        while (true)
+        {
+            try
+            {
+                table.put(put);
+                return;
+            } catch (IOException ignored)
+            {
+
+            }
+        }
     }
 }
