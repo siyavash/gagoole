@@ -1,14 +1,18 @@
 import javafx.util.Pair;
+import org.jsoup.nodes.Attribute;
+import org.jsoup.nodes.Attributes;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 
 public class URLData
 {
-    private String url;
-    private String passage;
-    private String meta;
-    private String title;
-    private String insideLinks;
+    private String url = ""; //TODO shorten the url
+    private String passage = "";
+    private String meta = "";
+    private String title = "";
+    private String insideLinks = "";
 
     public String getUrl()
     {
@@ -35,9 +39,28 @@ public class URLData
         return meta;
     }
 
-    public void setMeta(String meta)
+    public void setMeta(Elements allMetas)
     {
-        this.meta = meta;
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (Element meta : allMetas)
+        {
+            Attributes metaAttributes = meta.attributes();
+            buildMetaAttributesString(metaAttributes, stringBuilder);
+        }
+
+        meta = stringBuilder.toString();
+    }
+
+    private void buildMetaAttributesString(Attributes metaAttributes, StringBuilder stringBuilder)
+    {
+        for (Attribute metaAttribute : metaAttributes)
+        {
+            stringBuilder.append(metaAttribute.getKey());
+            stringBuilder.append(" , ");
+            stringBuilder.append(metaAttribute.getValue());
+            stringBuilder.append("\n");
+        }
     }
 
     public String getTitle()
@@ -55,11 +78,31 @@ public class URLData
         return insideLinks;
     }
 
-    public void setInsideLinks(ArrayList<Pair<String, String>> insideLinks)
+    public void setInsideLinks(ArrayList<Pair<String, String>> subLinks) //TODO better design?
     {
-        for (Pair<String, String> insideLink : insideLinks)
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (Pair<String, String> subLink : subLinks)
         {
-            this.insideLinks += insideLink.getKey() + " , " + insideLink.getValue() + "\n";
+            String linkName = "";
+            if (subLink.getKey() != null)
+            {
+                linkName = subLink.getKey();
+            }
+
+            String anchorName = "";
+            if (subLink.getValue() != null)
+            {
+                anchorName = subLink.getValue();
+            }
+
+
+            stringBuilder.append(linkName);
+            stringBuilder.append(" , ");
+            stringBuilder.append(anchorName);
+            stringBuilder.append("\n");
         }
+
+        insideLinks = stringBuilder.toString();
     }
 }
