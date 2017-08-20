@@ -1,3 +1,4 @@
+import javafx.util.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
@@ -5,112 +6,73 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class PageInfoDataStore
 {
     private Connection hbaseConnection;
-    private TableName tableName;
-    private byte[] columnFamily;
+    private TableName tableName = TableName.valueOf("smallTable");
+    private byte[] columnFamily = Bytes.toBytes("columnTable");
 
-    public PageInfoDataStore(String tableName, String columnFamilyName) throws IOException
+    public PageInfoDataStore(String zookeeperClientPort, String zookeeperQuorum) throws IOException
     {
-        //TODO get configuration data in constructor
         Configuration configuration = HBaseConfiguration.create();
-        configuration.set("hbase.zookeeper.property.clientPort", "2181");
-        configuration.set("hbase.zookeeper.quorum", "master,slave");
+        configuration.set("hbase.zookeeper.property.clientPort", zookeeperClientPort);
+        configuration.set("hbase.zookeeper.quorum", zookeeperQuorum);
         hbaseConnection = ConnectionFactory.createConnection(configuration);
-        this.tableName = TableName.valueOf(tableName);
-        columnFamily = Bytes.toBytes(columnFamilyName);
     }
 
-    private Table createTable(TableName tableName) //TODO createTable method is useless
+    public boolean exists(String url) throws IOException
     {
-        Table table;
-
-        while (true)
-        {
-            try
-            {
-                table = hbaseConnection.getTable(tableName);
-                return table;
-            } catch (IOException ignored)
-            {
-
-            }
-        }
-    }
-
-    public boolean exists(String url, Table table) throws IOException //TODO don't get table in input
-    {
+        Table table = hbaseConnection.getTable(tableName);
         Get get = new Get(Bytes.toBytes(url));
-        Result result = getResultFromTable(get, table);
+        Result result = table.get(get);
         return result.getRow() != null;
     }
 
-    private Result getResultFromTable(Get get, Table table)
-    {
-        Result result;
-
-        while (true)
-        {
-            try
-            {
-                result = table.get(get);
-                return result;
-            } catch (IOException ignored)
-            {
-
-            }
-        }
-    }
-
-    public Table getTable() throws IOException
-    {
-        return createTable(tableName);
-    }
-
-    public void put(PageInfo pageInfo, Table table)
+    public void put(PageInfo pageInfo) throws IOException
     {
         byte[] urlBytes = Bytes.toBytes(pageInfo.getUrl());
+        String subLinks = turnSubLinksToString(pageInfo.getSubLinks());
         Put put = new Put(urlBytes);
+        Table table = hbaseConnection.getTable(tableName);
+
 
 
         put.addColumn(columnFamily, Bytes.toBytes("meta"), Bytes.toBytes(pageInfo.getMeta()));
         put.addColumn(columnFamily, Bytes.toBytes("passage"), Bytes.toBytes(pageInfo.getBodyText()));
         put.addColumn(columnFamily, Bytes.toBytes("title"), Bytes.toBytes(pageInfo.getTitle()));
-        put.addColumn(columnFamily, Bytes.toBytes("links"), Bytes.toBytes(pageInfo.getInsideLinks()));
+        put.addColumn(columnFamily, Bytes.toBytes("links"), Bytes.toBytes(subLinks));
 
-        putChangesToTable(put, table);
-        closeTable(table);
+        table.put(put);
+        table.close();
     }
 
-    private void closeTable(Table table)
+    private String turnSubLinksToString(ArrayList<Pair<String, String>> subLinks)
     {
-        while (true)
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (Pair<String, String> subLink : subLinks)
         {
-            try
+            String linkName = "";
+            if (subLink.getKey() != null)
             {
-                table.close();
-                return;
-            } catch (IOException ignored)
-            {
-
+                linkName = subLink.getKey();
             }
-        }
-    }
 
-    private void putChangesToTable(Put put, Table table) //
-    {
-        while (true)
-        {
-            try
+            String anchorName = "";
+            if (subLink.getValue() != null)
             {
-                table.put(put);
-                return;
-            } catch (IOException ignored)
-            {
-
+                anchorName = subLink.getValue();
             }
+
+
+            stringBuilder.append(linkName);
+            stringBuilder.append(" , ");
+            stringBuilder.append(anchorName);
+            stringBuilder.append("\n");
         }
+
+        return stringBuilder.toString();
     }
 }

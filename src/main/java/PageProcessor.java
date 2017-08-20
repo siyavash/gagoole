@@ -33,7 +33,7 @@ public class PageProcessor {
 
     public PageInfo getUrlData() {
         PageInfo data = new PageInfo();
-        data.setInsideLinks(getAllInsideLinks());
+        data.setSubLinks(getAllInsideLinks());
         data.setTitle(document.title());
         data.setBodyText(document.body().text());
         data.setMeta(document.getElementsByTag("meta"));
