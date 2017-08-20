@@ -11,7 +11,7 @@ public class Main {
     private static int NTHREADS;
     private static boolean initialMode;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         loadProperties();
         Logger.start();
 
@@ -21,9 +21,15 @@ public class Main {
         KafkaSubscribe kafkaSubscribe = new KafkaSubscribe();
         kafkaSubscribe.start();
 
-        Crawler crawler = new Crawler(kafkaSubscribe);
-        crawler.setThreads(NTHREADS);
-        crawler.start();
+        try {
+            Crawler crawler = new Crawler(kafkaSubscribe);
+            crawler.setThreads(NTHREADS);
+            crawler.start();
+            System.out.println("HBASE IS WORKING OMG");
+        } catch (IOException e) {
+            System.err.println("Error in connecting hbase:" + e);
+            System.exit(20);
+        }
     }
 
     private static void loadProperties() {

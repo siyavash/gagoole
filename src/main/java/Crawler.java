@@ -9,10 +9,11 @@ class Crawler {
 
     private final KafkaSubscribe kafkaSubscribe;
     private final LruCache lruCache = new LruCache();
-    private final GagooleHBase hbase = new GagooleHBase("smallTable", "columnFamily");
+    private final GagooleHBase hbase;
 
     public Crawler(KafkaSubscribe kafkaSubscribe) throws IOException {
         this.kafkaSubscribe = kafkaSubscribe;
+        hbase = new GagooleHBase("smallTable", "columnTable");
     }
 
     public void start() {

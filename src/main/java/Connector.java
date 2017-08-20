@@ -13,7 +13,7 @@ public class Connector {
     private String pageUrl;
     private Document document;
 
-    public Connector(String pageUrl) throws ContentTypeException, LanguageException, SocketTimeoutException {
+    public Connector(String pageUrl) throws ContentTypeException, LanguageException, SocketTimeoutException, Exception {
         this.pageUrl = pageUrl;
 
         checkContentType();
@@ -28,7 +28,7 @@ public class Connector {
         return document;
     }
 
-    private void checkContentType() throws ContentTypeException, SocketTimeoutException {
+    private void checkContentType() throws ContentTypeException, SocketTimeoutException, Exception {
         String contentType = getContentType();
         if (contentType != null && !contentType.startsWith("text/html"))
             throw new ContentTypeException(pageUrl);
@@ -56,7 +56,7 @@ public class Connector {
         }
     }
 
-    private String getContentType() throws SocketTimeoutException {
+    private String getContentType() throws SocketTimeoutException, Exception {
         try {
             URL url = new URL(pageUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -65,9 +65,6 @@ public class Connector {
             return connection.getContentType();
         } catch (SocketTimeoutException e) {
             throw e;
-        } catch (Exception e) {
-            System.err.println("error in getting content-type" + pageUrl);
-            return null;
         }
     }
 }

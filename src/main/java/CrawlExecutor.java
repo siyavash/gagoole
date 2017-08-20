@@ -38,7 +38,7 @@ public class CrawlExecutor extends Thread {
             try {
                 linkToVisit = arrayBlockingQueue.take();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                System.err.println("error in reading from blocking queue");
             }
             if (linkToVisit == null) continue;
 
