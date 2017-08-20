@@ -15,6 +15,7 @@ public class GagooleHBase
     public GagooleHBase(String tableStringName, String columnFamilyName) throws IOException
     {
         Configuration configuration = HBaseConfiguration.create();
+        //set configuration if needed
         hbaseConnection = ConnectionFactory.createConnection(configuration);
         tableName = TableName.valueOf(tableStringName);
         columnFamily = Bytes.toBytes(columnFamilyName);
@@ -47,5 +48,6 @@ public class GagooleHBase
         Put put = new Put(urlBytes);
         put.addColumn(columnFamily, columnName, inputBytes);
         table.put(put);
+        table.close();
     }
 }
