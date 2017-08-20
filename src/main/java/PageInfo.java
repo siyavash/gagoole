@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 public class PageInfo
 {
-    
+
     private String url = ""; //TODO shorten the url
     private String bodyText = "";
     private String meta = ""; //TODO create different fields for different metas
