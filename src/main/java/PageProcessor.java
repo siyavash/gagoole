@@ -92,7 +92,7 @@ public class PageProcessor {
         data.setInsideLinks(getAllInsideLinks());
         data.setTitle(document.title());
         data.setPassage(document.body().text());
-        // TODO: data.setMeta();
+        data.setMeta(document.getElementsByTag("meta"));
         return data;
     }
 
