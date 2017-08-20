@@ -6,11 +6,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class MainPublishSeeds {
+public class Seeds {
 
-    public static void main(String[] args) {
+    public static void publish() {
         try {
-            ArrayList<String> seedUrls = new ArrayList<>(500);
+            ArrayList<String> seedUrls = new ArrayList<String>(500);
             File file = new File("seed.txt");
             FileReader fileReader = new FileReader(file);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
