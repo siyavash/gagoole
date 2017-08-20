@@ -15,6 +15,8 @@ public class GagooleHBase
     public GagooleHBase(String tableStringName, String columnFamilyName) throws IOException
     {
         Configuration configuration = HBaseConfiguration.create();
+        configuration.set("hbase.zookeeper.property.clientPort", "2181");
+        configuration.set("hbase.zookeeper.quorum", "master,slave");
         //set configuration if needed
         createConnection(configuration);
         tableName = TableName.valueOf(tableStringName);
