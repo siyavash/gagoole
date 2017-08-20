@@ -30,14 +30,14 @@ public class PageProcessor {
 
     public ArrayList<Pair<String, String>> getAllInsideLinks() {
 
-        ArrayList<Pair<String, String>> insideLinks = new ArrayList<>();
+        ArrayList<Pair<String, String>> insideLinks = new ArrayList<Pair<String, String>>();
         Elements elements = document.getElementsByTag("a");
         if (elements != null) {
             for (Element tag : elements) {
                 tag.attributes();
                 String href = tag.absUrl("href");
                 String anchor = tag.text();
-                insideLinks.add(new Pair<>(href, anchor));
+                insideLinks.add(new Pair<String, String>(href, anchor));
             }
         }
 
