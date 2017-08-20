@@ -29,7 +29,7 @@ public class KafkaPublish {
         props.put("key.serializer", StringSerializer.class.getName());
         props.put("value.serializer", StringSerializer.class.getName());
 
-        producer = new KafkaProducer<>(props);
+        producer = new KafkaProducer<String, String>(props);
 
     }
 
@@ -39,7 +39,7 @@ public class KafkaPublish {
     }
 
     public void produceUrl(String URL) {
-        ProducerRecord<String, String> producerRecord = new ProducerRecord<>("test", URL);
+        ProducerRecord<String, String> producerRecord = new ProducerRecord<String, String>("test", URL);
         producer.send(producerRecord);
     }
 
