@@ -3,9 +3,6 @@ package Util;
 import java.util.Timer;
 import java.util.TimerTask;
 
-/**
- * Created by Amir on 8/20/2017 AD.
- */
 public class Logger {
     private static int consumedFromKafka = 0;
     private static int polites = 0;

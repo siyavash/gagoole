@@ -5,11 +5,9 @@ import kafka.KafkaPublish;
 import kafka.KafkaSubscribe;
 import Util.LanguageException;
 import org.apache.hadoop.hbase.client.Table;
-import org.jsoup.HttpStatusException;
 import org.jsoup.nodes.Document;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -80,31 +78,10 @@ public class CrawlExecutor extends Thread {
             } catch (SocketTimeoutException ex) {
 //                System.err.println("timeout: " + linkToVisit);
                 publisher.produceUrl(linkToVisit);
-            } catch (HttpStatusException statusException) {
-                int statusCode = statusException.getStatusCode();
-                switch (statusCode) {
-                    case 500:
-//                        System.err.println("handled error 500: " + linkToVisit);
-                        publisher.produceUrl(linkToVisit);
-                        break;
-                    case 503:
-//                        System.err.println("handled error 503: " + linkToVisit);
-                        publisher.produceUrl(linkToVisit);
-                        break;
-                    case 502:
-//                        System.err.println("handled error 502: " + linkToVisit);
-                        publisher.produceUrl(linkToVisit);
-                        break;
-                    case 404:
-                        break;
-                    default:
-//                        System.err.println("Error in connecting url: " + linkToVisit + " " + statusException);
-                        break;
-                }
-            } catch (IOException e) {
+            }catch (IOException e) {
 //                System.err.println("io exception" + e + "\n" + linkToVisit);
             } catch (Exception e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         }
     }

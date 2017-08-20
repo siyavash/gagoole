@@ -5,17 +5,15 @@ import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 
-/**
- * Created by Amir on 8/20/2017 AD.
- */
 public class Connector {
 
     private String pageUrl;
     private Document document;
 
-    public Connector(String pageUrl) throws ContentTypeException, LanguageException {
+    public Connector(String pageUrl) throws ContentTypeException, LanguageException, SocketTimeoutException {
         this.pageUrl = pageUrl;
 
         checkContentType();
@@ -30,7 +28,7 @@ public class Connector {
         return document;
     }
 
-    private void checkContentType() throws ContentTypeException {
+    private void checkContentType() throws ContentTypeException, SocketTimeoutException {
         String contentType = getContentType();
         if (contentType != null && !contentType.startsWith("text/html"))
             throw new ContentTypeException(pageUrl);
@@ -42,13 +40,15 @@ public class Connector {
             throw new LanguageException(pageUrl);
     }
 
-    private Document getDocumentFromConnection() {
+    private Document getDocumentFromConnection() throws SocketTimeoutException {
         try {
             Connection.Response response = Jsoup.connect(pageUrl)
                     .userAgent(UserAgents.getRandom())
                     .maxBodySize(100 * 1024)
                     .execute();
             return response.parse();
+        } catch (SocketTimeoutException e) {
+            throw e;
         } catch (IOException e) {
             System.err.println("error in connecting url " + pageUrl);
             e.printStackTrace();
@@ -56,13 +56,15 @@ public class Connector {
         }
     }
 
-    private String getContentType() {
+    private String getContentType() throws SocketTimeoutException {
         try {
             URL url = new URL(pageUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("HEAD");
             connection.connect();
             return connection.getContentType();
+        } catch (SocketTimeoutException e) {
+            throw e;
         } catch (Exception e) {
             System.err.println("error in getting content-type" + pageUrl);
             return null;
