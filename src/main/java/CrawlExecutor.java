@@ -2,7 +2,6 @@ import Util.Logger;
 import com.google.common.net.InternetDomainName;
 import javafx.util.Pair;
 import kafka.KafkaPublish;
-import kafka.KafkaSubscribe;
 import Util.LanguageException;
 import kafka.URLQueue;
 import org.apache.hadoop.hbase.client.Table;
