@@ -12,20 +12,20 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 
 public class KafkaSubscribe extends Thread {
-    private static Logger logger = Logger.getLogger(Class.class.getSimpleName());
+//    private static Logger logger = Logger.getLogger(Class.class.getSimpleName());
     private final String topicName = "test";
     private final String bootstrapServer = "master:9092,slave:9092";
     private final String groupId = "test";
     private final ArrayBlockingQueue<String> urlsArrayBlockingQueue = new ArrayBlockingQueue<String>(1000000);
-
+    //TODO : bootstrap server, topic name fetched in constructor
+    //TODO: kafka subscribe and kafka publish merge ---- URLQueue
     @Override
     public void run() {
         Properties props = new Properties();
-        logger.debug("SALAM");
+//        logger.debug("SALAM");
         props.put("bootstrap.servers", bootstrapServer);
         props.put("group.id", groupId);
-
-        props.put("enable.auto.commit", "false");
+        props.put("enable.auto.commit", "true");
         props.put("session.timeout.ms", "30000");
         props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
@@ -33,7 +33,7 @@ public class KafkaSubscribe extends Thread {
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(props);
         consumer.subscribe(Arrays.asList(topicName));
         while (!isInterrupted()) {
-            ConsumerRecords<String, String> records = consumer.poll(10000);
+            ConsumerRecords<String, String> records = consumer.poll(1000);
             for (ConsumerRecord<String, String> record : records) {
                 try {
                     urlsArrayBlockingQueue.put(record.value());
@@ -42,16 +42,10 @@ public class KafkaSubscribe extends Thread {
                 }
                 System.out.println(record.value());
             }
-            try {
-                consumer.commitSync();
-            } catch (CommitFailedException e) {
-                //// TODO: 8/19/17 log.error("commit failed", e)
-            }
 
         }
         consumer.close();
     }
-
 
     public ArrayBlockingQueue<String> getUrlsArrayBlockingQueue() {
         return urlsArrayBlockingQueue;

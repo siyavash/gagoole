@@ -53,6 +53,12 @@
             <version>20.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>5.5.0</version>
+        </dependency>
+
 	
     </dependencies>
 

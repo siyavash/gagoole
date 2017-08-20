@@ -21,7 +21,7 @@ public class URLQueue extends Thread {
     private Properties publishProps = new Properties();
     private Properties consumeProps = new Properties();
 
-    private URLQueue(String bootstrapServers, String topicName, String groupId) {
+    public URLQueue(String bootstrapServers, String topicName, String groupId) {
         this.topicName = topicName;
         //below is for publish
         publishProps.put("bootstrap.servers", bootstrapServers);

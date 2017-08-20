@@ -2,6 +2,7 @@ import javafx.util.Pair;
 import kafka.KafkaPublish;
 import kafka.KafkaSubscribe;
 import Util.LanguageException;
+import kafka.URLQueue;
 import org.apache.hadoop.hbase.client.Table;
 import org.jsoup.HttpStatusException;
 
@@ -16,10 +17,11 @@ public class CrawlExecutor implements Runnable {
     private final LruCache cache;
     private final GagooleHBase hbase;
     private Table table = null;
+    URLQueue publisher = new URLQueue();
 
     public void run() {
 
-        KafkaPublish publisher = KafkaPublish.getInstance();
+
         ArrayBlockingQueue<String> arrayBlockingQueue = kafkaSubscribe.getUrlsArrayBlockingQueue();
         try {
             table = hbase.getTable();
