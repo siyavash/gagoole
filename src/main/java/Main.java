@@ -1,3 +1,4 @@
+import Util.Logger;
 import kafka.KafkaSubscribe;
 import kafka.Seeds;
 
@@ -10,8 +11,9 @@ public class Main {
     private static int NTHREADS;
     private static boolean initialMode;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         loadProperties();
+        Logger.start();
 
         if (initialMode)
             Seeds.publish();
@@ -19,9 +21,15 @@ public class Main {
         KafkaSubscribe kafkaSubscribe = new KafkaSubscribe();
         kafkaSubscribe.start();
 
-        Crawler crawler = new Crawler(kafkaSubscribe);
-        crawler.setThreads(NTHREADS);
-        crawler.start();
+        try {
+            Crawler crawler = new Crawler(kafkaSubscribe);
+            crawler.setThreads(NTHREADS);
+            crawler.start();
+            System.out.println("HBASE IS WORKING OMG");
+        } catch (IOException e) {
+            System.err.println("Error in connecting hbase:" + e);
+            System.exit(20);
+        }
     }
 
     private static void loadProperties() {
@@ -33,7 +41,7 @@ public class Main {
             input = new FileInputStream("config.properties");
             prop.load(input);
 
-            NTHREADS = Integer.getInteger(prop.getProperty("threads-number", "500"));
+            NTHREADS = Integer.parseInt(prop.getProperty("threads-number", "500"));
             initialMode = prop.getProperty("initial-mode", "true").equals("true");
 
         } catch (IOException ex) {

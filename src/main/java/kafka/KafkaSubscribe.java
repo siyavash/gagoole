@@ -40,7 +40,7 @@ public class KafkaSubscribe extends Thread {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                System.out.println(record.value());
+//                System.out.println(record.value());
             }
 
         }

@@ -1,19 +1,8 @@
-import Util.ContentTypeException;
-import Util.LanguageDetector;
-import Util.LanguageException;
-import Util.UserAgents;
 import javafx.util.Pair;
-import org.jsoup.Connection;
-import org.jsoup.HttpStatusException;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.SocketTimeoutException;
-import java.net.URL;
 import java.util.ArrayList;
 
 public class PageProcessor {
@@ -21,11 +10,9 @@ public class PageProcessor {
     private String pageUrl = "";
     private final Document document;
 
-    PageProcessor(String url) throws LanguageException, ContentTypeException , HttpStatusException, SocketTimeoutException, IOException {
+    PageProcessor(String url, Document document) { // throws LanguageException, ContentTypeException , HttpStatusException, SocketTimeoutException, IOException {
         pageUrl = url;
-        checkContentType();
-        document = getDocument();
-        checkLanguage(document);
+        this.document = document;
     }
 
     public ArrayList<Pair<String, String>> getAllInsideLinks() {
@@ -44,55 +31,12 @@ public class PageProcessor {
         return insideLinks;
     }
 
-    private void checkContentType() throws ContentTypeException {
-        String contentType = getContentType();
-        if (contentType != null && !contentType.startsWith("text/html"))
-            throw new ContentTypeException(pageUrl);
-    }
-
-    private void checkLanguage(Document document) throws LanguageException {
-        LanguageDetector languageDetector = new LanguageDetector(document);
-        if (!languageDetector.isEnglish())
-            throw new LanguageException(pageUrl);
-    }
-
-    private Document getDocument() {
-        try {
-            Connection.Response response = Jsoup.connect(pageUrl)
-                    .userAgent(getRandomUserAgent())
-                    .maxBodySize(100 * 1024)
-                    .execute();
-            return response.parse();
-        } catch (IOException e) {
-            System.err.println("error in connecting url " + pageUrl);
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private String getContentType() {
-        try {
-            URL url = new URL(pageUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("HEAD");
-            connection.connect();
-            return connection.getContentType();
-        } catch (Exception e) {
-            System.err.println("gand" + pageUrl);
-            return null;
-        }
-    }
-
-    private static String getRandomUserAgent() {
-        return UserAgents.getRandom();
-    }
-
-    public URLData getUrlData() {
-        URLData data = new URLData();
+    public PageInfo getUrlData() {
+        PageInfo data = new PageInfo();
         data.setInsideLinks(getAllInsideLinks());
         data.setTitle(document.title());
-        data.setPassage(document.body().text());
-        // TODO: data.setMeta();
+        data.setBodyText(document.body().text());
+        data.setMeta(document.getElementsByTag("meta"));
         return data;
     }
 

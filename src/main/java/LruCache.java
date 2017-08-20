@@ -21,12 +21,8 @@ public class LruCache {
         }
     }
 
-    public long getStats() {
-        return cache.size();
-    }
-
-    public static void main(String[] args) throws InterruptedException {
-        String url = "http://hello.com";
-        System.out.println((new StringBuilder(url).insert(4, 's')).toString());
-    }
+//    public static void main(String[] args) throws InterruptedException {
+//        String url = "http://hello.com";
+//        System.out.println((new StringBuilder(url).insert(4, 's')).toString());
+//    }
 }
