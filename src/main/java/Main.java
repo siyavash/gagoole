@@ -1,3 +1,4 @@
+import Util.Logger;
 import kafka.KafkaSubscribe;
 import kafka.Seeds;
 
@@ -12,6 +13,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         loadProperties();
+        Logger.start();
 
         if (initialMode)
             Seeds.publish();
@@ -33,7 +35,7 @@ public class Main {
             input = new FileInputStream("config.properties");
             prop.load(input);
 
-            NTHREADS = Integer.getInteger(prop.getProperty("threads-number", "500"));
+            NTHREADS = Integer.parseInt(prop.getProperty("threads-number", "500"));
             initialMode = prop.getProperty("initial-mode", "true").equals("true");
 
         } catch (IOException ex) {
