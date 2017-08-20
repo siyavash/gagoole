@@ -22,6 +22,12 @@ public class PageInfoDataStore
         hbaseConnection = ConnectionFactory.createConnection(configuration);
     }
 
+    public PageInfoDataStore() throws IOException
+    {
+        Configuration configuration = HBaseConfiguration.create();
+        hbaseConnection = ConnectionFactory.createConnection(configuration);
+    }
+
     public boolean exists(String url) throws IOException
     {
         Table table = hbaseConnection.getTable(tableName);
