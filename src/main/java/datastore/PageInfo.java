@@ -11,11 +11,11 @@ import java.util.ArrayList;
 public class PageInfo
 {
 
-    private String url = "";
-    private String bodyText = "";
-    private String meta = ""; //TODO create different fields for different metas
-    private String title = "";
-    private ArrayList<Pair<String, String>> subLinks = new ArrayList<>();
+    private String url;
+    private String bodyText;
+    private String meta; //TODO create different fields for different metas
+    private String title;
+    private ArrayList<Pair<String, String>> subLinks;
 
     public String getUrl()
     {

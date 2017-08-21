@@ -1,5 +1,10 @@
+import Util.Logger;
+
 public class Gagoole {
     public static void main(String[] args) {
-        System.out.printf("hello gagoole");
+        Logger.start();
+
+        Crawler crawler = new Crawler();
+        crawler.start();
     }
 }
