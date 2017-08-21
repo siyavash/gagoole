@@ -1,11 +1,14 @@
 import Util.Logger;
 import com.google.common.net.InternetDomainName;
+import datastore.DataStore;
+import datastore.PageInfo;
+import datastore.PageInfoDataStore;
 import javafx.util.Pair;
-import kafka.KafkaPublish;
 import Util.LanguageException;
-import kafka.URLQueue;
+import queue.DistributedQueue;
 import org.apache.hadoop.hbase.client.Table;
 import org.jsoup.nodes.Document;
+import queue.URLQueue;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -13,30 +16,24 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 
-public class CrawlExecutor extends Thread {
+public class CrawlThread extends Thread { //
 
-    private final KafkaSubscribe kafkaSubscribe;
-    private final KafkaPublish publisher = KafkaPublish.getInstance();
     private final LruCache cache;
-    private final PageInfoDataStore hbase;
     private Table table = null;
-    URLQueue publisher = new URLQueue();
+    private final URLQueue queue;
+    private final DataStore dataStore;
+
+    public CrawlThread(URLQueue queue, LruCache lruCache, DataStore dataStore) {
+        this.queue = queue;
+        this.cache = lruCache;
+        this.dataStore= dataStore;
+    }
 
     public void run() {
-        ArrayBlockingQueue<String> arrayBlockingQueue = kafkaSubscribe.getUrlsArrayBlockingQueue();
-
-        try {
-            table = hbase.getTable();
-        } catch (IOException e) {
-            System.err.println("error in getting table");
-            e.printStackTrace();
-            System.exit(10);
-        }
-
         while (true) {
             String linkToVisit = null;
             try {
-                linkToVisit = arrayBlockingQueue.take();
+                linkToVisit = queue.pop();
             } catch (InterruptedException e) {
                 System.err.println("error in reading from blocking queue");
             }
@@ -47,41 +44,45 @@ public class CrawlExecutor extends Thread {
 
             try {
                 if (!isPolite(linkToVisit)) {
-                    publisher.produceUrl(linkToVisit);
+                    queue.push(linkToVisit);
                     continue;
                 }
             } catch (Exception exception) {
+                System.out.println("failed to extract domain: " + linkToVisit);
                 continue;
             }
 
             Logger.isPolite();
+
+            // TODO: put language checker and content-type checker here
 
             try {
                 Connector connector = new Connector(linkToVisit);
                 Document document = connector.getDocument();
                 PageProcessor pageProcessor = new PageProcessor(linkToVisit, document);
                 PageInfo data = pageProcessor.getUrlData();
-                hbase.put(data, table);
+                dataStore.put(data);
+                System.out.println("done");
 
                 Logger.processed();
 
                 ArrayList<Pair<String, String>> insideLinks = pageProcessor.getAllInsideLinks();
                 for (Pair<String, String> pair : insideLinks) {
                     String url = pair.getKey();
-                    if (!existsInHbase(url)) {
-                        publisher.produceUrl(url);
+                    if (!dataStore.exists(url)) {
+                        queue.push(url);
                         Logger.newUniqueUrls();
                     }
                 }
-            } catch (LanguageException ex) {
+            } catch (LanguageException ex) { // TODO: make try cathc blocks small
 //                System.err.println("Language detection: " + ex.getUrl());
-            } catch (SocketTimeoutException ex) {
+            } catch (SocketTimeoutException ex) { // TODO:
 //                System.err.println("timeout: " + linkToVisit);
-                publisher.produceUrl(linkToVisit);
+                queue.push(linkToVisit);
             }catch (IOException e) {
-//                System.err.println("io exception" + e + "\n" + linkToVisit);
+                System.err.println("io exception: " + e + "\n" + linkToVisit);
             } catch (Exception e) {
-//                e.printStackTrace();
+                System.err.println("exception: " + e + linkToVisit);
             }
         }
     }
@@ -106,23 +107,5 @@ public class CrawlExecutor extends Thread {
 //            System.err.println("Illegal state exception: " + stringUrl);
 //            return null;
 //        }
-    }
-
-    public CrawlExecutor(KafkaSubscribe kafkaSubscribe, LruCache lruCache, PageInfoDataStore hbase) {
-        this.hbase = hbase;
-        this.cache = lruCache;
-        this.kafkaSubscribe = kafkaSubscribe;
-    }
-
-    private boolean existsInHbase(String url) {
-        try {
-            return hbase.exists(url, table);
-        } catch (IOException e) {
-            System.err.println("Error in check exising in hbase");
-            e.printStackTrace();
-            System.exit(11);
-        }
-
-        return true;
     }
 }

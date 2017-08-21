@@ -13,7 +13,7 @@ public class Connector {
     private String pageUrl;
     private Document document;
 
-    public Connector(String pageUrl) throws ContentTypeException, LanguageException, SocketTimeoutException, Exception {
+    public Connector(String pageUrl) throws ContentTypeException, LanguageException, SocketTimeoutException, Exception { // TODO: make this class functions for crawlThread
         this.pageUrl = pageUrl;
 
         checkContentType();
@@ -40,7 +40,7 @@ public class Connector {
             throw new LanguageException(pageUrl);
     }
 
-    private Document getDocumentFromConnection() throws SocketTimeoutException {
+    private Document getDocumentFromConnection() throws SocketTimeoutException, IOException {
         try {
             Connection.Response response = Jsoup.connect(pageUrl)
                     .userAgent(UserAgents.getRandom())
@@ -50,9 +50,7 @@ public class Connector {
         } catch (SocketTimeoutException e) {
             throw e;
         } catch (IOException e) {
-            System.err.println("error in connecting url " + pageUrl);
-            e.printStackTrace();
-            return null;
+            throw e;
         }
     }
 

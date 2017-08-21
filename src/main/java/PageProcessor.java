@@ -1,3 +1,4 @@
+import datastore.PageInfo;
 import javafx.util.Pair;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;

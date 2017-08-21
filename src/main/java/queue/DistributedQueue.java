@@ -1,4 +1,4 @@
-package kafka;
+package queue;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -14,14 +14,15 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 
-public class URLQueue extends Thread {
+public class DistributedQueue extends Thread implements URLQueue {
     private Producer<String, String> producer;
     private String topicName;
     private final ArrayBlockingQueue<String> arrayBlockingQueue = new ArrayBlockingQueue<String>(1000000);
     private Properties publishProps = new Properties();
     private Properties consumeProps = new Properties();
+    private final String groupId = "url-consumer";
 
-    public URLQueue(String bootstrapServers, String topicName, String groupId) {
+    public DistributedQueue(String bootstrapServers, String topicName) {
         this.topicName = topicName;
         //below is for publish
         publishProps.put("bootstrap.servers", bootstrapServers);
@@ -43,16 +44,17 @@ public class URLQueue extends Thread {
         consumeProps.put("value.deserializer", StringDeserializer.class.getName());
         consumeProps.put("auto.offset.reset", "earliest");
     }
+
     public String pop() throws InterruptedException{
         return arrayBlockingQueue.take();
     }
+
     public void push(ArrayList<String> arrayURLs) {
         for (String URL : arrayURLs)
             push(URL);
     }
+
     public void push(String URL) {
-
-
         ProducerRecord<String, String> producerRecord = new ProducerRecord<String, String>("test", URL);
         producer.send(producerRecord);
     }
