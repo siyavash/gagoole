@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 public class LogStatus {
     private static int consumedFromKafka = 0;
     private static int polites = 0;
+    private static int impolite = 0;
     private static int goodContentType = 0;
     private static int goodLanguage = 0;
     private static int processed = 0;
@@ -14,6 +15,7 @@ public class LogStatus {
 
     private static int prevConsumedFromKafka = 0;
     private static int prevPolites = 0;
+    private static int prevImpolite = 0;
     private static int prevGoodContentType = 0;
     private static int prevGoodLanguage = 0;
     private static int prevProcessed = 0;
@@ -36,6 +38,10 @@ public class LogStatus {
                 System.out.println("number of polite domains: " + (polites - prevPolites));
                 logger.info("number of polite domains: " + (polites - prevPolites));
                 prevPolites = polites;
+
+                System.out.println("number of impolite domains: " + (impolite - prevImpolite));
+                logger.info("number of polite domains: " + (impolite - prevImpolite));
+                prevImpolite = impolite;
 
                 System.out.println("number of links having suitable content-type: " + (goodContentType - prevGoodContentType));
                 logger.info("number of links having suitable content-type: " + (goodContentType - prevGoodContentType));
@@ -67,6 +73,10 @@ public class LogStatus {
 
     public synchronized static void isPolite() {
         polites++;
+    }
+
+    public synchronized static void isImPolite() {
+        impolite++;
     }
 
     public synchronized static void goodContentType() {

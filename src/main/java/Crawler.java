@@ -18,8 +18,12 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.sql.Time;
+import java.text.SimpleDateFormat;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class Crawler {
 
@@ -37,7 +41,6 @@ class Crawler {
 
     public Crawler() {
         loadProperties();
-        // TODO: initialze all elements and make all connections
         LogStatus.getLogger().info("number of threads: " + NTHREADS);
         if (localMode) {
             queue = new BlockingQueue();
@@ -60,6 +63,8 @@ class Crawler {
                 System.out.println("seed has been published");
                 System.exit(20);
             }
+        } else if (!localMode) {
+            queue.startThread();
         }
     }
 
@@ -74,6 +79,158 @@ class Crawler {
             thread.start();
             threads.add(thread);
         }
+    }
+
+    private void runCrawlThread() {
+        while (true) {
+            String linkToVisit;
+            try {
+                linkToVisit = queue.pop();
+            } catch (InterruptedException e) {
+                System.err.println("error in reading from blocking queue: ");
+                continue;
+            }
+            LogStatus.consumeLinkFromKafka();
+
+            try {
+                if (!isPolite(linkToVisit)) {
+                    LogStatus.isImPolite();
+                    queue.push(linkToVisit);
+                    continue;
+                }
+            } catch (IllegalArgumentException ex) {
+//                System.out.println("failed to get domain: " + linkToVisit);
+//                System.err.println("illegalArgument: " + linkToVisit);
+                continue;
+            } catch (IllegalStateException e){
+//                System.err.println("illegalState: " + linkToVisit);
+                continue;
+            } catch (IOException e) {
+//                System.err.println("io: " + linkToVisit);
+                continue;
+            }
+            LogStatus.isPolite();
+
+//            try {
+//                if (!isGoodContentType(linkToVisit)) {
+//                    // TODO: make log
+//                    continue;
+//                }
+//            } catch (IOException e) {
+//                // TODO: make log
+//                continue;
+//            }
+//            LogStatus.goodContentType();
+
+            Document document = null;
+            try {
+                document = getDocument(linkToVisit);
+            } catch (IOException e) {
+                // TODO: make log
+                continue;
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
+
+            if (!isEnglish(document)) continue;
+            LogStatus.goodLanguage();
+
+            PageInfo pageInfo = getPageInfo(linkToVisit, document);
+            try {
+                dataStore.put(pageInfo);
+            } catch (IOException e) {
+                System.err.println("errrrror");
+                System.exit(3);
+            }
+            LogStatus.processed();
+
+            ArrayList<String> sublinks = getAllSublinks(document);
+            for (String link : sublinks) {
+                try {
+                    if (!dataStore.exists(link)) {
+                        queue.push(link);
+                        LogStatus.newUniqueUrl();
+                    }
+                } catch (IOException e) {
+
+                }
+            }
+        }
+    }
+
+    private boolean isPolite(String stringUrl) throws IllegalArgumentException, IOException, IllegalStateException {
+        URL url = new URL(stringUrl);
+        String hostName = url.getHost();
+        String domain = InternetDomainName.from(hostName).topPrivateDomain().toString();
+        return !cache.checkIfExist(domain);
+    }
+
+    private boolean isGoodContentType(String urlString) throws IOException {
+        String contentType;
+        URL url = new URL(urlString);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("HEAD");
+        connection.connect();
+        contentType = connection.getContentType();
+
+        if (contentType == null)
+            return true;
+
+        return contentType.startsWith("text/html");
+    }
+
+    private boolean isEnglish(Document document) {
+        LanguageDetector languageDetector = new LanguageDetector(document);
+        return languageDetector.isEnglish();
+    }
+
+    private Document getDocument(String stringUrl) throws IOException, IllegalArgumentException {
+        Connection.Response response = Jsoup.connect(stringUrl)
+                .userAgent(UserAgents.getRandom())
+                .maxBodySize(100 * 1024)
+                .execute();
+        return response.parse();
+    }
+
+    public ArrayList<Pair<String, String>> getAllSubLinksWithAnchor(Document document) {
+        ArrayList<Pair<String, String>> insideLinks = new ArrayList<Pair<String, String>>();
+        Elements elements = document.getElementsByTag("a");
+        if (elements != null) {
+            for (Element tag : elements) {
+                String href = tag.absUrl("href");
+                if (!href.equals("")) {
+                    String anchor = tag.text();
+                    insideLinks.add(new Pair<String, String>(href, anchor));
+                }
+            }
+        }
+
+        return insideLinks;
+    }
+
+    ArrayList<String> getAllSublinks(Document document) {
+        ArrayList<String> insideLinks = new ArrayList<String>();
+        Elements elements = document.getElementsByTag("a");
+        if (elements != null) {
+            for (Element tag : elements) {
+                String href = tag.absUrl("href");
+                if (!href.equals(""))
+                    insideLinks.add(href);
+            }
+        }
+
+        return insideLinks;
+    }
+
+    PageInfo getPageInfo(String stringUrl, Document document) {
+        PageInfo data = new PageInfo();
+        data.setUrl(stringUrl);
+        data.setSubLinks(getAllSubLinksWithAnchor(document));
+        data.setTitle(document.title());
+        if (document.body() != null)
+            data.setBodyText(document.body().text());
+        data.setMeta(document.getElementsByTag("meta"));
+        return data;
     }
 
     private void loadProperties() {
@@ -123,163 +280,6 @@ class Crawler {
             System.exit(1);
             return null;
         }
-    }
-
-    private boolean isPolite(String stringUrl) throws IllegalArgumentException, IOException, IllegalStateException {
-        URL url = new URL(stringUrl);
-        String hostName = url.getHost();
-        String domain = InternetDomainName.from(hostName).topPrivateDomain().toString();
-
-        return !cache.checkIfExist(domain);
-
-//        catch (MalformedURLException e) {
-//            System.err.println("malformed url exception: " + stringUrl);
-//            return null;
-//        } catch (IllegalArgumentException ex) {
-//            System.err.println("Illegal argument exception: " + stringUrl);
-//            return null;
-//        } catch (IllegalStateException ex) {
-//            System.err.println("Illegal state exception: " + stringUrl);
-//            return null;
-//        }
-    }
-
-    private void runCrawlThread() {
-        while (true) {
-            String linkToVisit;
-            try {
-                linkToVisit = queue.pop();
-            } catch (InterruptedException e) {
-                System.err.println("error in reading from blocking queue: ");
-                continue;
-            }
-            if (linkToVisit == null) continue;
-            LogStatus.consumeLinkFromKafka();
-
-            try {
-                if (!isPolite(linkToVisit)) {
-                    queue.push(linkToVisit);
-                    continue;
-                }
-            } catch (IllegalArgumentException ex) {
-//                System.out.println("failed to get domain: " + linkToVisit);
-                System.err.println("illegalArgument: " + linkToVisit);
-                continue;
-            } catch (IllegalStateException e){
-                System.err.println("illegalState: " + linkToVisit);
-                continue;
-            } catch (IOException e) {
-                System.err.println("io: " + linkToVisit);
-                continue;
-            }
-            LogStatus.isPolite();
-
-            try {
-                if (!isGoodContentType(linkToVisit)) {
-                    // TODO: make log
-                }
-            } catch (IOException e) {
-                // TODO: make log
-                continue;
-            }
-            LogStatus.goodContentType();
-
-            Document document = null;
-            try {
-                document = getDocument(linkToVisit);
-            } catch (IOException e) {
-                // TODO: make log
-                continue;
-            }
-
-            LanguageDetector languageDetector = new LanguageDetector(document);
-            if (!languageDetector.isEnglish()) {
-                continue;
-            }
-            LogStatus.goodLanguage();
-
-            PageInfo data = getPageInfo(document);
-            try {
-                dataStore.put(data);
-            } catch (IOException e) {
-                System.err.println("errrrror");
-            }
-            LogStatus.processed();
-
-            ArrayList<String> sublinks = getAllSublinks(document);
-            for (String link : sublinks) {
-                try {
-                    if (!dataStore.exists(link)) {
-                        queue.push(link);
-                        LogStatus.newUniqueUrl();
-                    }
-                } catch (IOException e) {
-
-                }
-            }
-        }
-    }
-
-    private boolean isGoodContentType(String urlString) throws IOException {
-        String contentType;
-        URL url = new URL(urlString);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("HEAD");
-        connection.connect();
-        contentType = connection.getContentType();
-
-        if (contentType == null)
-            return true;
-
-        return contentType.startsWith("text/html");
-    }
-
-    private Document getDocument(String stringUrl) throws IOException {
-        Connection.Response response = Jsoup.connect(stringUrl)
-                .userAgent(UserAgents.getRandom())
-                .maxBodySize(100 * 1024)
-                .execute();
-        return response.parse();
-    }
-
-    public ArrayList<Pair<String, String>> getAllSubLinksWithAnchor(Document document) {
-        ArrayList<Pair<String, String>> insideLinks = new ArrayList<Pair<String, String>>();
-        Elements elements = document.getElementsByTag("a");
-        if (elements != null) {
-            for (Element tag : elements) {
-                String href = tag.absUrl("href");
-                if (!href.equals("")) {
-                    String anchor = tag.text();
-                    insideLinks.add(new Pair<String, String>(href, anchor));
-                }
-            }
-        }
-
-        return insideLinks;
-    }
-
-    ArrayList<String> getAllSublinks(Document document) {
-        ArrayList<String> insideLinks = new ArrayList<>();
-        Elements elements = document.getElementsByTag("a");
-        if (elements != null) {
-            for (Element tag : elements) {
-                String href = tag.absUrl("href");
-                if (!href.equals(""))
-                    insideLinks.add(href);
-            }
-        }
-
-        return insideLinks;
-    }
-
-    PageInfo getPageInfo(Document document) {
-        PageInfo data = new PageInfo();
-        data.setSubLinks(getAllSubLinksWithAnchor(document));
-        data.setTitle(document.title());
-        if (document.body() != null)
-            data.setBodyText(document.body().text());
-        data.setMeta(document.getElementsByTag("meta"));
-        return data;
     }
 
 }

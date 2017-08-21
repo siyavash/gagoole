@@ -11,4 +11,5 @@ public interface DataStore {
 
     void put(PageInfo pageInfo) throws IOException;
 
+    void put(String url);
 }

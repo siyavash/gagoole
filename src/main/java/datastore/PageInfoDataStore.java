@@ -98,4 +98,9 @@ public class PageInfoDataStore implements DataStore
 
         return stringBuilder.toString();
     }
+
+    @Override
+    public void put(String url) {
+
+    }
 }

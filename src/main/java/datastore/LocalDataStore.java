@@ -8,15 +8,19 @@ import java.util.HashSet;
  */
 public class LocalDataStore implements DataStore {
 
-    private HashSet<PageInfo> store = new HashSet<PageInfo>();
+    private HashSet<String> store = new HashSet<String>();
 
     @Override
     public boolean exists(String url) throws IOException {
-        return false;
+        return store.contains(url);
     }
 
     @Override
     public void put(PageInfo pageInfo) throws IOException {
 
+    }
+
+    public void put(String url) {
+        store.add(url);
     }
 }

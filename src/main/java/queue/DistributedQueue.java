@@ -37,12 +37,17 @@ public class DistributedQueue extends Thread implements URLQueue {
         producer = new KafkaProducer<String, String>(publishProps);
 
         //below is for subscribe
+        consumeProps.put("bootstrap.servers", bootstrapServers);
         consumeProps.put("group.id", groupId);
         consumeProps.put("enable.auto.commit", "true");
         consumeProps.put("session.timeout.ms", "30000");
         consumeProps.put("key.deserializer", StringDeserializer.class.getName());
         consumeProps.put("value.deserializer", StringDeserializer.class.getName());
         consumeProps.put("auto.offset.reset", "earliest");
+    }
+
+    public void startThread() {
+        this.start();
     }
 
     public String pop() throws InterruptedException{
@@ -52,12 +57,15 @@ public class DistributedQueue extends Thread implements URLQueue {
     public void push(ArrayList<String> arrayURLs) {
         for (String URL : arrayURLs)
             push(URL);
+        producer.close();
     }
 
     public void push(String URL) {
-        ProducerRecord<String, String> producerRecord = new ProducerRecord<String, String>("test", URL);
+        ProducerRecord<String, String> producerRecord = new ProducerRecord<String, String>(topicName, URL);
         producer.send(producerRecord);
     }
+
+
     @Override
     public void run() {
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(consumeProps);
@@ -70,7 +78,7 @@ public class DistributedQueue extends Thread implements URLQueue {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                System.out.println(record.value());
+//                System.out.println(record.value());
             }
 
         }
