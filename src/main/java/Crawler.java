@@ -15,7 +15,7 @@ class Crawler {
 
     private final URLQueue queue;
     private final LruCache lruCache = new LruCache();
-    private final DataStore dataStore;
+    private DataStore dataStore;
     private boolean initialMode = true;
     private boolean localMode = true;
     private String bootstrapServer;
@@ -32,6 +32,11 @@ class Crawler {
             dataStore = new LocalDataStore();
         } else {
             queue = new DistributedQueue(bootstrapServer, topicName);
+            try {
+                dataStore = new PageInfoDataStore(zookeeperClientPort, zookeeperQuorum);
+            } catch (IOException e) {
+
+            }
         }
 
         if (initialMode)
