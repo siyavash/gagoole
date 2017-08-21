@@ -9,8 +9,7 @@ class Crawler {
     private final LruCache lruCache = new LruCache();
     private final PageInfoDataStore hbase;
 
-    public Crawler(KafkaSubscribe kafkaSubscribe) throws IOException {
-        this.kafkaSubscribe = kafkaSubscribe;
+    public Crawler() {
         // TODO: initialze all elements and make all connections
         hbase = new PageInfoDataStore("2181", "master,slave");
     }

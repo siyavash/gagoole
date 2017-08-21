@@ -20,8 +20,9 @@ public class URLQueue extends Thread {
     private final ArrayBlockingQueue<String> arrayBlockingQueue = new ArrayBlockingQueue<String>(1000000);
     private Properties publishProps = new Properties();
     private Properties consumeProps = new Properties();
+    private final String groupId = "url-consumer";
 
-    public URLQueue(String bootstrapServers, String topicName, String groupId) {
+    public URLQueue(String bootstrapServers, String topicName) {
         this.topicName = topicName;
         //below is for publish
         publishProps.put("bootstrap.servers", bootstrapServers);
