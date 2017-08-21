@@ -15,17 +15,19 @@ public class Main {
         loadProperties();
         Logger.start();
 
-        if (initialMode)
-            Seeds.publish();
+        if (initialMode) {
+            Seeds.publish(); // TODO: change to func
+            System.out.println("seeds are published to kafka");
+            return;
+        }
 
         KafkaSubscribe kafkaSubscribe = new KafkaSubscribe();
         kafkaSubscribe.start();
 
         try {
-            Crawler crawler = new Crawler(kafkaSubscribe);
+            Crawler crawler = new Crawler(kafkaSubscribe); // TODO: put properties in constructor
             crawler.setThreads(NTHREADS);
             crawler.start();
-            System.out.println("HBASE IS WORKING OMG");
         } catch (IOException e) {
             System.err.println("Error in connecting hbase:" + e);
             System.exit(20);

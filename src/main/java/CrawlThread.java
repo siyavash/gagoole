@@ -13,7 +13,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 
-public class CrawlExecutor extends Thread {
+public class CrawlThread extends Thread { //
 
     private final KafkaSubscribe kafkaSubscribe;
     private final KafkaPublish publisher = KafkaPublish.getInstance();
@@ -51,17 +51,23 @@ public class CrawlExecutor extends Thread {
                     continue;
                 }
             } catch (Exception exception) {
+                System.out.println("failed to extract domain: " + linkToVisit);
                 continue;
             }
 
             Logger.isPolite();
 
+            // TODO: put language checker and content-type checker here
+
             try {
                 Connector connector = new Connector(linkToVisit);
                 Document document = connector.getDocument();
-                PageProcessor pageProcessor = new PageProcessor(linkToVisit, document);
+                PageProcessor pageProcessor = new PageProcessor(linkToVisit, document);  // TODO: make pageprocessor static
                 URLData data = pageProcessor.getUrlData();
+                System.out.println(data.getTitle());
+                System.out.println("trying to put urldata to hbase");
                 hbase.put(data, table);
+                System.out.println("done");
 
                 Logger.processed();
 
@@ -73,15 +79,15 @@ public class CrawlExecutor extends Thread {
                         Logger.newUniqueUrls();
                     }
                 }
-            } catch (LanguageException ex) {
+            } catch (LanguageException ex) { // TODO: make try cathc blocks small
 //                System.err.println("Language detection: " + ex.getUrl());
-            } catch (SocketTimeoutException ex) {
+            } catch (SocketTimeoutException ex) { // TODO:
 //                System.err.println("timeout: " + linkToVisit);
                 publisher.produceUrl(linkToVisit);
             }catch (IOException e) {
-//                System.err.println("io exception" + e + "\n" + linkToVisit);
+                System.err.println("io exception: " + e + "\n" + linkToVisit);
             } catch (Exception e) {
-//                e.printStackTrace();
+                System.err.println("exception: " + e + linkToVisit);
             }
         }
     }
@@ -108,7 +114,7 @@ public class CrawlExecutor extends Thread {
 //        }
     }
 
-    public CrawlExecutor(KafkaSubscribe kafkaSubscribe, LruCache lruCache, GagooleHBase hbase) {
+    public CrawlThread(KafkaSubscribe kafkaSubscribe, LruCache lruCache, GagooleHBase hbase) {
         this.hbase = hbase;
         this.cache = lruCache;
         this.kafkaSubscribe = kafkaSubscribe;
