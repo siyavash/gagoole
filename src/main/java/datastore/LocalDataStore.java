@@ -17,7 +17,7 @@ public class LocalDataStore implements DataStore {
 
     @Override
     public void put(PageInfo pageInfo) throws IOException {
-
+        store.add(pageInfo.getUrl());
     }
 
     public void put(String url) {
