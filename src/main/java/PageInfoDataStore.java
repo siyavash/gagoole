@@ -38,20 +38,30 @@ public class PageInfoDataStore
 
     public void put(PageInfo pageInfo) throws IOException
     {
-        byte[] urlBytes = Bytes.toBytes(pageInfo.getUrl());
         String subLinks = turnSubLinksToString(pageInfo.getSubLinks());
+
+        byte[] urlBytes = Bytes.toBytes(pageInfo.getUrl());
         Put put = new Put(urlBytes);
+
         Table table = hbaseConnection.getTable(tableName);
 
-
-
-        put.addColumn(columnFamily, Bytes.toBytes("meta"), Bytes.toBytes(pageInfo.getMeta()));
-        put.addColumn(columnFamily, Bytes.toBytes("passage"), Bytes.toBytes(pageInfo.getBodyText()));
-        put.addColumn(columnFamily, Bytes.toBytes("title"), Bytes.toBytes(pageInfo.getTitle()));
-        put.addColumn(columnFamily, Bytes.toBytes("links"), Bytes.toBytes(subLinks));
+        addColumnToPut(put, Bytes.toBytes("meta"), pageInfo.getMeta());
+        addColumnToPut(put, Bytes.toBytes("bodyText"), pageInfo.getBodyText());
+        addColumnToPut(put, Bytes.toBytes("title"), pageInfo.getTitle());
+        addColumnToPut(put, Bytes.toBytes("subLinks"), subLinks);
 
         table.put(put);
         table.close();
+    }
+
+    private void addColumnToPut(Put put, byte[] columnName, String value)
+    {
+        if (value == null)
+        {
+            return;
+        }
+
+        put.addColumn(columnFamily, columnName, Bytes.toBytes(value));
     }
 
     private String turnSubLinksToString(ArrayList<Pair<String, String>> subLinks)
