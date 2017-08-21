@@ -1,0 +1,36 @@
+2017-08-21 12:25:03,433 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:33) - number of consumed links from kafka: 0
+2017-08-21 12:25:03,445 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:37) - number of polite domains: 0
+2017-08-21 12:25:03,446 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:41) - number of links having suitable content-type: 0
+2017-08-21 12:25:03,446 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:45) - number of links with english language: 0
+2017-08-21 12:25:03,449 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:49) - number of processed links: 0
+2017-08-21 12:25:03,450 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:53) - number of unique subUrls: 0
+2017-08-21 12:25:03,450 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:57) - number of active threads: 3
+2017-08-21 12:25:03,474 INFO  [main] Crawler (Crawler.java:40) - number of threads: 1000
+2017-08-21 12:25:04,432 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:33) - number of consumed links from kafka: 0
+2017-08-21 12:25:04,433 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:37) - number of polite domains: 0
+2017-08-21 12:25:04,433 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:41) - number of links having suitable content-type: 0
+2017-08-21 12:25:04,434 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:45) - number of links with english language: 0
+2017-08-21 12:25:04,434 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:49) - number of processed links: 0
+2017-08-21 12:25:04,434 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:53) - number of unique subUrls: 0
+2017-08-21 12:25:04,434 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:57) - number of active threads: 957
+2017-08-21 12:25:05,432 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:33) - number of consumed links from kafka: 0
+2017-08-21 12:25:05,434 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:37) - number of polite domains: 0
+2017-08-21 12:25:05,435 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:41) - number of links having suitable content-type: 0
+2017-08-21 12:25:05,435 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:45) - number of links with english language: 0
+2017-08-21 12:25:05,435 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:49) - number of processed links: 0
+2017-08-21 12:25:05,435 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:53) - number of unique subUrls: 0
+2017-08-21 12:25:05,435 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:57) - number of active threads: 1003
+2017-08-21 12:25:06,437 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:33) - number of consumed links from kafka: 0
+2017-08-21 12:25:06,438 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:37) - number of polite domains: 0
+2017-08-21 12:25:06,438 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:41) - number of links having suitable content-type: 0
+2017-08-21 12:25:06,439 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:45) - number of links with english language: 0
+2017-08-21 12:25:06,439 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:49) - number of processed links: 0
+2017-08-21 12:25:06,439 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:53) - number of unique subUrls: 0
+2017-08-21 12:25:06,440 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:57) - number of active threads: 1003
+2017-08-21 12:25:07,436 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:33) - number of consumed links from kafka: 0
+2017-08-21 12:25:07,437 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:37) - number of polite domains: 0
+2017-08-21 12:25:07,437 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:41) - number of links having suitable content-type: 0
+2017-08-21 12:25:07,437 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:45) - number of links with english language: 0
+2017-08-21 12:25:07,437 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:49) - number of processed links: 0
+2017-08-21 12:25:07,437 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:53) - number of unique subUrls: 0
+2017-08-21 12:25:07,437 INFO  [Timer-0] Util.LogStatus$1 (LogStatus.java:57) - number of active threads: 1003

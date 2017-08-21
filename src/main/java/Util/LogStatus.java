@@ -2,8 +2,9 @@ package Util;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import org.apache.log4j.Logger;
 
-public class Logger {
+public class LogStatus {
     private static int consumedFromKafka = 0;
     private static int polites = 0;
     private static int goodContentType = 0;
@@ -18,6 +19,8 @@ public class Logger {
     private static int prevProcessed = 0;
     private static int prevUniqueurls = 0;
 
+    private static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(Class.class.getSimpleName());
+
     public static void start() {
 
         Timer timer = new Timer();
@@ -27,24 +30,31 @@ public class Logger {
                 System.out.println();
 
                 System.out.println("number of consumed links from kafka: " + (consumedFromKafka - prevConsumedFromKafka));
+                logger.info("number of consumed links from kafka: " + (consumedFromKafka - prevConsumedFromKafka));
                 prevConsumedFromKafka = consumedFromKafka;
 
                 System.out.println("number of polite domains: " + (polites - prevPolites));
+                logger.info("number of polite domains: " + (polites - prevPolites));
                 prevPolites = polites;
 
                 System.out.println("number of links having suitable content-type: " + (goodContentType - prevGoodContentType));
+                logger.info("number of links having suitable content-type: " + (goodContentType - prevGoodContentType));
                 prevGoodContentType = goodContentType;
 
                 System.out.println("number of links with english language: " + (goodLanguage - prevGoodLanguage));
+                logger.info("number of links with english language: " + (goodLanguage - prevGoodLanguage));
                 prevGoodLanguage = goodLanguage;
 
                 System.out.println("number of processed links: " + (processed - prevProcessed));
+                logger.info("number of processed links: " + (processed - prevProcessed));
                 prevProcessed = processed;
 
                 System.out.println("number of unique subUrls: " + (uniqueUrls - prevUniqueurls));
+                logger.info("number of unique subUrls: " + (uniqueUrls - prevUniqueurls));
                 prevUniqueurls = uniqueUrls;
 
                 System.out.println("number of active threads: " + Thread.activeCount());
+                logger.info("number of active threads: " + Thread.activeCount());
 
                 System.out.println();
             }
@@ -73,5 +83,9 @@ public class Logger {
 
     public synchronized static void newUniqueUrl() {
         uniqueUrls++;
+    }
+
+    public static Logger getLogger() {
+        return logger;
     }
 }

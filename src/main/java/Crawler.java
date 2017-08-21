@@ -37,7 +37,7 @@ class Crawler {
     public Crawler() {
         loadProperties();
         // TODO: initialze all elements and make all connections
-
+        LogStatus.getLogger().info("number of threads: " + NTHREADS);
         if (localMode) {
             queue = new BlockingQueue();
             dataStore = new LocalDataStore();
@@ -156,7 +156,7 @@ class Crawler {
             }
             if (linkToVisit == null) continue;
 
-            Logger.consumeLinkFromKafka();
+            LogStatus.consumeLinkFromKafka();
 
             try {
                 if (!isPolite(linkToVisit)) {
@@ -167,7 +167,7 @@ class Crawler {
                 System.out.println("failed to extract domain: " + linkToVisit);
                 continue;
             }
-            Logger.isPolite();
+            LogStatus.isPolite();
 
             try {
                 if (!isGoodContentType(linkToVisit)) {
@@ -176,7 +176,7 @@ class Crawler {
             } catch (IOException e) {
                 // TODO: make log
             }
-            Logger.goodContentType();
+            LogStatus.goodContentType();
 
             Document document = null;
             try {
@@ -189,7 +189,7 @@ class Crawler {
             if (!languageDetector.isEnglish()) {
                 continue;
             }
-            Logger.goodLanguage();
+            LogStatus.goodLanguage();
 
             PageInfo data = getPageInfo(document);
             try {
@@ -199,14 +199,14 @@ class Crawler {
             }
 
 
-            Logger.processed();
+            LogStatus.processed();
 
             ArrayList<String> sublinks = getAllSublinks(document);
             for (String link : sublinks) {
                 try {
                     if (!dataStore.exists(link)) {
                         queue.push(link);
-                        Logger.newUniqueUrl();
+                        LogStatus.newUniqueUrl();
                     }
                 } catch (IOException e) {
 

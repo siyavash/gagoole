@@ -1,8 +1,8 @@
-import Util.Logger;
+import Util.LogStatus;
 
 public class Gagoole {
     public static void main(String[] args) {
-        Logger.start();
+        LogStatus.start();
 
         Crawler crawler = new Crawler();
         crawler.start();
