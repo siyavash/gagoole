@@ -2,8 +2,8 @@ import Util.Logger;
 import com.google.common.net.InternetDomainName;
 import javafx.util.Pair;
 import kafka.KafkaPublish;
-import kafka.KafkaSubscribe;
 import Util.LanguageException;
+import kafka.URLQueue;
 import org.apache.hadoop.hbase.client.Table;
 import org.jsoup.nodes.Document;
 
@@ -18,11 +18,11 @@ public class CrawlThread extends Thread { //
     private final KafkaSubscribe kafkaSubscribe;
     private final KafkaPublish publisher = KafkaPublish.getInstance();
     private final LruCache cache;
-    private final GagooleHBase hbase;
+    private final PageInfoDataStore hbase;
     private Table table = null;
+    URLQueue publisher = new URLQueue();
 
     public void run() {
-
         ArrayBlockingQueue<String> arrayBlockingQueue = kafkaSubscribe.getUrlsArrayBlockingQueue();
 
         try {
@@ -62,10 +62,15 @@ public class CrawlThread extends Thread { //
             try {
                 Connector connector = new Connector(linkToVisit);
                 Document document = connector.getDocument();
+<<<<<<< HEAD:src/main/java/CrawlThread.java
                 PageProcessor pageProcessor = new PageProcessor(linkToVisit, document);  // TODO: make pageprocessor static
                 URLData data = pageProcessor.getUrlData();
                 System.out.println(data.getTitle());
                 System.out.println("trying to put urldata to hbase");
+=======
+                PageProcessor pageProcessor = new PageProcessor(linkToVisit, document);
+                PageInfo data = pageProcessor.getUrlData();
+>>>>>>> 1a6c7613587ba33dbdbb12a8f5a334a2fb93e824:src/main/java/CrawlExecutor.java
                 hbase.put(data, table);
                 System.out.println("done");
 

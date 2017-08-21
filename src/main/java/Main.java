@@ -1,5 +1,4 @@
 import Util.Logger;
-import kafka.KafkaSubscribe;
 import kafka.Seeds;
 
 import java.io.FileInputStream;

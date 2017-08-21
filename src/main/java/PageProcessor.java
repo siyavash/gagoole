@@ -1,19 +1,8 @@
-import Util.ContentTypeException;
-import Util.LanguageDetector;
-import Util.LanguageException;
-import Util.UserAgents;
 import javafx.util.Pair;
-import org.jsoup.Connection;
-import org.jsoup.HttpStatusException;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.SocketTimeoutException;
-import java.net.URL;
 import java.util.ArrayList;
 
 public class PageProcessor {
@@ -42,11 +31,11 @@ public class PageProcessor {
         return insideLinks;
     }
 
-    public URLData getUrlData() {
-        URLData data = new URLData();
-        data.setInsideLinks(getAllInsideLinks());
+    public PageInfo getUrlData() {
+        PageInfo data = new PageInfo();
+        data.setSubLinks(getAllInsideLinks());
         data.setTitle(document.title());
-        data.setPassage(document.body().text());
+        data.setBodyText(document.body().text());
         data.setMeta(document.getElementsByTag("meta"));
         return data;
     }
