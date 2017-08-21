@@ -9,14 +9,12 @@ public class Logger {
     private static int goodContentType = 0;
     private static int goodLanguage = 0;
     private static int processed = 0;
-    private static int uniqueUrls = 0;
 
     private static int prevConsumedFromKafka = 0;
     private static int prevPolites = 0;
     private static int prevGoodContentType = 0;
     private static int prevGoodLanguage = 0;
     private static int prevProcessed = 0;
-    private static int prevUniqueurls = 0;
 
     public static void start() {
 
@@ -40,9 +38,6 @@ public class Logger {
 
                 System.out.println("number of processed links: " + (processed - prevProcessed));
                 prevProcessed = processed;
-
-                System.out.println("number of unique subUrls: " + (uniqueUrls - prevUniqueurls));
-                prevUniqueurls = uniqueUrls;
 
                 System.out.println("number of active threads: " + Thread.activeCount());
 
@@ -69,9 +64,5 @@ public class Logger {
 
     public synchronized static void processed() {
         processed++;
-    }
-
-    public synchronized static void newUniqueUrl() {
-        uniqueUrls++;
     }
 }

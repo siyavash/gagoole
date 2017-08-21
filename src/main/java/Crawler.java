@@ -16,6 +16,7 @@ import queue.URLQueue;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Properties;
@@ -46,7 +47,8 @@ class Crawler {
             try {
                 dataStore = new PageInfoDataStore(zookeeperClientPort, zookeeperQuorum);
             } catch (IOException e) {
-
+                System.err.println("Error in initialising hbase: " + e);
+                System.exit(1);
             }
         }
 
@@ -62,8 +64,7 @@ class Crawler {
     }
 
     public void start() {
-        ArrayList<Thread> threads = new ArrayList<Thread>();
-
+        ArrayList<Thread> threads = new ArrayList<Thread>(NTHREADS);
         for (int i = 0; i < NTHREADS; i++) {
             Thread thread = new Thread(new Runnable() {
                 public void run() {
@@ -124,13 +125,10 @@ class Crawler {
         }
     }
 
-    private boolean isPolite(String stringUrl) throws Exception {
+    private boolean isPolite(String stringUrl) throws IllegalArgumentException, IOException, IllegalStateException {
         URL url = new URL(stringUrl);
         String hostName = url.getHost();
         String domain = InternetDomainName.from(hostName).topPrivateDomain().toString();
-
-        if (domain == null)
-            throw new Exception();
 
         return !cache.checkIfExist(domain);
 
@@ -148,14 +146,14 @@ class Crawler {
 
     private void runCrawlThread() {
         while (true) {
-            String linkToVisit = null;
+            String linkToVisit;
             try {
                 linkToVisit = queue.pop();
             } catch (InterruptedException e) {
-                System.err.println("error in reading from blocking queue");
+                System.err.println("error in reading from blocking queue: ");
+                continue;
             }
             if (linkToVisit == null) continue;
-
             Logger.consumeLinkFromKafka();
 
             try {
@@ -163,8 +161,15 @@ class Crawler {
                     queue.push(linkToVisit);
                     continue;
                 }
-            } catch (Exception exception) {
-                System.out.println("failed to extract domain: " + linkToVisit);
+            } catch (IllegalArgumentException ex) {
+//                System.out.println("failed to get domain: " + linkToVisit);
+                System.err.println("illegalArgument: " + linkToVisit);
+                continue;
+            } catch (IllegalStateException e){
+                System.err.println("illegalState: " + linkToVisit);
+                continue;
+            } catch (IOException e) {
+                System.err.println("io: " + linkToVisit);
                 continue;
             }
             Logger.isPolite();
@@ -175,6 +180,7 @@ class Crawler {
                 }
             } catch (IOException e) {
                 // TODO: make log
+                continue;
             }
             Logger.goodContentType();
 
@@ -183,6 +189,7 @@ class Crawler {
                 document = getDocument(linkToVisit);
             } catch (IOException e) {
                 // TODO: make log
+                continue;
             }
 
             LanguageDetector languageDetector = new LanguageDetector(document);
@@ -195,10 +202,8 @@ class Crawler {
             try {
                 dataStore.put(data);
             } catch (IOException e) {
-
+                System.err.println("errrrror");
             }
-
-
             Logger.processed();
 
             ArrayList<String> sublinks = getAllSublinks(document);
@@ -206,7 +211,6 @@ class Crawler {
                 try {
                     if (!dataStore.exists(link)) {
                         queue.push(link);
-                        Logger.newUniqueUrl();
                     }
                 } catch (IOException e) {
 
@@ -243,8 +247,10 @@ class Crawler {
         if (elements != null) {
             for (Element tag : elements) {
                 String href = tag.absUrl("href");
-                String anchor = tag.text();
-                insideLinks.add(new Pair<String, String>(href, anchor));
+                if (!href.equals("")) {
+                    String anchor = tag.text();
+                    insideLinks.add(new Pair<String, String>(href, anchor));
+                }
             }
         }
 
@@ -257,7 +263,8 @@ class Crawler {
         if (elements != null) {
             for (Element tag : elements) {
                 String href = tag.absUrl("href");
-                insideLinks.add(href);
+                if (!href.equals(""))
+                    insideLinks.add(href);
             }
         }
 
@@ -268,7 +275,8 @@ class Crawler {
         PageInfo data = new PageInfo();
         data.setSubLinks(getAllSubLinksWithAnchor(document));
         data.setTitle(document.title());
-        data.setBodyText(document.body().text());
+        if (document.body() != null)
+            data.setBodyText(document.body().text());
         data.setMeta(document.getElementsByTag("meta"));
         return data;
     }

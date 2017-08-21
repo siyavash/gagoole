@@ -12,8 +12,7 @@ public class BlockingQueue implements URLQueue {
 
     @Override
     public String pop() throws InterruptedException {
-        queue.take();
-        return null;
+        return queue.take();
     }
 
     @Override
