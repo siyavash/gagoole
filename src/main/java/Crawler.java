@@ -18,6 +18,10 @@ class Crawler {
     private final DataStore dataStore;
     private boolean initialMode = true;
     private boolean localMode = true;
+    private String bootstrapServer;
+    private String topicName;
+    private String zookeeperClientPort;
+    private String zookeeperQuorum;
 
     public Crawler() {
         loadProperties();
@@ -27,12 +31,7 @@ class Crawler {
             queue = new BlockingQueue();
             dataStore = new LocalDataStore();
         } else {
-            queue = new DistributedQueue();
-            try {
-                dataStore = new PageInfoDataStore();
-            } catch (IOException e) {
-
-            }
+            queue = new DistributedQueue(bootstrapServer, topicName);
         }
 
         if (initialMode)
@@ -69,7 +68,10 @@ class Crawler {
             NTHREADS = Integer.parseInt(prop.getProperty("threads-number", "500"));
             initialMode = prop.getProperty("initial-mode", "true").equals("true");
             localMode = prop.getProperty("local-mode", "true").equals("true");
-
+            bootstrapServer = prop.getProperty("bootstrap-server", "master:9092, slave:9092");
+            topicName = prop.getProperty("topic-name", "test");
+            zookeeperClientPort = prop.getProperty("zookeeper-client-port", "2181");
+            zookeeperQuorum = prop.getProperty("zookeeper-quorum", "master,slave");
         } catch (IOException ex) {
             System.err.println("error in reading config file:");
             ex.printStackTrace();
