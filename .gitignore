@@ -10,6 +10,7 @@
 log/
 target/
 META-INF
+classes
 
 #Log
 testLog.log
