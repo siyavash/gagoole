@@ -71,7 +71,7 @@ public class Logger {
         processed++;
     }
 
-    public synchronized static void newUniqueUrls() {
+    public synchronized static void newUniqueUrl() {
         uniqueUrls++;
     }
 }
