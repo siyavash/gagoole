@@ -68,6 +68,11 @@ public class PageInfoDataStore implements DataStore
 
     private String turnSubLinksToString(ArrayList<Pair<String, String>> subLinks)
     {
+        if (subLinks == null)
+        {
+            return null;
+        }
+
         StringBuilder stringBuilder = new StringBuilder();
 
         for (Pair<String, String> subLink : subLinks)
