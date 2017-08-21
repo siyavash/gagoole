@@ -1,11 +1,14 @@
 import Util.Logger;
 import com.google.common.net.InternetDomainName;
+import datastore.DataStore;
+import datastore.PageInfo;
+import datastore.PageInfoDataStore;
 import javafx.util.Pair;
-import kafka.KafkaPublish;
 import Util.LanguageException;
 import queue.DistributedQueue;
 import org.apache.hadoop.hbase.client.Table;
 import org.jsoup.nodes.Document;
+import queue.URLQueue;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -16,26 +19,21 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class CrawlThread extends Thread { //
 
     private final LruCache cache;
-    private final PageInfoDataStore hbase;
     private Table table = null;
-    private static boolean initialMode;
-    DistributedQueue publisher = new DistributedQueue();
+    private final URLQueue queue;
+    private final DataStore dataStore;
+
+    public CrawlThread(URLQueue queue, LruCache lruCache, DataStore dataStore) {
+        this.queue = queue;
+        this.cache = lruCache;
+        this.dataStore= dataStore;
+    }
 
     public void run() {
-        ArrayBlockingQueue<String> arrayBlockingQueue = kafkaSubscribe.getUrlsArrayBlockingQueue();
-
-        try {
-            table = hbase.getTable();
-        } catch (IOException e) {
-            System.err.println("error in getting table");
-            e.printStackTrace();
-            System.exit(10);
-        }
-
         while (true) {
             String linkToVisit = null;
             try {
-                linkToVisit = arrayBlockingQueue.take();
+                linkToVisit = queue.pop();
             } catch (InterruptedException e) {
                 System.err.println("error in reading from blocking queue");
             }
@@ -46,7 +44,7 @@ public class CrawlThread extends Thread { //
 
             try {
                 if (!isPolite(linkToVisit)) {
-                    publisher.produceUrl(linkToVisit);
+                    queue.push(linkToVisit);
                     continue;
                 }
             } catch (Exception exception) {
@@ -63,7 +61,7 @@ public class CrawlThread extends Thread { //
                 Document document = connector.getDocument();
                 PageProcessor pageProcessor = new PageProcessor(linkToVisit, document);
                 PageInfo data = pageProcessor.getUrlData();
-                hbase.put(data, table);
+                dataStore.put(data);
                 System.out.println("done");
 
                 Logger.processed();
@@ -71,8 +69,8 @@ public class CrawlThread extends Thread { //
                 ArrayList<Pair<String, String>> insideLinks = pageProcessor.getAllInsideLinks();
                 for (Pair<String, String> pair : insideLinks) {
                     String url = pair.getKey();
-                    if (!existsInHbase(url)) {
-                        publisher.produceUrl(url);
+                    if (!dataStore.exists(url)) {
+                        queue.push(url);
                         Logger.newUniqueUrls();
                     }
                 }
@@ -80,7 +78,7 @@ public class CrawlThread extends Thread { //
 //                System.err.println("Language detection: " + ex.getUrl());
             } catch (SocketTimeoutException ex) { // TODO:
 //                System.err.println("timeout: " + linkToVisit);
-                publisher.produceUrl(linkToVisit);
+                queue.push(linkToVisit);
             }catch (IOException e) {
                 System.err.println("io exception: " + e + "\n" + linkToVisit);
             } catch (Exception e) {
@@ -109,23 +107,5 @@ public class CrawlThread extends Thread { //
 //            System.err.println("Illegal state exception: " + stringUrl);
 //            return null;
 //        }
-    }
-
-    public CrawlThread(KafkaSubscribe kafkaSubscribe, LruCache lruCache, GagooleHBase hbase) {
-        this.hbase = hbase;
-        this.cache = lruCache;
-        this.kafkaSubscribe = kafkaSubscribe;
-    }
-
-    private boolean existsInHbase(String url) {
-        try {
-            return hbase.exists(url, table);
-        } catch (IOException e) {
-            System.err.println("Error in check exising in hbase");
-            e.printStackTrace();
-            System.exit(11);
-        }
-
-        return true;
     }
 }

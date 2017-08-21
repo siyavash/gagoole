@@ -1,10 +1,11 @@
+import datastore.DataStore;
+import datastore.LocalDataStore;
+import datastore.PageInfoDataStore;
 import queue.BlockingQueue;
 import queue.DistributedQueue;
 import queue.URLQueue;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Properties;
 
@@ -14,7 +15,7 @@ class Crawler {
 
     private final URLQueue queue;
     private final LruCache lruCache = new LruCache();
-    private final PageInfoDataStore hbase;
+    private final DataStore dataStore;
     private boolean initialMode = true;
     private boolean localMode = true;
 
@@ -24,11 +25,20 @@ class Crawler {
 
         if (localMode) {
             queue = new BlockingQueue();
+            dataStore = new LocalDataStore();
         } else {
             queue = new DistributedQueue();
+            try {
+                dataStore = new PageInfoDataStore();
+            } catch (IOException e) {
+
+            }
         }
 
-//        hbase = new PageInfoDataStore("2181", "master,slave");
+        if (initialMode)
+            publishSeeds();
+
+//        hbase = new datastore.PageInfoDataStore("2181", "master,slave");
 //        MyQueue urlQueue = new DistributedQueue();
     }
 
@@ -71,6 +81,24 @@ class Crawler {
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    private void publishSeeds() {
+        try {
+            ArrayList<String> seedUrls = new ArrayList<String>(500);
+            File file = new File("seed.txt");
+            FileReader fileReader = new FileReader(file);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                seedUrls.add("http://www." + line);
+            }
+            fileReader.close();
+            queue.push(seedUrls);
+        } catch (IOException e) {
+            System.err.println("error in loading seed: " + e);
+            System.exit(101);
         }
     }
 

@@ -10,17 +10,9 @@ public class Main {
     private static int NTHREADS;
 
     public static void main(String[] args) {
-        loadProperties();
         Logger.start();
 
-        if (initialMode) {
-            Seeds.publish(); // TODO: change to func
-            System.out.println("seeds are published to kafka");
-            return;
-        }
-
-        Crawler crawler = new Crawler(kafkaSubscribe); // TODO: put properties in constructor
-        crawler.setThreads(NTHREADS);
+        Crawler crawler = new Crawler();
         crawler.start();
     }
 }

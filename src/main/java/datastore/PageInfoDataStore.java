@@ -1,3 +1,5 @@
+package datastore;
+
 import javafx.util.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -8,7 +10,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class PageInfoDataStore
+public class PageInfoDataStore implements DataStore
 {
     private Connection hbaseConnection;
     private TableName tableName = TableName.valueOf("smallTable");
