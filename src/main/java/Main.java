@@ -1,5 +1,5 @@
 import Util.Logger;
-import kafka.Seeds;
+import queue.Seeds;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -22,31 +22,5 @@ public class Main {
         Crawler crawler = new Crawler(kafkaSubscribe); // TODO: put properties in constructor
         crawler.setThreads(NTHREADS);
         crawler.start();
-    }
-
-    private static void loadProperties() {
-        Properties prop = new Properties();
-        InputStream input = null;
-
-        try {
-
-            input = new FileInputStream("config.properties");
-            prop.load(input);
-
-            NTHREADS = Integer.parseInt(prop.getProperty("threads-number", "500"));
-            initialMode = prop.getProperty("initial-mode", "true").equals("true");
-
-        } catch (IOException ex) {
-            System.err.println("error in reading config file:");
-            ex.printStackTrace();
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 }

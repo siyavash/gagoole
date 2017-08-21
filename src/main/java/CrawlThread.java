@@ -3,7 +3,7 @@ import com.google.common.net.InternetDomainName;
 import javafx.util.Pair;
 import kafka.KafkaPublish;
 import Util.LanguageException;
-import kafka.URLQueue;
+import queue.DistributedQueue;
 import org.apache.hadoop.hbase.client.Table;
 import org.jsoup.nodes.Document;
 
@@ -19,7 +19,7 @@ public class CrawlThread extends Thread { //
     private final PageInfoDataStore hbase;
     private Table table = null;
     private static boolean initialMode;
-    URLQueue publisher = new URLQueue();
+    DistributedQueue publisher = new DistributedQueue();
 
     public void run() {
         ArrayBlockingQueue<String> arrayBlockingQueue = kafkaSubscribe.getUrlsArrayBlockingQueue();

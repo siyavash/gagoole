@@ -1,4 +1,4 @@
-package kafka;
+package queue;
 
 import java.io.IOException;
 
