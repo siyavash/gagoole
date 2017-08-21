@@ -38,7 +38,7 @@ class Crawler {
     public Crawler() {
         loadProperties();
         // TODO: initialze all elements and make all connections
-
+        LogStatus.getLogger().info("number of threads: " + NTHREADS);
         if (localMode) {
             queue = new BlockingQueue();
             dataStore = new LocalDataStore();
@@ -154,7 +154,7 @@ class Crawler {
                 continue;
             }
             if (linkToVisit == null) continue;
-            Logger.consumeLinkFromKafka();
+            LogStatus.consumeLinkFromKafka();
 
             try {
                 if (!isPolite(linkToVisit)) {
@@ -172,7 +172,7 @@ class Crawler {
                 System.err.println("io: " + linkToVisit);
                 continue;
             }
-            Logger.isPolite();
+            LogStatus.isPolite();
 
             try {
                 if (!isGoodContentType(linkToVisit)) {
@@ -182,7 +182,7 @@ class Crawler {
                 // TODO: make log
                 continue;
             }
-            Logger.goodContentType();
+            LogStatus.goodContentType();
 
             Document document = null;
             try {
@@ -196,7 +196,7 @@ class Crawler {
             if (!languageDetector.isEnglish()) {
                 continue;
             }
-            Logger.goodLanguage();
+            LogStatus.goodLanguage();
 
             PageInfo data = getPageInfo(document);
             try {
@@ -204,13 +204,14 @@ class Crawler {
             } catch (IOException e) {
                 System.err.println("errrrror");
             }
-            Logger.processed();
+            LogStatus.processed();
 
             ArrayList<String> sublinks = getAllSublinks(document);
             for (String link : sublinks) {
                 try {
                     if (!dataStore.exists(link)) {
                         queue.push(link);
+                        LogStatus.newUniqueUrl();
                     }
                 } catch (IOException e) {
 
