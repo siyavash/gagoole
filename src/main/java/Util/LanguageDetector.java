@@ -56,13 +56,4 @@ public class LanguageDetector {
         return stringChecker(doc.text());
     }
 
-//    public static void main(String[] args) throws Exception {
-//        String url = "https://www.google.com";
-//        Connection.Response response = Jsoup.connect(url)
-//                .maxBodySize(100 * 1024)
-//                .timeout(8 * 1000)
-//                .execute();
-//        LanguageDetector languageDetector = new LanguageDetector(response.parse());
-//        System.out.println(languageDetector.isEnglish());
-//    }
 }

@@ -7,8 +7,8 @@ import java.io.IOException;
  */
 public interface DataStore {
 
-    public boolean exists(String url) throws IOException;
+    boolean exists(String url) throws IOException;
 
-    public void put(PageInfo pageInfo) throws IOException;
+    void put(PageInfo pageInfo) throws IOException;
 
 }

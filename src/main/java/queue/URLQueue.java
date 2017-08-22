@@ -12,4 +12,9 @@ public interface URLQueue {
     void push(ArrayList<String> arrayURLs);
 
     void push(String URL);
+
+    void startThread();
+
+    int size();
+
 }
