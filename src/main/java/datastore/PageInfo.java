@@ -13,7 +13,11 @@ public class PageInfo
 
     private String url;
     private String bodyText;
-    private String meta; //TODO create different fields for different metas
+    private String titleMeta;
+    private String descriptionMeta;
+    private String keyWordsMeta;
+    private String authorMeta;
+    private String contentTypeMeta;
     private String title;
     private ArrayList<Pair<String, String>> subLinks;
 
@@ -35,24 +39,6 @@ public class PageInfo
     public void setBodyText(String bodyText)
     {
         this.bodyText = bodyText;
-    }
-
-    public String getMeta()
-    {
-        return meta;
-    }
-
-    public void setMeta(Elements allMetas) //TODO Change this shit -_-
-    {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        for (Element meta : allMetas)
-        {
-            Attributes metaAttributes = meta.attributes();
-            buildMetaAttributesString(metaAttributes, stringBuilder);
-        }
-
-        meta = stringBuilder.toString();
     }
 
     private void buildMetaAttributesString(Attributes metaAttributes, StringBuilder stringBuilder)
@@ -84,5 +70,55 @@ public class PageInfo
     public void setSubLinks(ArrayList<Pair<String, String>> subLinks)
     {
         this.subLinks = subLinks;
+    }
+
+    public String getTitleMeta()
+    {
+        return titleMeta;
+    }
+
+    public void setTitleMeta(String titleMeta)
+    {
+        this.titleMeta = titleMeta;
+    }
+
+    public String getDescriptionMeta()
+    {
+        return descriptionMeta;
+    }
+
+    public void setDescriptionMeta(String descriptionMeta)
+    {
+        this.descriptionMeta = descriptionMeta;
+    }
+
+    public String getKeyWordsMeta()
+    {
+        return keyWordsMeta;
+    }
+
+    public void setKeyWordsMeta(String keyWordsMeta)
+    {
+        this.keyWordsMeta = keyWordsMeta;
+    }
+
+    public String getAuthorMeta()
+    {
+        return authorMeta;
+    }
+
+    public void setAuthorMeta(String authorMeta)
+    {
+        this.authorMeta = authorMeta;
+    }
+
+    public String getContentTypeMeta()
+    {
+        return contentTypeMeta;
+    }
+
+    public void setContentTypeMeta(String contentTypeMeta)
+    {
+        this.contentTypeMeta = contentTypeMeta;
     }
 }
