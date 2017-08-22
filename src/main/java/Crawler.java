@@ -47,13 +47,12 @@ class Crawler {
             dataStore = new LocalDataStore();
         } else {
             queue = new DistributedQueue(bootstrapServer, topicName);
-            dataStore = new LocalDataStore();
-//            try {
-//                dataStore = new PageInfoDataStore(zookeeperClientPort, zookeeperQuorum);
-//            } catch (IOException e) {
-//                System.err.println("Error in initialising hbase: " + e);
-//                System.exit(1);
-//            }
+            try {
+                dataStore = new PageInfoDataStore(zookeeperClientPort, zookeeperQuorum);
+            } catch (IOException e) {
+                System.err.println("Error in initialising hbase: " + e);
+                System.exit(1);
+            }
         }
 
         if (initialMode) {
@@ -84,7 +83,6 @@ class Crawler {
 
     private void runCrawlThread() {
         while (true) {
-            System.out.println(queue.size());
             String linkToVisit;
             try {
                 linkToVisit = queue.pop();
@@ -113,16 +111,16 @@ class Crawler {
             }
             LogStatus.isPolite();
 
-//            try {
-//                if (!isGoodContentType(linkToVisit)) {
-//                    // TODO: make log
-//                    continue;
-//                }
-//            } catch (IOException e) {
-//                // TODO: make log
-//                continue;
-//            }
-//            LogStatus.goodContentType();
+            try {
+                if (!isGoodContentType(linkToVisit)) {
+                    // TODO: make log
+                    continue;
+                }
+            } catch (IOException e) {
+                // TODO: make log
+                continue;
+            }
+            LogStatus.goodContentType();
 
             Document document = null;
             try {
@@ -190,6 +188,7 @@ class Crawler {
         Connection.Response response = Jsoup.connect(stringUrl)
                 .userAgent(UserAgents.getRandom())
                 .maxBodySize(100 * 1024)
+                .timeout(1000)
                 .execute();
         return response.parse();
     }

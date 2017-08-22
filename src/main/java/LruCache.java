@@ -4,7 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import java.util.concurrent.TimeUnit;
 
 public class LruCache {
-    final static long MAXIMUM_SIZE = 1000000;
+    final static long MAXIMUM_SIZE = 10 * 1000 * 1000;
 
     private Cache<String, Object> cache = CacheBuilder.newBuilder()
             .maximumSize(MAXIMUM_SIZE)
@@ -19,6 +19,10 @@ public class LruCache {
             cache.put(key, defaultObject);
             return false;
         }
+    }
+
+    public long size() {
+        return cache.size();
     }
 
 //    public static void main(String[] args) throws InterruptedException {
