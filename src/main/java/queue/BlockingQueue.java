@@ -25,4 +25,9 @@ public class BlockingQueue implements URLQueue {
     public void startThread() {
 
     }
+
+    @Override
+    public int size() {
+        return queue.size();
+    }
 }

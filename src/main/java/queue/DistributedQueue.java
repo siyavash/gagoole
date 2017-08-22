@@ -65,6 +65,10 @@ public class DistributedQueue extends Thread implements URLQueue {
         producer.send(producerRecord);
     }
 
+    @Override
+    public int size() {
+        return arrayBlockingQueue.size();
+    }
 
     @Override
     public void run() {

@@ -20,7 +20,4 @@ public class LocalDataStore implements DataStore {
         store.add(pageInfo.getUrl());
     }
 
-    public void put(String url) {
-        store.add(url);
-    }
 }

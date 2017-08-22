@@ -25,46 +25,53 @@ public class LogStatus {
 
     public static void start() {
 
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
+        Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                System.out.println();
+                Timer timer = new Timer();
+                timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        System.out.println();
 
-                System.out.println("number of consumed links from kafka: " + (consumedFromKafka - prevConsumedFromKafka));
-                logger.info("number of consumed links from kafka: " + (consumedFromKafka - prevConsumedFromKafka));
-                prevConsumedFromKafka = consumedFromKafka;
+                        System.out.println("number of consumed links from kafka: " + (consumedFromKafka - prevConsumedFromKafka));
+                        logger.info("number of consumed links from kafka: " + (consumedFromKafka - prevConsumedFromKafka));
+                        prevConsumedFromKafka = consumedFromKafka;
 
-                System.out.println("number of polite domains: " + (polites - prevPolites));
-                logger.info("number of polite domains: " + (polites - prevPolites));
-                prevPolites = polites;
+                        System.out.println("number of polite domains: " + (polites - prevPolites));
+                        logger.info("number of polite domains: " + (polites - prevPolites));
+                        prevPolites = polites;
 
-                System.out.println("number of impolite domains: " + (impolite - prevImpolite));
-                logger.info("number of polite domains: " + (impolite - prevImpolite));
-                prevImpolite = impolite;
+                        System.out.println("number of impolite domains: " + (impolite - prevImpolite));
+                        logger.info("number of polite domains: " + (impolite - prevImpolite));
+                        prevImpolite = impolite;
 
-                System.out.println("number of links having suitable content-type: " + (goodContentType - prevGoodContentType));
-                logger.info("number of links having suitable content-type: " + (goodContentType - prevGoodContentType));
-                prevGoodContentType = goodContentType;
+                        System.out.println("number of links having suitable content-type: " + (goodContentType - prevGoodContentType));
+                        logger.info("number of links having suitable content-type: " + (goodContentType - prevGoodContentType));
+                        prevGoodContentType = goodContentType;
 
-                System.out.println("number of links with english language: " + (goodLanguage - prevGoodLanguage));
-                logger.info("number of links with english language: " + (goodLanguage - prevGoodLanguage));
-                prevGoodLanguage = goodLanguage;
+                        System.out.println("number of links with english language: " + (goodLanguage - prevGoodLanguage));
+                        logger.info("number of links with english language: " + (goodLanguage - prevGoodLanguage));
+                        prevGoodLanguage = goodLanguage;
 
-                System.out.println("number of processed links: " + (processed - prevProcessed));
-                logger.info("number of processed links: " + (processed - prevProcessed));
-                prevProcessed = processed;
+                        System.out.println("number of processed links: " + (processed - prevProcessed));
+                        logger.info("number of processed links: " + (processed - prevProcessed));
+                        prevProcessed = processed;
 
-                System.out.println("number of unique subUrls: " + (uniqueUrls - prevUniqueurls));
-                logger.info("number of unique subUrls: " + (uniqueUrls - prevUniqueurls));
-                prevUniqueurls = uniqueUrls;
+                        System.out.println("number of unique subUrls: " + (uniqueUrls - prevUniqueurls));
+                        logger.info("number of unique subUrls: " + (uniqueUrls - prevUniqueurls));
+                        prevUniqueurls = uniqueUrls;
 
-                System.out.println("number of active threads: " + Thread.activeCount());
-                logger.info("number of active threads: " + Thread.activeCount());
+                        System.out.println("number of active threads: " + Thread.activeCount());
+                        logger.info("number of active threads: " + Thread.activeCount());
 
-                System.out.println();
+                        System.out.println();
+                    }
+                }, 0, 1000);
             }
-        }, 0, 1000);
+        });
+        thread.setPriority(Thread.MAX_PRIORITY);
+        thread.start();
     }
 
     public synchronized static void consumeLinkFromKafka() {

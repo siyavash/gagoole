@@ -47,12 +47,13 @@ class Crawler {
             dataStore = new LocalDataStore();
         } else {
             queue = new DistributedQueue(bootstrapServer, topicName);
-            try {
-                dataStore = new PageInfoDataStore(zookeeperClientPort, zookeeperQuorum);
-            } catch (IOException e) {
-                System.err.println("Error in initialising hbase: " + e);
-                System.exit(1);
-            }
+            dataStore = new LocalDataStore();
+//            try {
+//                dataStore = new PageInfoDataStore(zookeeperClientPort, zookeeperQuorum);
+//            } catch (IOException e) {
+//                System.err.println("Error in initialising hbase: " + e);
+//                System.exit(1);
+//            }
         }
 
         if (initialMode) {
@@ -83,6 +84,7 @@ class Crawler {
 
     private void runCrawlThread() {
         while (true) {
+            System.out.println(queue.size());
             String linkToVisit;
             try {
                 linkToVisit = queue.pop();

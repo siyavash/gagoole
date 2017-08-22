@@ -14,4 +14,7 @@ public interface URLQueue {
     void push(String URL);
 
     void startThread();
+
+    int size();
+
 }
