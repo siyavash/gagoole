@@ -9,12 +9,14 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 
 public class PageInfoDataStore implements DataStore
 {
     private Connection hbaseConnection;
-    private TableName tableName = TableName.valueOf("smallTable");
-    private byte[] columnFamily = Bytes.toBytes("columnTable");
+    private static final TableName TABLE_NAME = TableName.valueOf("smallTable");
+    private static final byte[] COLUMN_FAMILY = Bytes.toBytes("columnTable");
 
     public PageInfoDataStore(String zookeeperClientPort, String zookeeperQuorum) throws IOException
     {
@@ -32,7 +34,7 @@ public class PageInfoDataStore implements DataStore
 
     public boolean exists(String url) throws IOException
     {
-        Table table = hbaseConnection.getTable(tableName);
+        Table table = hbaseConnection.getTable(TABLE_NAME);
         Get get = new Get(Bytes.toBytes(url));
         Result result = table.get(get);
         return result.getRow() != null;
@@ -45,9 +47,13 @@ public class PageInfoDataStore implements DataStore
         byte[] urlBytes = Bytes.toBytes(pageInfo.getUrl());
         Put put = new Put(urlBytes);
 
-        Table table = hbaseConnection.getTable(tableName);
+        Table table = hbaseConnection.getTable(TABLE_NAME);
 
-        addColumnToPut(put, Bytes.toBytes("meta"), pageInfo.getMeta());
+        addColumnToPut(put, Bytes.toBytes("authorMeta"), pageInfo.getAuthorMeta());
+        addColumnToPut(put, Bytes.toBytes("descriptionMeta"), pageInfo.getDescriptionMeta());
+        addColumnToPut(put, Bytes.toBytes("titleMeta"), pageInfo.getTitleMeta());
+        addColumnToPut(put, Bytes.toBytes("contentTypeMeta"), pageInfo.getContentTypeMeta());
+        addColumnToPut(put, Bytes.toBytes("keyWordsMeta"), pageInfo.getKeyWordsMeta());
         addColumnToPut(put, Bytes.toBytes("bodyText"), pageInfo.getBodyText());
         addColumnToPut(put, Bytes.toBytes("title"), pageInfo.getTitle());
         addColumnToPut(put, Bytes.toBytes("subLinks"), subLinks);
@@ -63,7 +69,7 @@ public class PageInfoDataStore implements DataStore
             return;
         }
 
-        put.addColumn(columnFamily, columnName, Bytes.toBytes(value));
+        put.addColumn(COLUMN_FAMILY, columnName, Bytes.toBytes(value));
     }
 
     private String turnSubLinksToString(ArrayList<Pair<String, String>> subLinks)
@@ -97,5 +103,97 @@ public class PageInfoDataStore implements DataStore
         }
 
         return stringBuilder.toString();
+    }
+
+    public Iterator<PageInfo> getRowIterator() throws IOException
+    {
+        Table table = hbaseConnection.getTable(TABLE_NAME);
+        ResultScanner rowScanner = table.getScanner(new Scan());
+        // set caching
+        return new RowIterator(rowScanner);
+    }
+
+    private PageInfo createPageInfo(Result result)
+    {
+        PageInfo pageInfo = new PageInfo();
+
+        pageInfo.setUrl(Arrays.toString(result.getRow()));
+        pageInfo.setBodyText(toPageInfoString(result.getValue(COLUMN_FAMILY, Bytes.toBytes("bodyText"))));
+        pageInfo.setTitle(toPageInfoString(result.getValue(COLUMN_FAMILY, Bytes.toBytes("title"))));
+        //TODO set meta ffs
+        pageInfo.setSubLinks(extractSubLinks(result));
+
+        return pageInfo;
+    }
+
+    private String toPageInfoString(byte[] bodyTexts)
+    {
+        if (bodyTexts == null)
+        {
+            return null;
+        }
+        return Arrays.toString(bodyTexts);
+    }
+
+    private ArrayList<Pair<String, String>> extractSubLinks(Result result)
+    {
+        ArrayList<Pair<String, String>> subLinkPairs = new ArrayList<>();
+
+        String storedSubLinks = Arrays.toString(result.getValue(COLUMN_FAMILY, Bytes.toBytes("subLinks")));
+        for (String subLink : storedSubLinks.split("\n"))
+        {
+            Pair<String, String> subLinkPair = extractSubLinkPair(subLink);
+            subLinkPairs.add(subLinkPair);
+        }
+
+        return subLinkPairs;
+    }
+
+    private Pair<String, String> extractSubLinkPair(String subLink)
+    {
+        String [] subLinkParts = subLink.split(" , ");
+        String url = subLinkParts[0];
+        String anchor = subLinkParts[1];
+
+        return new Pair<>(url, anchor);
+    }
+
+    private class RowIterator implements Iterator<PageInfo>
+    {
+        private ResultScanner rowScanner;
+
+        private RowIterator(ResultScanner rowScanner)
+        {
+            this.rowScanner = rowScanner;
+        }
+
+
+        @Override
+        public boolean hasNext()
+        {
+            try
+            {
+                return rowScanner.next() != null;
+            } catch (IOException e)
+            {
+                return true;
+            }
+        }
+
+        @Override
+        public PageInfo next()
+        {
+            Result nextResult;
+
+            try
+            {
+                nextResult = rowScanner.next();
+            } catch (IOException e)
+            {
+                return null;
+            }
+
+            return createPageInfo(nextResult);
+        }
     }
 }
