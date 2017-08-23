@@ -1,8 +1,10 @@
 package Util;
 
+import org.apache.log4j.Logger;
+
 import java.util.Timer;
 import java.util.TimerTask;
-import org.apache.log4j.Logger;
+
 
 public class LogStatus {
     private static int consumedFromKafka = 0;
@@ -21,7 +23,7 @@ public class LogStatus {
     private static int prevProcessed = 0;
     private static int prevUniqueurls = 0;
 
-    private static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(Class.class.getSimpleName());
+    private static Logger logger = Logger.getLogger(Class.class.getName());
 
     public static void start() {
 
