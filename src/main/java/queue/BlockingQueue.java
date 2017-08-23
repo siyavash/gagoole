@@ -12,9 +12,10 @@ public class BlockingQueue implements URLQueue {
     }
 
     public void push(ArrayList<String> arrayURLs) {
-        for (String link : arrayURLs)
+        for (String url : arrayURLs) {
             if (queue.size() < 900 * 1000)
-                queue.add(link);
+                queue.add(url);
+        }
     }
 
     public void push(String URL) {
@@ -29,5 +30,10 @@ public class BlockingQueue implements URLQueue {
     @Override
     public int size() {
         return queue.size();
+    }
+
+    @Override
+    public void close() {
+
     }
 }

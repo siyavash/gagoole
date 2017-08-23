@@ -37,6 +37,7 @@ public class PageInfoDataStore implements DataStore
         Table table = hbaseConnection.getTable(TABLE_NAME);
         Get get = new Get(Bytes.toBytes(url));
         Result result = table.get(get);
+        table.close();
         return result.getRow() != null;
     }
 

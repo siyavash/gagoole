@@ -57,7 +57,6 @@ public class DistributedQueue extends Thread implements URLQueue {
     public void push(ArrayList<String> arrayURLs) {
         for (String URL : arrayURLs)
             push(URL);
-        producer.close();
     }
 
     public void push(String URL) {
@@ -68,6 +67,11 @@ public class DistributedQueue extends Thread implements URLQueue {
     @Override
     public int size() {
         return arrayBlockingQueue.size();
+    }
+
+    @Override
+    public void close() {
+        producer.close();
     }
 
     @Override

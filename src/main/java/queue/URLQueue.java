@@ -17,4 +17,5 @@ public interface URLQueue {
 
     int size();
 
+    void close();
 }

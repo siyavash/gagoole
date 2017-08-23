@@ -7,6 +7,7 @@ import datastore.PageInfoDataStore;
 import javafx.util.Pair;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
+import org.jsoup.helper.HttpConnection;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -18,6 +19,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.time.LocalTime;
@@ -33,7 +35,8 @@ class Crawler {
     private final LruCache cache = new LruCache();
     private DataStore dataStore;
     private boolean initialMode = true;
-    private boolean localMode = true;
+    private boolean useKafka = false;
+    private boolean useHbase = false;
     private String bootstrapServer;
     private String topicName;
     private String zookeeperClientPort;
@@ -42,28 +45,35 @@ class Crawler {
     public Crawler() {
         loadProperties();
         LogStatus.getLogger().info("number of threads: " + NTHREADS);
-        if (localMode) {
-            queue = new BlockingQueue();
-            dataStore = new LocalDataStore();
-        } else {
+
+        if (useKafka) {
             queue = new DistributedQueue(bootstrapServer, topicName);
+        } else {
+            queue = new BlockingQueue();
+        }
+
+        if (useHbase) {
             try {
                 dataStore = new PageInfoDataStore(zookeeperClientPort, zookeeperQuorum);
             } catch (IOException e) {
                 System.err.println("Error in initialising hbase: " + e);
                 System.exit(1);
             }
+        } else {
+            dataStore = new LocalDataStore();
         }
 
-        if (initialMode) {
+
+        if (initialMode && useKafka) {
             ArrayList<String> seeds = loadSeeds();
             queue.push(seeds);
-
-            if (!localMode) {
-                System.out.println("seed has been published");
-                System.exit(20);
-            }
-        } else if (!localMode) {
+            queue.close();
+            System.out.println("seed has been published");
+            System.exit(20);
+        } else if (initialMode && !useKafka) {
+            ArrayList<String> seeds = loadSeeds();
+            queue.push(seeds);
+        } else if (!initialMode && useKafka) {
             queue.startThread();
         }
     }
@@ -99,25 +109,21 @@ class Crawler {
                     continue;
                 }
             } catch (IllegalArgumentException ex) {
-//                System.out.println("failed to get domain: " + linkToVisit);
-//                System.err.println("illegalArgument: " + linkToVisit);
                 continue;
             } catch (IllegalStateException e){
-//                System.err.println("illegalState: " + linkToVisit);
                 continue;
             } catch (IOException e) {
-//                System.err.println("io: " + linkToVisit);
                 continue;
             }
             LogStatus.isPolite();
 
             try {
                 if (!isGoodContentType(linkToVisit)) {
-                    // TODO: make log
                     continue;
                 }
             } catch (IOException e) {
-                // TODO: make log
+                continue;
+            } catch (IllegalArgumentException e) {
                 continue;
             }
             LogStatus.goodContentType();
@@ -126,7 +132,6 @@ class Crawler {
             try {
                 document = getDocument(linkToVisit);
             } catch (IOException e) {
-                // TODO: make log
                 continue;
             } catch (IllegalArgumentException e) {
                 continue;
@@ -168,10 +173,12 @@ class Crawler {
     private boolean isGoodContentType(String urlString) throws IOException {
         String contentType;
         URL url = new URL(urlString);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("HEAD");
-        connection.connect();
-        contentType = connection.getContentType();
+        URLConnection connection = url.openConnection();
+        if (!(connection instanceof HttpURLConnection)) return false;
+        HttpURLConnection httpURLConnection = (HttpURLConnection) connection;
+        httpURLConnection.setRequestMethod("HEAD");
+        httpURLConnection.connect();
+        contentType = httpURLConnection.getContentType();
 
         if (contentType == null)
             return true;
@@ -188,7 +195,7 @@ class Crawler {
         Connection.Response response = Jsoup.connect(stringUrl)
                 .userAgent(UserAgents.getRandom())
                 .maxBodySize(100 * 1024)
-                .timeout(1000)
+                .timeout(5000)
                 .execute();
         return response.parse();
     }
@@ -230,7 +237,23 @@ class Crawler {
         data.setTitle(document.title());
         if (document.body() != null)
             data.setBodyText(document.body().text());
-        data.setMeta(document.getElementsByTag("meta"));
+
+        Elements elements = document.select("meta[name=author]");
+        if (elements != null)
+            data.setAuthorMeta(elements.attr("content"));
+
+        elements = document.select("meta[name=description]");
+        if (elements != null)
+            data.setDescriptionMeta(elements.attr("content"));
+
+        elements = document.select("meta[name=content-type]");
+        if (elements != null)
+            data.setContentTypeMeta(elements.attr("content"));
+
+        elements = document.select("meta[name=keywords]");
+        if (elements != null)
+            data.setKeyWordsMeta(elements.attr("content"));
+
         return data;
     }
 
@@ -245,7 +268,8 @@ class Crawler {
 
             NTHREADS = Integer.parseInt(prop.getProperty("threads-number", "500"));
             initialMode = prop.getProperty("initial-mode", "true").equals("true");
-            localMode = prop.getProperty("local-mode", "true").equals("true");
+            useKafka = prop.getProperty("use-kafka", "false").equals("true");
+            useHbase = prop.getProperty("use-hbase", "false").equals("true");
             bootstrapServer = prop.getProperty("bootstrap-server", "master:9092, slave:9092");
             topicName = prop.getProperty("topic-name", "test");
             zookeeperClientPort = prop.getProperty("zookeeper-client-port", "2181");
