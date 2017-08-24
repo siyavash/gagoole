@@ -3,7 +3,7 @@ package queue;
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 
-public class BlockingQueue implements URLQueue {
+public class LocalQueue implements URLQueue {
 
     private ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<String>(1000 * 1000);
 

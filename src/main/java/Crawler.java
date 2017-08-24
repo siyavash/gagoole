@@ -7,31 +7,25 @@ import datastore.PageInfoDataStore;
 import javafx.util.Pair;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
-import org.jsoup.helper.HttpConnection;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import queue.BlockingQueue;
+import queue.LocalQueue;
 import queue.DistributedQueue;
 import queue.URLQueue;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.sql.Time;
-import java.text.SimpleDateFormat;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
 
 class Crawler {
 
     private int NTHREADS;
 
-    private final URLQueue queue;
+    private URLQueue queue;
     private final LruCache cache = new LruCache();
     private DataStore dataStore;
     private boolean initialMode = true;
@@ -44,25 +38,8 @@ class Crawler {
 
     public Crawler() {
         loadProperties();
-        LogStatus.getLogger().info("number of threads: " + NTHREADS);
-
-        if (useKafka) {
-            queue = new DistributedQueue(bootstrapServer, topicName);
-        } else {
-            queue = new BlockingQueue();
-        }
-
-        if (useHbase) {
-            try {
-                dataStore = new PageInfoDataStore(zookeeperClientPort, zookeeperQuorum);
-            } catch (IOException e) {
-                System.err.println("Error in initialising hbase: " + e);
-                System.exit(1);
-            }
-        } else {
-            dataStore = new LocalDataStore();
-        }
-
+        loadQueue();
+        loadDataStore();
 
         if (initialMode && useKafka) {
             ArrayList<String> seeds = loadSeeds();
@@ -91,6 +68,27 @@ class Crawler {
         }
     }
 
+    private void loadQueue() {
+        if (useKafka) {
+            queue = new DistributedQueue(bootstrapServer, topicName);
+        } else {
+            queue = new LocalQueue();
+        }
+    }
+
+    private void loadDataStore() {
+        if (useHbase) {
+            try {
+                dataStore = new PageInfoDataStore(zookeeperClientPort, zookeeperQuorum);
+            } catch (IOException e) {
+                System.err.println("Error in initialising hbase: " + e);
+                System.exit(1);
+            }
+        } else {
+            dataStore = new LocalDataStore();
+        }
+    }
+
     private void runCrawlThread() {
         while (true) {
             String linkToVisit;
@@ -99,6 +97,13 @@ class Crawler {
             } catch (InterruptedException e) {
                 System.err.println("error in reading from blocking queue: ");
                 continue;
+            }
+
+            try {
+                if (dataStore.exists(linkToVisit))
+                    continue;
+            } catch (IOException e) {
+                System.err.println("error in check existing in hbase: " + e);
             }
             LogStatus.consumeLinkFromKafka();
 
@@ -157,7 +162,7 @@ class Crawler {
                         LogStatus.newUniqueUrl();
                     }
                 } catch (IOException e) {
-
+                    System.err.println("error in check existing in hbase: " + e);
                 }
             }
         }
@@ -194,8 +199,6 @@ class Crawler {
     private Document getDocument(String stringUrl) throws IOException, IllegalArgumentException {
         Connection.Response response = Jsoup.connect(stringUrl)
                 .userAgent(UserAgents.getRandom())
-                .maxBodySize(100 * 1024)
-                .timeout(5000)
                 .execute();
         return response.parse();
     }
