@@ -36,9 +36,9 @@ public class PageInfoDataStore implements DataStore
     {
         Table table = hbaseConnection.getTable(TABLE_NAME);
         Get get = new Get(Bytes.toBytes(url));
-        Result result = table.get(get);
+        boolean result = table.exists(get);
         table.close();
-        return result.getRow() != null;
+        return result;
     }
 
     public void put(PageInfo pageInfo) throws IOException
