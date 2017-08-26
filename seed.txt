@@ -21,54 +21,6 @@ jd.com
 weibo.com
 360.cn
 google.de
-"seed.txt" [noeol] 500L, 6152C                                                     1,1           Top
-gizmodo.com
-
-
-1073745433
-2017-08-26 07:40:38,024 INFO org.apache.hadoop.hdfs.server.datanode.fsdataset.impl.FsDatasetAsyncDiskService: Deleted BP-563292234-127.0.1.1-1502886546076 blk_1073745468_4650 file /work/hadoop/hadoopinfra/hdfs/datanode/current/BP-563292234-127.0.1.1-1502886546076/current/finalized/subdir0/subdir14/blk_1073745468
-ls
-^C
-nimbo@ns377066:/usr/local/hadoop/logs$ pwd
-/usr/local/hadoop/logs
-nimbo@ns377066:/usr/local/hadoop/logs$ cd ~/crawler/
-nimbo@ns377066:~/crawler$ ls
-config.properties                               gagoole.iml        nohup.out  seed.txt  target
-gagoole-1.0-SNAPSHOT-jar-with-dependencies.jar  log-with-put-time  pom.xml    src       testLog.log
-nimbo@ns377066:~/crawler$ cat config.properties
-threads-number=300
-initial-mode=false
-use-kafka=true
-use-hbase=true
-topic-name=urls1
-bootstrap-server=master:9092,slave:9092
-zookeeper-client-port=2181
-zookeeper-quorum=master,slave
-nimbo@ns377066:~/crawler$ vim seed.txt
-nimbo@ns377066:~/crawler$ cat seed.txt
-google.com
-youtube.com
-facebook.com
-baidu.com
-wikipedia.org
-yahoo.com
-google.co.in
-qq.com
-reddit.com
-amazon.com
-taobao.com
-google.co.jp
-twitter.com
-tmall.com
-live.com
-vk.com
-sohu.com
-instagram.com
-sina.com.cn
-jd.com
-weibo.com
-360.cn
-google.de
 linkedin.com
 google.co.uk
 list.tmall.com

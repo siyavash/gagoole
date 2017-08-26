@@ -226,7 +226,7 @@ class Crawler {
                 .userAgent(UserAgents.getRandom())
                 .execute();
         long time = System.currentTimeMillis() - t1;
-        Profiler.download(stringUrl, time);
+        Profiler.download(stringUrl, time, response.bodyAsBytes().length);
 
         t1 = System.currentTimeMillis();
         Document document = response.parse();
