@@ -6,7 +6,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 
-public class LogStatus {
+public class Profiler {
     private static long consumedFromKafka = 0;
     private static long polites = 0;
     private static long impolite = 0;

@@ -98,7 +98,7 @@ class Crawler {
                 t1 = System.currentTimeMillis();
                 linkToVisit = queue.pop();
                 time = System.currentTimeMillis() - t1;
-                LogStatus.getLinkFromQueueToCrawl(linkToVisit, time);
+                Profiler.getLinkFromQueueToCrawl(linkToVisit, time);
             } catch (InterruptedException e) {
                 System.err.println("error in reading from blocking queue: ");
                 continue;
@@ -108,9 +108,9 @@ class Crawler {
                 t1 = System.currentTimeMillis();
                 boolean isPolite = isPolite(linkToVisit);
                 time = System.currentTimeMillis() - t1;
-                LogStatus.checkPolitensess(linkToVisit, time, isPolite);
+                Profiler.checkPolitensess(linkToVisit, time, isPolite);
                 if (!isPolite) {
-                    LogStatus.isImpolite();
+                    Profiler.isImpolite();
                     queue.push(linkToVisit);
                     continue;
                 }
@@ -126,7 +126,7 @@ class Crawler {
                 t1 = System.currentTimeMillis();
                 boolean isExists = dataStore.exists(linkToVisit);
                 time = System.currentTimeMillis() - t1;
-                LogStatus.checkExistenceInDataStore(linkToVisit, time);
+                Profiler.checkExistenceInDataStore(linkToVisit, time);
                 if (isExists) continue;
             } catch (IOException e) {
                 System.err.println("error in check existing in hbase: " + e);
@@ -136,7 +136,7 @@ class Crawler {
                 t1 = System.currentTimeMillis();
                 boolean isGoodContentType = isGoodContentType(linkToVisit);
                 time = System.currentTimeMillis() - t1;
-                LogStatus.checkContentType(linkToVisit, time, isGoodContentType);
+                Profiler.checkContentType(linkToVisit, time, isGoodContentType);
                 if (!isGoodContentType) continue;
             } catch (IOException e) {
                 continue;
@@ -149,7 +149,7 @@ class Crawler {
                 t1 = System.currentTimeMillis();
                 document = getDocument(linkToVisit);
                 time = System.currentTimeMillis() - t1;
-                LogStatus.downloadAndParse(linkToVisit, time);
+                Profiler.downloadAndParse(linkToVisit, time);
             } catch (IOException e) {
                 continue;
             } catch (IllegalArgumentException e) {
@@ -159,19 +159,19 @@ class Crawler {
             t1 = System.currentTimeMillis();
             boolean isEnglish = isEnglish(document);
             time = System.currentTimeMillis() - t1;
-            LogStatus.goodLanguage(linkToVisit, time, isEnglish);
+            Profiler.goodLanguage(linkToVisit, time, isEnglish);
             if (!isEnglish) continue;
 
             t1 = System.currentTimeMillis();
             PageInfo pageInfo = getPageInfo(linkToVisit, document);
             time = System.currentTimeMillis() - t1;
-            LogStatus.extractInformationFromDocument(linkToVisit, time);
+            Profiler.extractInformationFromDocument(linkToVisit, time);
 
             try {
                 t1 = System.currentTimeMillis();
                 dataStore.put(pageInfo);
                 time = System.currentTimeMillis() - t1;
-                LogStatus.putToDataStore(linkToVisit, time);
+                Profiler.putToDataStore(linkToVisit, time);
             } catch (IOException e) {
                 System.err.println("errrrror");
                 System.exit(3);
@@ -183,10 +183,10 @@ class Crawler {
                     t1 = System.currentTimeMillis();
                     boolean isExists = dataStore.exists(link);
                     time = System.currentTimeMillis() - t1;
-                    LogStatus.checkExistenceInDataStore(link, time);
+                    Profiler.checkExistenceInDataStore(link, time);
                     if (!isExists) {
                         queue.push(link);
-                        LogStatus.newUniqueUrl();
+                        Profiler.newUniqueUrl();
                     }
                 } catch (IOException e) {
                     System.err.println("error in check existing in hbase: " + e);
