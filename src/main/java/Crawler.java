@@ -1,4 +1,4 @@
-import Util.*;
+import util.*;
 import com.google.common.net.InternetDomainName;
 import datastore.DataStore;
 import datastore.LocalDataStore;

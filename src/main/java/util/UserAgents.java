@@ -1,4 +1,4 @@
-package Util;
+package util;
 
 public class UserAgents {
     final static String[] userAgents = {"Googlebot/2.1",
