@@ -21,6 +21,54 @@ jd.com
 weibo.com
 360.cn
 google.de
+"seed.txt" [noeol] 500L, 6152C                                                     1,1           Top
+gizmodo.com
+
+
+1073745433
+2017-08-26 07:40:38,024 INFO org.apache.hadoop.hdfs.server.datanode.fsdataset.impl.FsDatasetAsyncDiskService: Deleted BP-563292234-127.0.1.1-1502886546076 blk_1073745468_4650 file /work/hadoop/hadoopinfra/hdfs/datanode/current/BP-563292234-127.0.1.1-1502886546076/current/finalized/subdir0/subdir14/blk_1073745468
+ls
+^C
+nimbo@ns377066:/usr/local/hadoop/logs$ pwd
+/usr/local/hadoop/logs
+nimbo@ns377066:/usr/local/hadoop/logs$ cd ~/crawler/
+nimbo@ns377066:~/crawler$ ls
+config.properties                               gagoole.iml        nohup.out  seed.txt  target
+gagoole-1.0-SNAPSHOT-jar-with-dependencies.jar  log-with-put-time  pom.xml    src       testLog.log
+nimbo@ns377066:~/crawler$ cat config.properties
+threads-number=300
+initial-mode=false
+use-kafka=true
+use-hbase=true
+topic-name=urls1
+bootstrap-server=master:9092,slave:9092
+zookeeper-client-port=2181
+zookeeper-quorum=master,slave
+nimbo@ns377066:~/crawler$ vim seed.txt
+nimbo@ns377066:~/crawler$ cat seed.txt
+google.com
+youtube.com
+facebook.com
+baidu.com
+wikipedia.org
+yahoo.com
+google.co.in
+qq.com
+reddit.com
+amazon.com
+taobao.com
+google.co.jp
+twitter.com
+tmall.com
+live.com
+vk.com
+sohu.com
+instagram.com
+sina.com.cn
+jd.com
+weibo.com
+360.cn
+google.de
 linkedin.com
 google.co.uk
 list.tmall.com
@@ -35,7 +83,6 @@ google.it
 t.co
 google.es
 ebay.com
-pornhub.com
 imgur.com
 bing.com
 alipay.com
@@ -43,7 +90,6 @@ twitch.tv
 google.ca
 msn.com
 google.com.mx
-xvideos.com
 tumblr.com
 ok.ru
 microsoft.com
@@ -57,7 +103,6 @@ livejasmin.com
 github.com
 imdb.com
 amazon.co.jp
-youth.cn
 csdn.net
 blogspot.com
 wikia.com
@@ -70,9 +115,7 @@ google.com.tw
 google.com.tr
 microsoftonline.com
 whatsapp.com
-bongacams.com
 popads.net
-xhamster.com
 google.pl
 google.co.id
 detail.tmall.com
@@ -80,8 +123,6 @@ gmw.cn
 diply.com
 nicovideo.jp
 adobe.com
-txxx.com
-porn555.com
 amazon.de
 craigslist.org
 google.com.ar
@@ -104,7 +145,6 @@ rakuten.co.jp
 google.com.eg
 bbc.com
 google.com.sa
-xnxx.com
 bbc.co.uk
 google.com.ua
 cnn.com
@@ -148,7 +188,6 @@ openload.co
 indeed.com
 mediafire.com
 cnet.com
-xinhuanet.com
 mozilla.org
 google.gr
 globo.com
@@ -197,7 +236,6 @@ hclips.com
 twimg.com
 upornia.com
 bankofamerica.com
-redtube.com
 slack.com
 redd.it
 steampowered.com
@@ -238,7 +276,6 @@ ikea.com
 forbes.com
 google.ae
 google.pt
-youporn.com
 kakaku.com
 google.ro
 gamepedia.com
@@ -306,13 +343,9 @@ wikimedia.org
 aliyun.com
 sberbank.ru
 skype.com
-xfinity.com
 subject.tmall.com
 utorrent.com
 liputan6.com
-kissanime.ru
-livedoor.com
-digikala.com
 rutracker.org
 iqoption.com
 flickr.com
@@ -352,7 +385,6 @@ kaskus.co.id
 hola.com
 gismeteo.ru
 blogspot.com.br
-1337x.to
 shopify.com
 accuweather.com
 ouo.io
