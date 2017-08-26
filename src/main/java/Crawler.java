@@ -144,12 +144,9 @@ class Crawler {
                 continue;
             }
 
-            Document document = null;
+            Document document;
             try {
-                t1 = System.currentTimeMillis();
                 document = getDocument(linkToVisit);
-                time = System.currentTimeMillis() - t1;
-                Profiler.downloadAndParse(linkToVisit, time);
             } catch (IOException e) {
                 continue;
             } catch (IllegalArgumentException e) {
@@ -224,10 +221,19 @@ class Crawler {
     }
 
     private Document getDocument(String stringUrl) throws IOException, IllegalArgumentException {
+        long t1 = System.currentTimeMillis();
         Connection.Response response = Jsoup.connect(stringUrl)
                 .userAgent(UserAgents.getRandom())
                 .execute();
-        return response.parse();
+        long time = System.currentTimeMillis() - t1;
+        Profiler.download(stringUrl, time);
+
+        t1 = System.currentTimeMillis();
+        Document document = response.parse();
+        time = System.currentTimeMillis() - t1;
+        Profiler.parse(stringUrl, time);
+
+        return document;
     }
 
     public ArrayList<Pair<String, String>> getAllSubLinksWithAnchor(Document document) {

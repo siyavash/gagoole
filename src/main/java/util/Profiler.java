@@ -91,8 +91,12 @@ public class Profiler {
         uniqueUrls++;
     }
 
-    public synchronized static void downloadAndParse(String url, long time) {
-        logger.info(String.format("Downloaded and Parsed in time %d: %s", time, url));
+    public synchronized static void download(String url, long time) {
+        logger.info(String.format("Downloaded in time %d: %s", time, url));
+    }
+
+    public synchronized static void parse(String url, long time) {
+        logger.info(String.format("Parsed in time %d: %s", time, url));
     }
 
     public synchronized static void putToDataStore(String url, long time) {
