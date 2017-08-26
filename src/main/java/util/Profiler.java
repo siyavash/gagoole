@@ -45,6 +45,7 @@ public class Profiler {
                         goodContentType = 0;
                         goodLanguage = 0;
                         crawled = 0;
+                        uniqueUrls = 0;
                     }
                 }, 0, 1000);
             }
@@ -91,15 +92,16 @@ public class Profiler {
     }
 
     public synchronized static void downloadAndParse(String url, long time) {
-        logger.info(String.format("Parsed in time %d: %s", time, url));
+        logger.info(String.format("Downloaded and Parsed in time %d: %s", time, url));
     }
 
     public synchronized static void putToDataStore(String url, long time) {
         logger.info(String.format("Putted in data store in time %d: %s", time, url));
     }
 
-    public synchronized static void checkExistenceInDataStore(String url, long time) {
-        logger.info(String.format("Check existence in data store in time %d: %s", time, url));
+    public synchronized static void checkExistenceInDataStore(String url, long time, boolean isExists) {
+        String existence = (isExists ? "exists": "does'nt exist");
+        logger.info(String.format("Check existence in data store (%s) in time %d: %s", existence, time, url));
     }
 
 }

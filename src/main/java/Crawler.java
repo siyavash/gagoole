@@ -126,7 +126,7 @@ class Crawler {
                 t1 = System.currentTimeMillis();
                 boolean isExists = dataStore.exists(linkToVisit);
                 time = System.currentTimeMillis() - t1;
-                Profiler.checkExistenceInDataStore(linkToVisit, time);
+                Profiler.checkExistenceInDataStore(linkToVisit, time, isExists);
                 if (isExists) continue;
             } catch (IOException e) {
                 System.err.println("error in check existing in hbase: " + e);
@@ -183,7 +183,7 @@ class Crawler {
                     t1 = System.currentTimeMillis();
                     boolean isExists = dataStore.exists(link);
                     time = System.currentTimeMillis() - t1;
-                    Profiler.checkExistenceInDataStore(link, time);
+                    Profiler.checkExistenceInDataStore(link, time, isExists);
                     if (!isExists) {
                         queue.push(link);
                         Profiler.newUniqueUrl();
