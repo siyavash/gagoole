@@ -34,33 +34,45 @@ public class PageInfoDataStore implements DataStore
 
     public boolean exists(String url) throws IOException
     {
-        Table table = hbaseConnection.getTable(TABLE_NAME);
-        Get get = new Get(Bytes.toBytes(url));
-        boolean result = table.exists(get);
-        table.close();
+        Table table = null;
+        boolean result = true;
+        try {
+            table = hbaseConnection.getTable(TABLE_NAME);
+            Get get = new Get(Bytes.toBytes(url));
+            result = table.exists(get);
+        } finally {
+            if (table != null)
+                table.close();
+
+        }
         return result;
     }
 
     public void put(PageInfo pageInfo) throws IOException
     {
-        String subLinks = turnSubLinksToString(pageInfo.getSubLinks());
+        Table table = null;
+        try {
+            String subLinks = turnSubLinksToString(pageInfo.getSubLinks());
 
-        byte[] urlBytes = Bytes.toBytes(pageInfo.getUrl());
-        Put put = new Put(urlBytes);
+            byte[] urlBytes = Bytes.toBytes(pageInfo.getUrl());
+            Put put = new Put(urlBytes);
 
-        Table table = hbaseConnection.getTable(TABLE_NAME);
+            table = hbaseConnection.getTable(TABLE_NAME);
 
-        addColumnToPut(put, Bytes.toBytes("authorMeta"), pageInfo.getAuthorMeta());
-        addColumnToPut(put, Bytes.toBytes("descriptionMeta"), pageInfo.getDescriptionMeta());
-        addColumnToPut(put, Bytes.toBytes("titleMeta"), pageInfo.getTitleMeta());
-        addColumnToPut(put, Bytes.toBytes("contentTypeMeta"), pageInfo.getContentTypeMeta());
-        addColumnToPut(put, Bytes.toBytes("keyWordsMeta"), pageInfo.getKeyWordsMeta());
-        addColumnToPut(put, Bytes.toBytes("bodyText"), pageInfo.getBodyText());
-        addColumnToPut(put, Bytes.toBytes("title"), pageInfo.getTitle());
-        addColumnToPut(put, Bytes.toBytes("subLinks"), subLinks);
+            addColumnToPut(put, Bytes.toBytes("authorMeta"), pageInfo.getAuthorMeta());
+            addColumnToPut(put, Bytes.toBytes("descriptionMeta"), pageInfo.getDescriptionMeta());
+            addColumnToPut(put, Bytes.toBytes("titleMeta"), pageInfo.getTitleMeta());
+            addColumnToPut(put, Bytes.toBytes("contentTypeMeta"), pageInfo.getContentTypeMeta());
+            addColumnToPut(put, Bytes.toBytes("keyWordsMeta"), pageInfo.getKeyWordsMeta());
+            addColumnToPut(put, Bytes.toBytes("bodyText"), pageInfo.getBodyText());
+            addColumnToPut(put, Bytes.toBytes("title"), pageInfo.getTitle());
+            addColumnToPut(put, Bytes.toBytes("subLinks"), subLinks);
 
-        table.put(put);
-        table.close();
+            table.put(put);
+        } finally {
+            if (table != null)
+                table.close();
+        }
     }
 
     private void addColumnToPut(Put put, byte[] columnName, String value)
