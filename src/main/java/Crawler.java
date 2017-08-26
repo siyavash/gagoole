@@ -92,24 +92,25 @@ class Crawler {
     private void runCrawlThread() {
         while (true) {
             String linkToVisit;
+            long t1, time;
+
             try {
+                t1 = System.currentTimeMillis();
                 linkToVisit = queue.pop();
+                time = System.currentTimeMillis() - t1;
+                LogStatus.getLinkFromQueueToCrawl(linkToVisit, time);
             } catch (InterruptedException e) {
                 System.err.println("error in reading from blocking queue: ");
                 continue;
             }
 
             try {
-                if (dataStore.exists(linkToVisit))
-                    continue;
-            } catch (IOException e) {
-                System.err.println("error in check existing in hbase: " + e);
-            }
-            LogStatus.consumeLinkFromKafka();
-
-            try {
-                if (!isPolite(linkToVisit)) {
-                    LogStatus.isImPolite();
+                t1 = System.currentTimeMillis();
+                boolean isPolite = isPolite(linkToVisit);
+                time = System.currentTimeMillis() - t1;
+                LogStatus.checkPolitensess(linkToVisit, time, isPolite);
+                if (!isPolite) {
+                    LogStatus.isImpolite();
                     queue.push(linkToVisit);
                     continue;
                 }
@@ -120,44 +121,70 @@ class Crawler {
             } catch (IOException e) {
                 continue;
             }
-            LogStatus.isPolite();
 
             try {
-                if (!isGoodContentType(linkToVisit)) {
-                    continue;
-                }
+                t1 = System.currentTimeMillis();
+                boolean isExists = dataStore.exists(linkToVisit);
+                time = System.currentTimeMillis() - t1;
+                LogStatus.checkExistenceInDataStore(linkToVisit, time);
+                if (isExists) continue;
+            } catch (IOException e) {
+                System.err.println("error in check existing in hbase: " + e);
+            }
+
+            try {
+                t1 = System.currentTimeMillis();
+                boolean isGoodContentType = isGoodContentType(linkToVisit);
+                time = System.currentTimeMillis() - t1;
+                LogStatus.checkContentType(linkToVisit, time, isGoodContentType);
+                if (!isGoodContentType) continue;
             } catch (IOException e) {
                 continue;
             } catch (IllegalArgumentException e) {
                 continue;
             }
-            LogStatus.goodContentType();
 
             Document document = null;
             try {
+                t1 = System.currentTimeMillis();
                 document = getDocument(linkToVisit);
+                time = System.currentTimeMillis() - t1;
+                LogStatus.downloadAndParse(linkToVisit, time);
             } catch (IOException e) {
                 continue;
             } catch (IllegalArgumentException e) {
                 continue;
             }
 
-            if (!isEnglish(document)) continue;
-            LogStatus.goodLanguage();
+            t1 = System.currentTimeMillis();
+            boolean isEnglish = isEnglish(document);
+            time = System.currentTimeMillis() - t1;
+            LogStatus.goodLanguage(linkToVisit, time, isEnglish);
+            if (!isEnglish) continue;
 
+            t1 = System.currentTimeMillis();
             PageInfo pageInfo = getPageInfo(linkToVisit, document);
+            time = System.currentTimeMillis() - t1;
+            LogStatus.extractInformationFromDocument(linkToVisit, time);
+
             try {
+                t1 = System.currentTimeMillis();
                 dataStore.put(pageInfo);
+                time = System.currentTimeMillis() - t1;
+                LogStatus.putToDataStore(linkToVisit, time);
             } catch (IOException e) {
                 System.err.println("errrrror");
                 System.exit(3);
             }
-            LogStatus.processed();
 
             ArrayList<String> sublinks = getAllSublinks(document);
             for (String link : sublinks) {
                 try {
-                    if (!dataStore.exists(link)) {
+                    t1 = System.currentTimeMillis();
+                    boolean isExists = dataStore.exists(link);
+                    time = System.currentTimeMillis() - t1;
+                    LogStatus.checkExistenceInDataStore(link, time);
+                    if (!isExists) {
                         queue.push(link);
                         LogStatus.newUniqueUrl();
                     }
