@@ -1,5 +1,4 @@
 import util.*;
-import com.google.common.net.InternetDomainName;
 import datastore.DataStore;
 import datastore.LocalDataStore;
 import datastore.PageInfo;
@@ -15,9 +14,6 @@ import queue.DistributedQueue;
 import queue.URLQueue;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Properties;
 
@@ -91,12 +87,14 @@ class Crawler {
 
     private void runCrawlThread() {
         while (true) {
+            Profiler.looped();
             String linkToVisit;
             long t1, time;
 
             try {
                 t1 = System.currentTimeMillis();
                 linkToVisit = queue.pop();
+                if (linkToVisit == null) continue;
                 time = System.currentTimeMillis() - t1;
                 Profiler.getLinkFromQueueToCrawl(linkToVisit, time);
             } catch (InterruptedException e) {
@@ -132,18 +130,6 @@ class Crawler {
                 System.err.println("error in check existing in hbase: " + e);
             }
 
-            try {
-                t1 = System.currentTimeMillis();
-                boolean isGoodContentType = isGoodContentType(linkToVisit);
-                time = System.currentTimeMillis() - t1;
-                Profiler.checkContentType(linkToVisit, time, isGoodContentType);
-                if (!isGoodContentType) continue;
-            } catch (IOException e) {
-                continue;
-            } catch (IllegalArgumentException e) {
-                continue;
-            }
-
             Document document;
             try {
                 document = getDocument(linkToVisit);
@@ -175,44 +161,14 @@ class Crawler {
             }
 
             ArrayList<String> sublinks = getAllSublinks(document);
-            for (String link : sublinks) {
-                try {
-                    t1 = System.currentTimeMillis();
-                    boolean isExists = dataStore.exists(link);
-                    time = System.currentTimeMillis() - t1;
-                    Profiler.checkExistenceInDataStore(link, time, isExists);
-                    if (!isExists) {
-                        queue.push(link);
-                        Profiler.newUniqueUrl();
-                    }
-                } catch (IOException e) {
-                    System.err.println("error in check existing in hbase: " + e);
-                }
-            }
+            queue.push(sublinks);
         }
     }
 
     private boolean isPolite(String stringUrl) throws IllegalArgumentException, IOException, IllegalStateException {
-        URL url = new URL(stringUrl);
-        String hostName = url.getHost();
-        String domain = InternetDomainName.from(hostName).topPrivateDomain().toString();
-        return !cache.checkIfExist(domain);
-    }
-
-    private boolean isGoodContentType(String urlString) throws IOException {
-        String contentType;
-        URL url = new URL(urlString);
-        URLConnection connection = url.openConnection();
-        if (!(connection instanceof HttpURLConnection)) return false;
-        HttpURLConnection httpURLConnection = (HttpURLConnection) connection;
-        httpURLConnection.setRequestMethod("HEAD");
-        httpURLConnection.connect();
-        contentType = httpURLConnection.getContentType();
-
-        if (contentType == null)
-            return true;
-
-        return contentType.startsWith("text/html");
+        int index = stringUrl.indexOf("/", 8);
+        if (index == -1) index = stringUrl.length();
+        return !cache.checkIfExist(stringUrl.substring(0, index));
     }
 
     private boolean isEnglish(Document document) {

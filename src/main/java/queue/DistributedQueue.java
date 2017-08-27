@@ -51,7 +51,7 @@ public class DistributedQueue extends Thread implements URLQueue {
     }
 
     public String pop() throws InterruptedException{
-        return arrayBlockingQueue.take();
+        return arrayBlockingQueue.poll();
     }
 
     public void push(ArrayList<String> arrayURLs) {
@@ -86,7 +86,6 @@ public class DistributedQueue extends Thread implements URLQueue {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-//                System.out.println(record.value());
             }
 
         }

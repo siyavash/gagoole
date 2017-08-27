@@ -43,7 +43,6 @@ public class PageInfoDataStore implements DataStore
         } finally {
             if (table != null)
                 table.close();
-
         }
         return result;
     }
