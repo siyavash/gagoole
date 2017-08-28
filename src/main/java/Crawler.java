@@ -1,3 +1,6 @@
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import util.*;
 import datastore.DataStore;
 import datastore.LocalDataStore;
@@ -14,8 +17,12 @@ import queue.DistributedQueue;
 import queue.URLQueue;
 
 import java.io.*;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 class Crawler {
 
@@ -31,11 +38,13 @@ class Crawler {
     private String topicName;
     private String zookeeperClientPort;
     private String zookeeperQuorum;
+    private static OkHttpClient client = new OkHttpClient();
 
     public Crawler() {
         loadProperties();
         loadQueue();
         loadDataStore();
+        client.setConnectTimeout(10, TimeUnit.SECONDS);
 
         if (initialMode && useKafka) {
             ArrayList<String> seeds = loadSeeds();
@@ -87,10 +96,10 @@ class Crawler {
 
     private void runCrawlThread() {
         while (true) {
-            Profiler.looped();
             String linkToVisit;
             long t1, time;
 
+            // pop from queue
             try {
                 t1 = System.currentTimeMillis();
                 linkToVisit = queue.pop();
@@ -102,24 +111,18 @@ class Crawler {
                 continue;
             }
 
-            try {
-                t1 = System.currentTimeMillis();
-                boolean isPolite = isPolite(linkToVisit);
-                time = System.currentTimeMillis() - t1;
-                Profiler.checkPolitensess(linkToVisit, time, isPolite);
-                if (!isPolite) {
-                    Profiler.isImpolite();
-                    queue.push(linkToVisit);
-                    continue;
-                }
-            } catch (IllegalArgumentException ex) {
-                continue;
-            } catch (IllegalStateException e){
-                continue;
-            } catch (IOException e) {
+            // check politeness
+            t1 = System.currentTimeMillis();
+            boolean isPolite = isPolite(linkToVisit);
+            time = System.currentTimeMillis() - t1;
+            Profiler.checkPolitensess(linkToVisit, time, isPolite);
+            if (!isPolite) {
+                Profiler.isImpolite();
+                queue.push(linkToVisit);
                 continue;
             }
 
+            // check repeated
             try {
                 t1 = System.currentTimeMillis();
                 boolean isExists = dataStore.exists(linkToVisit);
@@ -130,21 +133,45 @@ class Crawler {
                 System.err.println("error in check existing in hbase: " + e);
             }
 
-            Document document;
+            // check content-type
             try {
-                document = getDocument(linkToVisit);
+                t1 = System.currentTimeMillis();
+                boolean isGoodContentType = isGoodContentType(linkToVisit);
+                time = System.currentTimeMillis() - t1;
+                Profiler.checkContentType(linkToVisit, time, isGoodContentType);
+            } catch (IOException e) {
+//                e.printStackTrace();
+                continue;
+            }
+
+            // make connection and get response
+            String html;
+            try {
+                t1 = System.currentTimeMillis();
+                html = getPureHtmlFromLink(linkToVisit);
+                time = System.currentTimeMillis() - t1;
+                Profiler.download(linkToVisit, time);
             } catch (IOException e) {
                 continue;
             } catch (IllegalArgumentException e) {
                 continue;
             }
 
+            // parse html
+            Document document;
+            t1 = System.currentTimeMillis();
+            document = parseHtml(html);
+            time = System.currentTimeMillis() - t1;
+            Profiler.parse(linkToVisit, time);
+
+            // check language
             t1 = System.currentTimeMillis();
             boolean isEnglish = isEnglish(document);
             time = System.currentTimeMillis() - t1;
             Profiler.goodLanguage(linkToVisit, time, isEnglish);
             if (!isEnglish) continue;
 
+            // extract info
             t1 = System.currentTimeMillis();
             PageInfo pageInfo = getPageInfo(linkToVisit, document);
             time = System.currentTimeMillis() - t1;
@@ -160,15 +187,24 @@ class Crawler {
                 System.exit(3);
             }
 
-            ArrayList<String> sublinks = getAllSublinks(document);
+            ArrayList<String> sublinks = getAllSublinksFromPageInfo(pageInfo);
             queue.push(sublinks);
         }
     }
 
-    private boolean isPolite(String stringUrl) throws IllegalArgumentException, IOException, IllegalStateException {
+    private boolean isPolite(String stringUrl) {
         int index = stringUrl.indexOf("/", 8);
         if (index == -1) index = stringUrl.length();
         return !cache.checkIfExist(stringUrl.substring(0, index));
+    }
+
+    private boolean isGoodContentType(String link) throws IOException {
+        OkHttpClient client = new OkHttpClient();
+        client.setConnectTimeout(10, TimeUnit.SECONDS);
+        Request request = new Request.Builder().url(link).method("HEAD", null).build();
+        Response response = client.newCall(request).execute();
+        String contentType = response.header("Content-type", "text/html");
+        return contentType.startsWith("text/html");
     }
 
     private boolean isEnglish(Document document) {
@@ -176,20 +212,14 @@ class Crawler {
         return languageDetector.isEnglish();
     }
 
-    private Document getDocument(String stringUrl) throws IOException, IllegalArgumentException {
-        long t1 = System.currentTimeMillis();
-        Connection.Response response = Jsoup.connect(stringUrl)
-                .userAgent(UserAgents.getRandom())
-                .execute();
-        long time = System.currentTimeMillis() - t1;
-        Profiler.download(stringUrl, time, response.bodyAsBytes().length);
+    private static String getPureHtmlFromLink(String link) throws IOException {
+        Request request = new Request.Builder().url(link).build();
+        Response response = client.newCall(request).execute();
+        return response.body().string();
+    }
 
-        t1 = System.currentTimeMillis();
-        Document document = response.parse();
-        time = System.currentTimeMillis() - t1;
-        Profiler.parse(stringUrl, time);
-
-        return document;
+    private Document parseHtml(String content) {
+        return Jsoup.parse(content);
     }
 
     public ArrayList<Pair<String, String>> getAllSubLinksWithAnchor(Document document) {
@@ -198,7 +228,7 @@ class Crawler {
         if (elements != null) {
             for (Element tag : elements) {
                 String href = tag.absUrl("href");
-                if (!href.equals("")) {
+                if (!href.equals("") && !href.startsWith("mailto")) {
                     String anchor = tag.text();
                     insideLinks.add(new Pair<String, String>(href, anchor));
                 }
@@ -208,17 +238,11 @@ class Crawler {
         return insideLinks;
     }
 
-    ArrayList<String> getAllSublinks(Document document) {
+    ArrayList<String> getAllSublinksFromPageInfo(PageInfo pageInfo) {
         ArrayList<String> insideLinks = new ArrayList<String>();
-        Elements elements = document.getElementsByTag("a");
-        if (elements != null) {
-            for (Element tag : elements) {
-                String href = tag.absUrl("href");
-                if (!href.equals(""))
-                    insideLinks.add(href);
-            }
+        for (Pair<String, String> pair : pageInfo.getSubLinks()) {
+            insideLinks.add(pair.getKey());
         }
-
         return insideLinks;
     }
 
@@ -299,12 +323,12 @@ class Crawler {
         }
     }
 
-    private String normalizeUrl(String Url){
+    private String normalizeUrl(String Url) {
         StringBuilder normalizedUrl = new StringBuilder("");
         Url = Url.toLowerCase();
-        if (Url.startsWith("http") || Url.startsWith("https")){
+        if (Url.startsWith("http") || Url.startsWith("https")) {
             int i = 0;
-            while(Url.charAt(i) != '/')
+            while (Url.charAt(i) != '/')
                 i++;
             i += 2;
             for (; i < Url.length(); i++) {
@@ -313,11 +337,9 @@ class Crawler {
                 normalizedUrl.append(Url.charAt(i));
             }
             return normalizedUrl.toString();
-        }
-        else if(Url.startsWith("ftp"))
+        } else if (Url.startsWith("ftp"))
             return null;
         else
             return Url;
     }
-
 }
