@@ -41,17 +41,6 @@ public class PageInfo
         this.bodyText = bodyText;
     }
 
-    private void buildMetaAttributesString(Attributes metaAttributes, StringBuilder stringBuilder)
-    {
-        for (Attribute metaAttribute : metaAttributes)
-        {
-            stringBuilder.append(metaAttribute.getKey());
-            stringBuilder.append(" , ");
-            stringBuilder.append(metaAttribute.getValue());
-            stringBuilder.append("\n");
-        }
-    }
-
     public String getTitle()
     {
         return title;
