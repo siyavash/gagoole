@@ -26,12 +26,7 @@ public class PageInfoDataStore implements DataStore
         configuration.set("hbase.zookeeper.property.clientPort", zookeeperClientPort);
         configuration.set("hbase.zookeeper.quorum", zookeeperQuorum);
         hbaseConnection = ConnectionFactory.createConnection(configuration);
-    }
-
-    public PageInfoDataStore() throws IOException
-    {
-        Configuration configuration = HBaseConfiguration.create();
-        hbaseConnection = ConnectionFactory.createConnection(configuration);
+        startPuttingToTable();
     }
 
     public boolean exists(String url) throws IOException
@@ -116,81 +111,44 @@ public class PageInfoDataStore implements DataStore
         return stringBuilder.toString();
     }
 
-    private String toPageInfoString(byte[] bodyTexts)
+    private void startPuttingToTable()
     {
-        if (bodyTexts == null)
-        {
-            return null;
-        }
-        return Arrays.toString(bodyTexts);
-    }
-
-    private ArrayList<Pair<String, String>> extractSubLinks(Result result)
-    {
-        ArrayList<Pair<String, String>> subLinkPairs = new ArrayList<>();
-
-        String storedSubLinks = Arrays.toString(result.getValue(COLUMN_FAMILY, Bytes.toBytes("subLinks")));
-        for (String subLink : storedSubLinks.split("\n"))
-        {
-            Pair<String, String> subLinkPair = extractSubLinkPair(subLink);
-            subLinkPairs.add(subLinkPair);
-        }
-
-        return subLinkPairs;
-    }
-
-    private Pair<String, String> extractSubLinkPair(String subLink)
-    {
-        String [] subLinkParts = subLink.split(" , ");
-        String url = subLinkParts[0];
-        String anchor = subLinkParts[1];
-
-        return new Pair<>(url, anchor);
-    }
-
-    public void startPuttingToTable()
-    {
-        new Thread(new Runnable()
-        {
-            @Override
-            public void run()
+        new Thread(() -> {
+            while (true)
             {
-                while (true)
+                ArrayList<Put> puts = new ArrayList<>();
+                for (int i = 0; i < 100; i++)
                 {
-                    ArrayList<Put> puts = new ArrayList<>();
-                    for (int i = 0; i < 100; i++)
-                    {
-                        try
-                        {
-                            puts.add(putArrayBlockingQueue.take());
-                        } catch (InterruptedException e)
-                        {
-                            e.printStackTrace(); //TODO
-                        }
-                    }
-
-                    Table table = null;
-
                     try
                     {
-                        table = hbaseConnection.getTable(TABLE_NAME);
-                        table.put(puts);
-                        table.close();
-                    } catch (IOException e)
+                        puts.add(putArrayBlockingQueue.take());
+                    } catch (InterruptedException e)
                     {
                         e.printStackTrace(); //TODO
-                    } finally
-                    {
-                        if (table != null)
-                        {
+                    }
+                }
 
-                            try
-                            {
-                                table.close();
-                            } catch (IOException e)
-                            {
-                                e.printStackTrace(); //TODO
-                            }
+                Table table = null;
+
+                try
+                {
+                    table = hbaseConnection.getTable(TABLE_NAME);
+                    table.put(puts);
+                    table.close();
+                } catch (IOException e)
+                {
+                    e.printStackTrace(); //TODO
+                } finally
+                {
+                    if (table != null)
+                    {
+
+                        try
+                        {
+                            table.close();
+                        } catch (IOException e)
+                        {
+                            e.printStackTrace(); //TODO
                         }
                     }
                 }
