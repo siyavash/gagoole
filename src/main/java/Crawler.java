@@ -299,4 +299,25 @@ class Crawler {
         }
     }
 
+    private String normalizeUrl(String Url){
+        StringBuilder normalizedUrl = new StringBuilder("");
+        Url = Url.toLowerCase();
+        if (Url.startsWith("http") || Url.startsWith("https")){
+            int i = 0;
+            while(Url.charAt(i) != '/')
+                i++;
+            i += 2;
+            for (; i < Url.length(); i++) {
+                if (i == Url.length() - 1 && Url.charAt(i) == '/')
+                    break;
+                normalizedUrl.append(Url.charAt(i));
+            }
+            return normalizedUrl.toString();
+        }
+        else if(Url.startsWith("ftp"))
+            return null;
+        else
+            return Url;
+    }
+
 }
