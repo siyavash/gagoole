@@ -142,6 +142,8 @@ class Crawler {
             } catch (IOException e) {
 //                e.printStackTrace();
                 continue;
+            } catch (IllegalArgumentException e) {
+                continue;
             }
 
             // make connection and get response
@@ -198,7 +200,7 @@ class Crawler {
         return !cache.checkIfExist(stringUrl.substring(0, index));
     }
 
-    private boolean isGoodContentType(String link) throws IOException {
+    private boolean isGoodContentType(String link) throws IOException, IllegalArgumentException {
         OkHttpClient client = new OkHttpClient();
         client.setConnectTimeout(10, TimeUnit.SECONDS);
         Request request = new Request.Builder().url(link).method("HEAD", null).build();
