@@ -139,6 +139,7 @@ class Crawler {
                 boolean isGoodContentType = isGoodContentType(linkToVisit);
                 time = System.currentTimeMillis() - t1;
                 Profiler.checkContentType(linkToVisit, time, isGoodContentType);
+                if (!isGoodContentType) continue;
             } catch (IOException e) {
 //                e.printStackTrace();
                 continue;
