@@ -202,7 +202,6 @@ class Crawler {
     }
 
     private boolean isGoodContentType(String link) throws IOException, IllegalArgumentException {
-        OkHttpClient client = new OkHttpClient();
         client.setConnectTimeout(10, TimeUnit.SECONDS);
         Request request = new Request.Builder().url(link).method("HEAD", null).build();
         Response response = client.newCall(request).execute();
