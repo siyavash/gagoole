@@ -6,11 +6,10 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class PageInfoDataStore implements DataStore
@@ -19,6 +18,7 @@ public class PageInfoDataStore implements DataStore
     private static final TableName TABLE_NAME = TableName.valueOf("wb");
     private static final byte[] COLUMN_FAMILY = Bytes.toBytes("cf");
     private ArrayBlockingQueue<Put> putArrayBlockingQueue = new ArrayBlockingQueue<>(10000);
+    private Logger logger = Logger.getLogger(Class.class.getName());
 
     public PageInfoDataStore(String zookeeperClientPort, String zookeeperQuorum) throws IOException
     {
@@ -114,17 +114,21 @@ public class PageInfoDataStore implements DataStore
     private void startPuttingToTable()
     {
         new Thread(() -> {
+            long t1, t2 = 0;
+
             while (true)
             {
                 ArrayList<Put> puts = new ArrayList<>();
-                for (int i = 0; i < 100; i++)
+                t2 = System.currentTimeMillis() - t2;
+                logger.info("Started adding Put classes in a list after " + t2 + " milli seconds");
+                for (int i = 0; i < 200; i++)
                 {
                     try
                     {
                         puts.add(putArrayBlockingQueue.take());
                     } catch (InterruptedException e)
                     {
-                        e.printStackTrace(); //TODO
+
                     }
                 }
 
@@ -133,11 +137,14 @@ public class PageInfoDataStore implements DataStore
                 try
                 {
                     table = hbaseConnection.getTable(TABLE_NAME);
+                    t1 = System.currentTimeMillis();
                     table.put(puts);
-                    table.close();
+                    t1 = System.currentTimeMillis() - t1;
+                    logger.info("100 put done in " + t1 + " milli seconds");
+                    t2 = System.currentTimeMillis();
                 } catch (IOException e)
                 {
-                    e.printStackTrace(); //TODO
+                    logger.error("Failed to put in hbase");
                 } finally
                 {
                     if (table != null)
@@ -148,7 +155,7 @@ public class PageInfoDataStore implements DataStore
                             table.close();
                         } catch (IOException e)
                         {
-                            e.printStackTrace(); //TODO
+                            logger.error("Failed to close the table");
                         }
                     }
                 }
