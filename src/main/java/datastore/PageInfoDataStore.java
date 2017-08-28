@@ -11,12 +11,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class PageInfoDataStore implements DataStore
 {
     private Connection hbaseConnection;
     private static final TableName TABLE_NAME = TableName.valueOf("wb");
     private static final byte[] COLUMN_FAMILY = Bytes.toBytes("cf");
+    private ArrayBlockingQueue<Put> putArrayBlockingQueue = new ArrayBlockingQueue<>(10000);
 
     public PageInfoDataStore(String zookeeperClientPort, String zookeeperQuorum) throws IOException
     {
@@ -49,14 +51,11 @@ public class PageInfoDataStore implements DataStore
 
     public void put(PageInfo pageInfo) throws IOException
     {
-        Table table = null;
         try {
             String subLinks = turnSubLinksToString(pageInfo.getSubLinks());
 
             byte[] urlBytes = Bytes.toBytes(pageInfo.getUrl());
             Put put = new Put(urlBytes);
-
-            table = hbaseConnection.getTable(TABLE_NAME);
 
             addColumnToPut(put, Bytes.toBytes("authorMeta"), pageInfo.getAuthorMeta());
             addColumnToPut(put, Bytes.toBytes("descriptionMeta"), pageInfo.getDescriptionMeta());
@@ -67,10 +66,10 @@ public class PageInfoDataStore implements DataStore
             addColumnToPut(put, Bytes.toBytes("title"), pageInfo.getTitle());
             addColumnToPut(put, Bytes.toBytes("subLinks"), subLinks);
 
-            table.put(put);
-        } finally {
-            if (table != null)
-                table.close();
+            putArrayBlockingQueue.put(put);
+        } catch (InterruptedException e)
+        {
+            e.printStackTrace();
         }
     }
 
@@ -117,27 +116,6 @@ public class PageInfoDataStore implements DataStore
         return stringBuilder.toString();
     }
 
-    public Iterator<PageInfo> getRowIterator() throws IOException
-    {
-        Table table = hbaseConnection.getTable(TABLE_NAME);
-        ResultScanner rowScanner = table.getScanner(new Scan());
-        // set caching
-        return new RowIterator(rowScanner);
-    }
-
-    private PageInfo createPageInfo(Result result)
-    {
-        PageInfo pageInfo = new PageInfo();
-
-        pageInfo.setUrl(Arrays.toString(result.getRow()));
-        pageInfo.setBodyText(toPageInfoString(result.getValue(COLUMN_FAMILY, Bytes.toBytes("bodyText"))));
-        pageInfo.setTitle(toPageInfoString(result.getValue(COLUMN_FAMILY, Bytes.toBytes("title"))));
-        //TODO set meta ffs
-        pageInfo.setSubLinks(extractSubLinks(result));
-
-        return pageInfo;
-    }
-
     private String toPageInfoString(byte[] bodyTexts)
     {
         if (bodyTexts == null)
@@ -170,42 +148,53 @@ public class PageInfoDataStore implements DataStore
         return new Pair<>(url, anchor);
     }
 
-    private class RowIterator implements Iterator<PageInfo>
+    public void startPuttingToTable()
     {
-        private ResultScanner rowScanner;
-
-        private RowIterator(ResultScanner rowScanner)
+        new Thread(new Runnable()
         {
-            this.rowScanner = rowScanner;
-        }
-
-
-        @Override
-        public boolean hasNext()
-        {
-            try
+            @Override
+            public void run()
             {
-                return rowScanner.next() != null;
-            } catch (IOException e)
-            {
-                return true;
+                while (true)
+                {
+                    ArrayList<Put> puts = new ArrayList<>();
+                    for (int i = 0; i < 100; i++)
+                    {
+                        try
+                        {
+                            puts.add(putArrayBlockingQueue.take());
+                        } catch (InterruptedException e)
+                        {
+                            e.printStackTrace(); //TODO
+                        }
+                    }
+
+                    Table table = null;
+
+                    try
+                    {
+                        table = hbaseConnection.getTable(TABLE_NAME);
+                        table.put(puts);
+                        table.close();
+                    } catch (IOException e)
+                    {
+                        e.printStackTrace(); //TODO
+                    } finally
+                    {
+                        if (table != null)
+                        {
+
+                            try
+                            {
+                                table.close();
+                            } catch (IOException e)
+                            {
+                                e.printStackTrace(); //TODO
+                            }
+                        }
+                    }
+                }
             }
-        }
-
-        @Override
-        public PageInfo next()
-        {
-            Result nextResult;
-
-            try
-            {
-                nextResult = rowScanner.next();
-            } catch (IOException e)
-            {
-                return null;
-            }
-
-            return createPageInfo(nextResult);
-        }
+        }).start();
     }
 }
