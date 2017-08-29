@@ -57,13 +57,9 @@ class Crawler {
     }
 
     public void start() {
-        ArrayList<Thread> threads = new ArrayList<Thread>(NTHREADS);
+        ArrayList<Thread> threads = new ArrayList<>(NTHREADS);
         for (int i = 0; i < NTHREADS; i++) {
-            Thread thread = new Thread(new Runnable() {
-                public void run() {
-                    runCrawlThread();
-                }
-            });
+            Thread thread = new Thread(() -> runCrawlThread());
             thread.start();
             threads.add(thread);
         }
