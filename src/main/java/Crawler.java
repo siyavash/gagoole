@@ -205,9 +205,23 @@ class Crawler {
     }
 
     private boolean isGoodContentType(String link) throws IOException, IllegalArgumentException {
+        long requestTime = System.currentTimeMillis();
         Request request = new Request.Builder().url(link).method("HEAD", null).build();
+        requestTime = System.currentTimeMillis() - requestTime;
+
+        long responseTime = System.currentTimeMillis();
         Response response = client.newCall(request).execute();
+        responseTime  = System.currentTimeMillis() - responseTime;
+
+        long checkHeaderTime = System.currentTimeMillis();
         String contentType = response.header("Content-type", "text/html");
+        checkHeaderTime = System.currentTimeMillis() - checkHeaderTime;
+
+        Profiler.writeRequestTimeLog(requestTime, link);
+        Profiler.writeResponseTimeLog(responseTime, link);
+        Profiler.writeCheckHeaderTimeLog(checkHeaderTime, link);
+
+        response.body().close();
         return contentType.startsWith("text/html");
     }
 
