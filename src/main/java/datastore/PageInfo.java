@@ -1,11 +1,6 @@
 package datastore;
 
 import javafx.util.Pair;
-import org.jsoup.nodes.Attribute;
-import org.jsoup.nodes.Attributes;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
 import java.util.ArrayList;
 
 public class PageInfo

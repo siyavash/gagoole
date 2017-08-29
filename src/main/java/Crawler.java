@@ -7,7 +7,6 @@ import datastore.LocalDataStore;
 import datastore.PageInfo;
 import datastore.PageInfoDataStore;
 import javafx.util.Pair;
-import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -17,9 +16,6 @@ import queue.DistributedQueue;
 import queue.URLQueue;
 
 import java.io.*;
-import java.net.ConnectException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -44,7 +40,7 @@ class Crawler {
         loadProperties();
         loadQueue();
         loadDataStore();
-        client.setConnectTimeout(10, TimeUnit.SECONDS);
+        client.setReadTimeout(10, TimeUnit.SECONDS);
 
         if (initialMode && useKafka) {
             ArrayList<String> seeds = loadSeeds();
@@ -141,7 +137,6 @@ class Crawler {
                 Profiler.checkContentType(linkToVisit, time, isGoodContentType);
                 if (!isGoodContentType) continue;
             } catch (IOException e) {
-//                e.printStackTrace();
                 continue;
             } catch (IllegalArgumentException e) {
                 continue;
@@ -202,7 +197,6 @@ class Crawler {
     }
 
     private boolean isGoodContentType(String link) throws IOException, IllegalArgumentException {
-        client.setConnectTimeout(10, TimeUnit.SECONDS);
         Request request = new Request.Builder().url(link).method("HEAD", null).build();
         Response response = client.newCall(request).execute();
         String contentType = response.header("Content-type", "text/html");
