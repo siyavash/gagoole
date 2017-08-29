@@ -319,23 +319,18 @@ class Crawler {
         }
     }
 
-    private String normalizeUrl(String url) {
-        StringBuilder normalizedUrl = new StringBuilder("");
+    public String normalizeUrl(String url) {
+        String normalizedUrl;
         url = url.toLowerCase();
-        if (url.startsWith("http") || url.startsWith("https")) {
-            int i = 0;
-            while (url.charAt(i) != '/')
-                i++;
-            i += 2;
-            for (; i < url.length(); i++) {
-                if (i == url.length() - 1 && url.charAt(i) == '/')
-                    break;
-                normalizedUrl.append(url.charAt(i));
-            }
-            return normalizedUrl.toString();
-        } else if (url.startsWith("ftp"))
+        if (url.startsWith("ftp"))
             return null;
-        else
-            return url;
+        normalizedUrl = url.replaceFirst("^(http://www\\.|https://www\\.|http://|https://|www\\.)","");
+        int slashCounter = 0;
+        if(normalizedUrl.endsWith("/")){
+            while(normalizedUrl.charAt(normalizedUrl.length()-slashCounter-1) == '/')
+                slashCounter++;
+        }
+        normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length()-slashCounter);
+        return normalizedUrl;
     }
 }
