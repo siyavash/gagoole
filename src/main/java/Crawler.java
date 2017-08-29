@@ -244,7 +244,7 @@ class Crawler {
 
     PageInfo getPageInfo(String stringUrl, Document document) {
         PageInfo data = new PageInfo();
-        data.setUrl(stringUrl);
+        data.setUrl(normalizeUrl(stringUrl));
         data.setSubLinks(getAllSubLinksWithAnchor(document));
         data.setTitle(document.title());
         if (document.body() != null)
@@ -319,23 +319,23 @@ class Crawler {
         }
     }
 
-    private String normalizeUrl(String Url) {
+    private String normalizeUrl(String url) {
         StringBuilder normalizedUrl = new StringBuilder("");
-        Url = Url.toLowerCase();
-        if (Url.startsWith("http") || Url.startsWith("https")) {
+        url = url.toLowerCase();
+        if (url.startsWith("http") || url.startsWith("https")) {
             int i = 0;
-            while (Url.charAt(i) != '/')
+            while (url.charAt(i) != '/')
                 i++;
             i += 2;
-            for (; i < Url.length(); i++) {
-                if (i == Url.length() - 1 && Url.charAt(i) == '/')
+            for (; i < url.length(); i++) {
+                if (i == url.length() - 1 && url.charAt(i) == '/')
                     break;
-                normalizedUrl.append(Url.charAt(i));
+                normalizedUrl.append(url.charAt(i));
             }
             return normalizedUrl.toString();
-        } else if (Url.startsWith("ftp"))
+        } else if (url.startsWith("ftp"))
             return null;
         else
-            return Url;
+            return url;
     }
 }
