@@ -1,3 +1,4 @@
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -224,7 +225,7 @@ class Crawler {
         if (elements != null) {
             for (Element tag : elements) {
                 String href = tag.absUrl("href");
-                if (!href.equals("") && !href.startsWith("mailto")) {
+                if (!href.equals("") && !href.startsWith("mailto") && !href.startsWith("ftp")) {
                     String anchor = tag.text();
                     insideLinks.add(new Pair<String, String>(href, anchor));
                 }
