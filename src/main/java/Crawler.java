@@ -201,9 +201,23 @@ class Crawler {
     }
 
     private boolean isGoodContentType(String link) throws IOException, IllegalArgumentException {
+        long requestTime = System.currentTimeMillis();
         Request request = new Request.Builder().url(link).method("HEAD", null).build();
+        requestTime = System.currentTimeMillis() - requestTime;
+
+        long responseTime = System.currentTimeMillis();
         Response response = client.newCall(request).execute();
+        responseTime  = System.currentTimeMillis() - responseTime;
+
+        long checkHeaderTime = System.currentTimeMillis();
         String contentType = response.header("Content-type", "text/html");
+        checkHeaderTime = System.currentTimeMillis() - checkHeaderTime;
+
+        Profiler.writeRequestTimeLog(requestTime, link);
+        Profiler.writeResponseTimeLog(responseTime, link);
+        Profiler.writeCheckHeaderTimeLog(checkHeaderTime, link);
+
+        response.body().close();
         return contentType.startsWith("text/html");
     }
 
@@ -323,23 +337,18 @@ class Crawler {
         }
     }
 
-    private String normalizeUrl(String url) {
-        StringBuilder normalizedUrl = new StringBuilder("");
+    public String normalizeUrl(String url) {
+        String normalizedUrl;
         url = url.toLowerCase();
-        if (url.startsWith("http") || url.startsWith("https")) {
-            int i = 0;
-            while (url.charAt(i) != '/')
-                i++;
-            i += 2;
-            for (; i < url.length(); i++) {
-                if (i == url.length() - 1 && url.charAt(i) == '/')
-                    break;
-                normalizedUrl.append(url.charAt(i));
-            }
-            return normalizedUrl.toString();
-        } else if (url.startsWith("ftp"))
+        if (url.startsWith("ftp"))
             return null;
-        else
-            return url;
+        normalizedUrl = url.replaceFirst("^(http://www\\.|https://www\\.|http://|https://|www\\.)","");
+        int slashCounter = 0;
+        if(normalizedUrl.endsWith("/")){
+            while(normalizedUrl.length()-slashCounter > 0 && normalizedUrl.charAt(normalizedUrl.length()-slashCounter-1) == '/')
+                slashCounter++;
+        }
+        normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length()-slashCounter);
+        return normalizedUrl;
     }
 }

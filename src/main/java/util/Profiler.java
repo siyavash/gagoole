@@ -122,4 +122,16 @@ public class Profiler {
     public synchronized static void pushToQueue(String url, long time) {
         logger.info(String.format("pushed to queue in time: %d %s", time, url));
     }
+
+    public static void writeRequestTimeLog(long requestTime, String link) {
+        logger.info("Request time is " + requestTime + ", for link : " + link);
+    }
+
+    public static void writeResponseTimeLog(long responseTime, String link) {
+        logger.info("Response time is " + responseTime + ", for link : " + link);
+    }
+
+    public static void writeCheckHeaderTimeLog(long checkHeaderTime, String link) {
+        logger.info("Checked header in "+ checkHeaderTime + ", for link : " + link);
+    }
 }
