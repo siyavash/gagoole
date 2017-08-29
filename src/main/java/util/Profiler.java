@@ -119,4 +119,7 @@ public class Profiler {
         logger.info(String.format("Completely crawled in time %d: %s", time, url));
     }
 
+    public synchronized static void pushToQueue(String url, long time) {
+        logger.info(String.format("pushed to queue in time: %d %s", time, url));
+    }
 }

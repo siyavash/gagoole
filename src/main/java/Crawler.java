@@ -188,7 +188,13 @@ class Crawler {
             }
 
             ArrayList<String> sublinks = getAllSublinksFromPageInfo(pageInfo);
+
+            t1 = System.currentTimeMillis();
             queue.push(sublinks);
+            time = System.currentTimeMillis() - t1;
+            Profiler.pushToQueue(linkToVisit, time);
+
+            Profiler.crawled(linkToVisit, System.currentTimeMillis() - startCrawlTime);
         }
     }
 
