@@ -1,24 +1,16 @@
 import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import datastore.DataStore;
 import datastore.LocalDataStore;
-import datastore.PageInfo;
 import datastore.PageInfoDataStore;
 import javafx.util.Pair;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import queue.DistributedQueue;
 import queue.LocalQueue;
 import queue.URLQueue;
-import util.LanguageDetector;
-import util.Profiler;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 class Crawler
@@ -37,6 +29,8 @@ class Crawler
     private String zookeeperClientPort;
     private String zookeeperQuorum;
     private OkHttpClient client = new OkHttpClient();
+    private ArrayBlockingQueue<String> notYetDownloadedLinks = new ArrayBlockingQueue<>(100000);
+    private ArrayBlockingQueue<Pair<String, String>> downloadedData = new ArrayBlockingQueue<>(100000);
 
     public Crawler()
     {
@@ -64,12 +58,13 @@ class Crawler
 
     public void start()
     {
-        ArrayList<Thread> threads = new ArrayList<>(NTHREADS);
         for (int i = 0; i < NTHREADS; i++)
         {
-            Thread thread = new Thread(() -> runCrawlThread());
-            thread.start();
-            threads.add(thread);
+            new LinkFilterThread(queue, dataStore, client).start();
+            new DataSenderThread(dataStore, queue, downloadedData).start();
+        }
+        for (int i = 0; i < 1000; i++) {
+            new DownloadThread(notYetDownloadedLinks, downloadedData, client).start();
         }
     }
 
@@ -100,237 +95,6 @@ class Crawler
         {
             dataStore = new LocalDataStore();
         }
-    }
-
-    private void runCrawlThread()
-    {
-        while (true)
-        {
-            String linkToVisit;
-            long t1, time, startCrawlTime;
-
-            Profiler.setQueueSize(queue.size());
-            // pop from queue
-            try
-            {
-                t1 = System.currentTimeMillis();
-                startCrawlTime = t1;
-                linkToVisit = queue.pop();
-                if (linkToVisit == null || linkToVisit.startsWith("ftp") || linkToVisit.startsWith("mailto")) continue;
-                time = System.currentTimeMillis() - t1;
-                Profiler.getLinkFromQueueToCrawl(linkToVisit, time);
-            } catch (InterruptedException e)
-            {
-                System.err.println("error in reading from blocking queue: ");
-                continue;
-            }
-
-            // check politeness
-            t1 = System.currentTimeMillis();
-            boolean isPolite = isPolite(linkToVisit);
-            time = System.currentTimeMillis() - t1;
-            Profiler.checkPolitensess(linkToVisit, time, isPolite);
-            if (!isPolite)
-            {
-                Profiler.isImpolite();
-                queue.push(linkToVisit);
-                continue;
-            }
-
-            // check repeated
-            try
-            {
-                t1 = System.currentTimeMillis();
-                boolean isExists = dataStore.exists(normalizeUrl(linkToVisit));
-                time = System.currentTimeMillis() - t1;
-                Profiler.checkExistenceInDataStore(linkToVisit, time, isExists);
-                if (isExists) continue;
-            } catch (IOException e)
-            {
-                System.err.println("error in check existing in hbase: " + e);
-            }
-
-            // check content-type
-            try
-            {
-                t1 = System.currentTimeMillis();
-                boolean isGoodContentType = isGoodContentType(linkToVisit);
-                time = System.currentTimeMillis() - t1;
-                Profiler.checkContentType(linkToVisit, time, isGoodContentType);
-                if (!isGoodContentType) continue;
-            } catch (IOException e)
-            {
-                continue;
-            } catch (IllegalArgumentException e)
-            {
-                continue;
-            }
-
-            // make connection and get response
-            String html;
-            try
-            {
-                t1 = System.currentTimeMillis();
-                html = getPureHtmlFromLink(linkToVisit);
-                time = System.currentTimeMillis() - t1;
-                Profiler.download(linkToVisit, time);
-            } catch (IOException e)
-            {
-                continue;
-            } catch (IllegalArgumentException e)
-            {
-                continue;
-            }
-
-            // parse html
-            Document document;
-            t1 = System.currentTimeMillis();
-            document = parseHtml(html);
-            time = System.currentTimeMillis() - t1;
-            Profiler.parse(linkToVisit, time);
-
-            // check language
-            t1 = System.currentTimeMillis();
-            boolean isEnglish = isEnglish(document);
-            time = System.currentTimeMillis() - t1;
-            Profiler.goodLanguage(linkToVisit, time, isEnglish);
-            if (!isEnglish) continue;
-
-            // extract info
-            t1 = System.currentTimeMillis();
-            PageInfo pageInfo = getPageInfo(linkToVisit, document);
-            time = System.currentTimeMillis() - t1;
-            Profiler.extractInformationFromDocument(linkToVisit, time);
-
-            try
-            {
-                t1 = System.currentTimeMillis();
-                dataStore.put(pageInfo);
-                time = System.currentTimeMillis() - t1;
-                Profiler.putToDataStore(linkToVisit, time);
-            } catch (IOException e)
-            {
-                System.err.println("errrrror");
-                System.exit(3);
-            }
-
-            ArrayList<String> sublinks = getAllSublinksFromPageInfo(pageInfo);
-
-            t1 = System.currentTimeMillis();
-            queue.push(sublinks);
-            time = System.currentTimeMillis() - t1;
-            Profiler.pushToQueue(linkToVisit, time);
-
-            Profiler.crawled(linkToVisit, System.currentTimeMillis() - startCrawlTime);
-        }
-    }
-
-    private boolean isPolite(String stringUrl)
-    {
-        int index = stringUrl.indexOf("/", 8);
-        if (index == -1) index = stringUrl.length();
-        return !cache.checkIfExist(stringUrl.substring(0, index));
-    }
-
-    private boolean isGoodContentType(String link) throws IOException, IllegalArgumentException
-    {
-//        Connection.Response response2 = Jsoup.connect(link).method(Connection.Method.HEAD).execute();
-//
-//
-        long requestTime = System.currentTimeMillis();
-        Request request = new Request.Builder().url(link).method("HEAD", null).build();
-        requestTime = System.currentTimeMillis() - requestTime;
-
-        long responseTime = System.currentTimeMillis();
-        Response response = client.newCall(request).execute();
-        responseTime = System.currentTimeMillis() - responseTime;
-
-        long checkHeaderTime = System.currentTimeMillis();
-        String contentType = response.header("Content-type", "text/html");
-        checkHeaderTime = System.currentTimeMillis() - checkHeaderTime;
-
-        Profiler.writeRequestTimeLog(requestTime, link);
-        Profiler.writeResponseTimeLog(responseTime, link);
-        Profiler.writeCheckHeaderTimeLog(checkHeaderTime, link);
-
-        response.body().close();
-        return contentType.startsWith("text/html");
-    }
-
-    private boolean isEnglish(Document document)
-    {
-        LanguageDetector languageDetector = new LanguageDetector(document);
-        return languageDetector.isEnglish();
-    }
-
-    private String getPureHtmlFromLink(String link) throws IOException
-    {
-        Request request = new Request.Builder().url(link).build();
-        Response response = client.newCall(request).execute();
-        return response.body().string();
-    }
-
-    private Document parseHtml(String content)
-    {
-        return Jsoup.parse(content);
-    }
-
-    public ArrayList<Pair<String, String>> getAllSubLinksWithAnchor(Document document)
-    {
-        ArrayList<Pair<String, String>> insideLinks = new ArrayList<Pair<String, String>>();
-        Elements elements = document.getElementsByTag("a");
-        if (elements != null)
-        {
-            for (Element tag : elements)
-            {
-                String href = tag.absUrl("href");
-                if (!href.equals("") && !href.startsWith("mailto") && !href.startsWith("ftp"))
-                {
-                    String anchor = tag.text();
-                    insideLinks.add(new Pair<String, String>(href, anchor));
-                }
-            }
-        }
-
-        return insideLinks;
-    }
-
-    ArrayList<String> getAllSublinksFromPageInfo(PageInfo pageInfo)
-    {
-        ArrayList<String> insideLinks = new ArrayList<String>();
-        for (Pair<String, String> pair : pageInfo.getSubLinks())
-        {
-            insideLinks.add(pair.getKey());
-        }
-        return insideLinks;
-    }
-
-    PageInfo getPageInfo(String stringUrl, Document document)
-    {
-        PageInfo data = new PageInfo();
-        data.setUrl(normalizeUrl(stringUrl));
-        data.setSubLinks(getAllSubLinksWithAnchor(document));
-        data.setTitle(document.title());
-        if (document.body() != null)
-            data.setBodyText(document.body().text());
-
-        Elements elements = document.select("meta[name=author]");
-        if (elements != null)
-            data.setAuthorMeta(elements.attr("content"));
-
-        elements = document.select("meta[name=description]");
-        if (elements != null)
-            data.setDescriptionMeta(elements.attr("content"));
-
-        elements = document.select("meta[name=content-type]");
-        if (elements != null)
-            data.setContentTypeMeta(elements.attr("content"));
-
-        elements = document.select("meta[name=keywords]");
-        if (elements != null)
-            data.setKeyWordsMeta(elements.attr("content"));
-
-        return data;
     }
 
     private void loadProperties()
@@ -375,7 +139,7 @@ class Crawler
     {
         try
         {
-            ArrayList<String> seedUrls = new ArrayList<String>(500);
+            ArrayList<String> seedUrls = new ArrayList<>(500);
             File file = new File("seed.txt");
             FileReader fileReader = new FileReader(file);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
@@ -400,7 +164,7 @@ class Crawler
         url = url.toLowerCase();
         if (url.startsWith("ftp"))
             return null;
-        normalizedUrl = url.replaceFirst("^(http://www\\.|https://www\\.|http://|https://|www\\.)", "");
+        normalizedUrl = url.replaceFirst("(www\\.)", "");
         int slashCounter = 0;
         if (normalizedUrl.endsWith("/"))
         {
