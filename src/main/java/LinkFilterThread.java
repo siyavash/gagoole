@@ -1,6 +1,4 @@
 import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import datastore.DataStore;
 import queue.URLQueue;
 import util.Profiler;
@@ -12,14 +10,12 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class LinkFilterThread extends Thread {
     private URLQueue urlQueue;
     private DataStore urlDatabase;
-    private OkHttpClient client;
     private final LruCache cache = new LruCache();
     private ArrayBlockingQueue<String> notYetDownloadedLinks;
     //constructor
-    public LinkFilterThread(URLQueue urlQueue, DataStore urlDatabase, OkHttpClient client, ArrayBlockingQueue notYetDownloadedLinks) {
+    public LinkFilterThread(URLQueue urlQueue, DataStore urlDatabase, ArrayBlockingQueue notYetDownloadedLinks) {
         this.urlQueue = urlQueue;
         this.urlDatabase = urlDatabase;
-        this.client = client;
         this.notYetDownloadedLinks = notYetDownloadedLinks;
     }
     private String getLinkFromQueue(){
@@ -53,6 +49,13 @@ public class LinkFilterThread extends Thread {
                     || link.endsWith(".gz") || link.endsWith(".rar") || link.endsWith(".zip") || link.endsWith(".tar.gz"))
             return false;
         return true;
+    }
+    private void addLinkToArrayBlockingQueue(String linkToVisit) {
+        try {
+            notYetDownloadedLinks.put(linkToVisit);
+        } catch (InterruptedException e) {
+            //TODO catch deciding
+        }
     }
 
     @Override
@@ -91,11 +94,8 @@ public class LinkFilterThread extends Thread {
             Profiler.checkContentType(linkToVisit, timeDifference, isGoodContentType);
             if (!isGoodContentType)
                 continue;
-            try {
-                notYetDownloadedLinks.put(linkToVisit);
-            } catch (InterruptedException e) {
-                //TODO catch deciding
-            }
+            //finish
+            addLinkToArrayBlockingQueue(linkToVisit);
         }
     }
 }

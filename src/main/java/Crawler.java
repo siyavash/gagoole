@@ -10,8 +10,7 @@ import queue.URLQueue;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Properties;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 class Crawler
 {
@@ -59,11 +58,18 @@ class Crawler
     {
         for (int i = 0; i < NTHREADS; i++)
         {
-            new LinkFilterThread(queue, dataStore, client, notYetDownloadedLinks).start();
+            new LinkFilterThread(queue, dataStore, notYetDownloadedLinks).start();
             new DataSenderThread(dataStore, queue, downloadedData).start();
         }
-        for (int i = 0; i < 1000; i++) {
-            new DownloadThread(notYetDownloadedLinks, downloadedData, client).start();
+        ExecutorService pool = Executors.newFixedThreadPool(500);
+        for (int i = 0; i < 500; i++) {
+            pool.submit(new DownloadThread(notYetDownloadedLinks, downloadedData));
+        }
+        pool.shutdown();
+        try {
+            pool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            //TODO exception handling
         }
     }
 

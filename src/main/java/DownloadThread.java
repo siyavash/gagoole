@@ -13,16 +13,16 @@ public class DownloadThread extends Thread
     private ArrayBlockingQueue<Pair<String, String>> downloadedDataBlockingQueue;
     private OkHttpClient client;
 
-    public DownloadThread(ArrayBlockingQueue<String> notYetDownloadedLinksBlockingQueue, ArrayBlockingQueue<Pair<String, String>> downloadedDataBlockingQueue, OkHttpClient client)
+    public DownloadThread(ArrayBlockingQueue<String> notYetDownloadedLinksBlockingQueue, ArrayBlockingQueue<Pair<String, String>> downloadedDataBlockingQueue)
     {
         this.downloadedDataBlockingQueue = downloadedDataBlockingQueue;
         this.notYetDownloadedLinksBlockingQueue = notYetDownloadedLinksBlockingQueue;
-        this.client = client;
     }
 
     @Override
     public void run()
     {
+        client = new OkHttpClient();
         while (true)
         {
             long t1 = System.currentTimeMillis();
@@ -76,7 +76,6 @@ public class DownloadThread extends Thread
         {
             return null;
         }
-
         Request request = new Request.Builder().url(link).build();
         Response response = client.newCall(request).execute();
         return response.body().string();
