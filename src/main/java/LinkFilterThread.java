@@ -96,6 +96,7 @@ public class LinkFilterThread extends Thread {
                 continue;
             //finish
             addLinkToArrayBlockingQueue(linkToVisit);
+            Profiler.setNotYetSize(notYetDownloadedLinks.size());
         }
     }
 }

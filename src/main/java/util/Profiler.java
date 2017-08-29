@@ -15,7 +15,7 @@ public class Profiler {
     private static long allCrawled = 0;
     private static long goodContentType = 0;
     private static long queueSize = 0;
-
+    private static long notYetSize = 0;
     private static Logger logger = Logger.getLogger(Class.class.getName());
 
     public static void start() {
@@ -37,6 +37,7 @@ public class Profiler {
                         System.out.println("number of crawled links: " + crawled);
                         System.out.println("number of active threads: " + Thread.activeCount());
                         System.out.println("number of all crawled links: " + allCrawled);
+                        System.out.println("not yet queue size: " + notYetSize);
                         System.out.println();
 
                         consumedFromKafka = 0;
@@ -113,6 +114,10 @@ public class Profiler {
 
     public synchronized static void setQueueSize(long size) {
         queueSize = size;
+    }
+
+    public synchronized static void setNotYetSize(long size){
+        notYetSize = size;
     }
 
     public synchronized static void crawled(String url, long time) {
