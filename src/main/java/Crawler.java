@@ -93,13 +93,15 @@ class Crawler {
     private void runCrawlThread() {
         while (true) {
             String linkToVisit;
-            long t1, time;
+            long t1, time, startCrawlTime;
 
+            Profiler.setQueueSize(queue.size());
             // pop from queue
             try {
                 t1 = System.currentTimeMillis();
+                startCrawlTime = t1;
                 linkToVisit = queue.pop();
-                if (linkToVisit == null) continue;
+                if (linkToVisit == null || linkToVisit.startsWith("ftp") || linkToVisit.startsWith("mailto")) continue;
                 time = System.currentTimeMillis() - t1;
                 Profiler.getLinkFromQueueToCrawl(linkToVisit, time);
             } catch (InterruptedException e) {
@@ -121,7 +123,7 @@ class Crawler {
             // check repeated
             try {
                 t1 = System.currentTimeMillis();
-                boolean isExists = dataStore.exists(linkToVisit);
+                boolean isExists = dataStore.exists(normalizeUrl(linkToVisit));
                 time = System.currentTimeMillis() - t1;
                 Profiler.checkExistenceInDataStore(linkToVisit, time, isExists);
                 if (isExists) continue;
@@ -186,7 +188,13 @@ class Crawler {
             }
 
             ArrayList<String> sublinks = getAllSublinksFromPageInfo(pageInfo);
+
+            t1 = System.currentTimeMillis();
             queue.push(sublinks);
+            time = System.currentTimeMillis() - t1;
+            Profiler.pushToQueue(linkToVisit, time);
+
+            Profiler.crawled(linkToVisit, System.currentTimeMillis() - startCrawlTime);
         }
     }
 
@@ -224,7 +232,7 @@ class Crawler {
         if (elements != null) {
             for (Element tag : elements) {
                 String href = tag.absUrl("href");
-                if (!href.equals("") && !href.startsWith("mailto")) {
+                if (!href.equals("") && !href.startsWith("mailto") && !href.startsWith("ftp")) {
                     String anchor = tag.text();
                     insideLinks.add(new Pair<String, String>(href, anchor));
                 }
