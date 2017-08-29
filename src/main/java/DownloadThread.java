@@ -43,6 +43,9 @@ public class DownloadThread extends Thread
                 downloadedData = getPureHtmlFromLink(link);
                 time = System.currentTimeMillis() - time;
                 Profiler.download(link, time);
+
+                if(!isHtml(downloadedData))
+                    continue;
             } catch (IOException | IllegalArgumentException e)
             {
                 continue;
@@ -60,6 +63,11 @@ public class DownloadThread extends Thread
             Profiler.downloadThread(link, t1);
         }
 
+    }
+
+    private boolean isHtml(String downloadedData) {
+        downloadedData = downloadedData.toLowerCase();
+        return downloadedData.contains("<html>") && downloadedData.contains("</html>");
     }
 
     private String getPureHtmlFromLink(String link) throws IOException
