@@ -1,4 +1,3 @@
-import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -94,14 +93,15 @@ class Crawler {
     private void runCrawlThread() {
         while (true) {
             String linkToVisit;
-            long t1, time;
+            long t1, time, startCrawlTime;
 
             Profiler.setQueueSize(queue.size());
             // pop from queue
             try {
                 t1 = System.currentTimeMillis();
+                startCrawlTime = t1;
                 linkToVisit = queue.pop();
-                if (linkToVisit == null) continue;
+                if (linkToVisit == null || linkToVisit.startsWith("ftp") || linkToVisit.startsWith("mailto")) continue;
                 time = System.currentTimeMillis() - t1;
                 Profiler.getLinkFromQueueToCrawl(linkToVisit, time);
             } catch (InterruptedException e) {
@@ -123,7 +123,7 @@ class Crawler {
             // check repeated
             try {
                 t1 = System.currentTimeMillis();
-                boolean isExists = dataStore.exists(linkToVisit);
+                boolean isExists = dataStore.exists(normalizeUrl(linkToVisit));
                 time = System.currentTimeMillis() - t1;
                 Profiler.checkExistenceInDataStore(linkToVisit, time, isExists);
                 if (isExists) continue;

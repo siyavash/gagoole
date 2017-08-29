@@ -115,4 +115,8 @@ public class Profiler {
         queueSize = size;
     }
 
+    public synchronized static void crawled(String url, long time) {
+        logger.info(String.format("Completely crawled in time %d: %s", time, url));
+    }
+
 }
