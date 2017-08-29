@@ -349,7 +349,7 @@ class Crawler {
         normalizedUrl = url.replaceFirst("^(http://www\\.|https://www\\.|http://|https://|www\\.)","");
         int slashCounter = 0;
         if(normalizedUrl.endsWith("/")){
-            while(normalizedUrl.charAt(normalizedUrl.length()-slashCounter-1) == '/')
+            while(normalizedUrl.length()-slashCounter > 0 && normalizedUrl.charAt(normalizedUrl.length()-slashCounter-1) == '/')
                 slashCounter++;
         }
         normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length()-slashCounter);
