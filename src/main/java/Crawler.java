@@ -29,8 +29,8 @@ class Crawler
     private String zookeeperClientPort;
     private String zookeeperQuorum;
     private OkHttpClient client = new OkHttpClient();
-    private ArrayBlockingQueue<String> notYetDownloadedLinks = new ArrayBlockingQueue<>(100000);
-    private ArrayBlockingQueue<Pair<String, String>> downloadedData = new ArrayBlockingQueue<>(100000);
+    private ArrayBlockingQueue<String> notYetDownloadedLinks = new ArrayBlockingQueue<>(1000000);
+    private ArrayBlockingQueue<Pair<String, String>> downloadedData = new ArrayBlockingQueue<>(1000000);
 
     public Crawler()
     {

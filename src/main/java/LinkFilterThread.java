@@ -10,14 +10,14 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 
 public class LinkFilterThread extends Thread {
-    private URLQueue urlArrayBlockingQueue;
+    private URLQueue urlQueue;
     private DataStore urlDatabase;
     private OkHttpClient client;
     private final LruCache cache = new LruCache();
     private ArrayBlockingQueue<String> notYetDownloadedLinks;
     //constructor
-    public LinkFilterThread(URLQueue urlArrayBlockingQueue, DataStore urlDatabase, OkHttpClient client, ArrayBlockingQueue notYetDownloadedLinks) {
-        this.urlArrayBlockingQueue = urlArrayBlockingQueue;
+    public LinkFilterThread(URLQueue urlQueue, DataStore urlDatabase, OkHttpClient client, ArrayBlockingQueue notYetDownloadedLinks) {
+        this.urlQueue = urlQueue;
         this.urlDatabase = urlDatabase;
         this.client = client;
         this.notYetDownloadedLinks = notYetDownloadedLinks;
@@ -25,7 +25,8 @@ public class LinkFilterThread extends Thread {
     private String getLinkFromQueue(){
         String candidateLink = null;
         try {
-            candidateLink = urlArrayBlockingQueue.pop();
+
+            candidateLink = urlQueue.pop();
         } catch (InterruptedException e) {
             //TODO: catch deciding
         }
@@ -60,6 +61,7 @@ public class LinkFilterThread extends Thread {
             long t0, timeDifference;
             //get url
             t0 = System.currentTimeMillis();
+            Profiler.setQueueSize(urlQueue.size());
             String linkToVisit = getLinkFromQueue();
             if (linkToVisit == null || linkToVisit.startsWith("ftp") || linkToVisit.startsWith("mailto"))
                 continue;
@@ -72,7 +74,7 @@ public class LinkFilterThread extends Thread {
             Profiler.checkPolitensess(linkToVisit, timeDifference, isPolite);
             if (!isPolite) {
                 Profiler.isImpolite();
-                urlArrayBlockingQueue.push(linkToVisit);
+                urlQueue.push(linkToVisit);
                 continue;
             }
             //check exist
