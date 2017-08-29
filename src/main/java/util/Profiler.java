@@ -14,6 +14,7 @@ public class Profiler {
     private static long crawled = 0;
     private static long allCrawled = 0;
     private static long goodContentType = 0;
+    private static long queueSize = 0;
 
     private static Logger logger = Logger.getLogger(Class.class.getName());
 
@@ -27,6 +28,7 @@ public class Profiler {
                     @Override
                     public void run() {
                         System.out.println();
+                        System.out.println("queue size: " + queueSize);
                         System.out.println("number of fetched links from queue to crawl: " + consumedFromKafka);
                         System.out.println("number of polite domains: " + polites);
                         System.out.println("number of impolite domains: " + impolite);
@@ -107,6 +109,10 @@ public class Profiler {
         String existence = (isExists ? "exists": "does'nt exist");
         if (time != 0)
         logger.info(String.format("Check existence in data store (%s) in time %d: %s", existence, time, url));
+    }
+
+    public synchronized static void setQueueSize(long size) {
+        queueSize = size;
     }
 
 }

@@ -96,6 +96,7 @@ class Crawler {
             String linkToVisit;
             long t1, time;
 
+            Profiler.setQueueSize(queue.size());
             // pop from queue
             try {
                 t1 = System.currentTimeMillis();
