@@ -134,4 +134,14 @@ public class Profiler {
     public static void writeCheckHeaderTimeLog(long checkHeaderTime, String link) {
         logger.info("Checked header in "+ checkHeaderTime + ", for link : " + link);
     }
+
+    public static void dataSentLog(String link, long sentTime)
+    {
+        logger.info("Data sent to hbase and kafka in time " + sentTime + ", link: " + link);
+    }
+
+    public static void downloadThread(String link, long downloadTime)
+    {
+        logger.info("Download thread done in time " + downloadTime + ", link: " + link);
+    }
 }

@@ -1,6 +1,7 @@
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import javafx.util.Pair;
 import util.Profiler;
 
 import java.io.IOException;
@@ -9,10 +10,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class DownloadThread extends Thread
 {
     private ArrayBlockingQueue<String> notYetDownloadedLinksBlockingQueue;
-    private ArrayBlockingQueue<String> downloadedDataBlockingQueue;
+    private ArrayBlockingQueue<Pair<String, String>> downloadedDataBlockingQueue;
     private OkHttpClient client;
 
-    public DownloadThread(ArrayBlockingQueue<String> notYetDownloadedLinksBlockingQueue, ArrayBlockingQueue<String> downloadedDataBlockingQueue, OkHttpClient client)
+    public DownloadThread(ArrayBlockingQueue<String> notYetDownloadedLinksBlockingQueue, ArrayBlockingQueue<Pair<String, String>> downloadedDataBlockingQueue, OkHttpClient client)
     {
         this.downloadedDataBlockingQueue = downloadedDataBlockingQueue;
         this.notYetDownloadedLinksBlockingQueue = notYetDownloadedLinksBlockingQueue;
@@ -24,6 +25,7 @@ public class DownloadThread extends Thread
     {
         while (true)
         {
+            long t1 = System.currentTimeMillis();
             String downloadedData;
             String link;
 
@@ -37,10 +39,10 @@ public class DownloadThread extends Thread
 
             try
             {
-                long t1 = System.currentTimeMillis();
+                long time = System.currentTimeMillis();
                 downloadedData = getPureHtmlFromLink(link);
-                t1 = System.currentTimeMillis() - t1;
-                Profiler.download(link, t1);
+                time = System.currentTimeMillis() - time;
+                Profiler.download(link, time);
             } catch (IOException | IllegalArgumentException e)
             {
                 continue;
@@ -48,11 +50,14 @@ public class DownloadThread extends Thread
 
             try
             {
-                downloadedDataBlockingQueue.put(downloadedData);
+                downloadedDataBlockingQueue.put(new Pair<>(downloadedData, link));
             } catch (InterruptedException e)
             {
                 e.printStackTrace(); //TODO
             }
+
+            t1 = System.currentTimeMillis() - t1;
+            Profiler.downloadThread(link, t1);
         }
 
     }
