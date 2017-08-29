@@ -1,7 +1,6 @@
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import util.*;
 import datastore.DataStore;
 import datastore.LocalDataStore;
 import datastore.PageInfo;
@@ -11,16 +10,19 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import queue.LocalQueue;
 import queue.DistributedQueue;
+import queue.LocalQueue;
 import queue.URLQueue;
+import util.LanguageDetector;
+import util.Profiler;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-class Crawler {
+class Crawler
+{
 
     private int NTHREADS;
 
@@ -34,73 +36,91 @@ class Crawler {
     private String topicName;
     private String zookeeperClientPort;
     private String zookeeperQuorum;
-    private static OkHttpClient client = new OkHttpClient();
+    private OkHttpClient client = new OkHttpClient();
 
-    public Crawler() {
+    public Crawler()
+    {
         loadProperties();
         loadQueue();
         loadDataStore();
         client.setReadTimeout(10, TimeUnit.SECONDS);
 
-        if (initialMode && useKafka) {
+        if (initialMode && useKafka)
+        {
             ArrayList<String> seeds = loadSeeds();
             queue.push(seeds);
             queue.close();
             System.out.println("seed has been published");
             System.exit(20);
-        } else if (initialMode && !useKafka) {
+        } else if (initialMode && !useKafka)
+        {
             ArrayList<String> seeds = loadSeeds();
             queue.push(seeds);
-        } else if (!initialMode && useKafka) {
+        } else if (!initialMode && useKafka)
+        {
             queue.startThread();
         }
     }
 
-    public void start() {
+    public void start()
+    {
         ArrayList<Thread> threads = new ArrayList<>(NTHREADS);
-        for (int i = 0; i < NTHREADS; i++) {
+        for (int i = 0; i < NTHREADS; i++)
+        {
             Thread thread = new Thread(() -> runCrawlThread());
             thread.start();
             threads.add(thread);
         }
     }
 
-    private void loadQueue() {
-        if (useKafka) {
+    private void loadQueue()
+    {
+        if (useKafka)
+        {
             queue = new DistributedQueue(bootstrapServer, topicName);
-        } else {
+        } else
+        {
             queue = new LocalQueue();
         }
     }
 
-    private void loadDataStore() {
-        if (useHbase) {
-            try {
+    private void loadDataStore()
+    {
+        if (useHbase)
+        {
+            try
+            {
                 dataStore = new PageInfoDataStore(zookeeperClientPort, zookeeperQuorum);
-            } catch (IOException e) {
+            } catch (IOException e)
+            {
                 System.err.println("Error in initialising hbase: " + e);
                 System.exit(1);
             }
-        } else {
+        } else
+        {
             dataStore = new LocalDataStore();
         }
     }
 
-    private void runCrawlThread() {
-        while (true) {
+    private void runCrawlThread()
+    {
+        while (true)
+        {
             String linkToVisit;
             long t1, time, startCrawlTime;
 
             Profiler.setQueueSize(queue.size());
             // pop from queue
-            try {
+            try
+            {
                 t1 = System.currentTimeMillis();
                 startCrawlTime = t1;
                 linkToVisit = queue.pop();
                 if (linkToVisit == null || linkToVisit.startsWith("ftp") || linkToVisit.startsWith("mailto")) continue;
                 time = System.currentTimeMillis() - t1;
                 Profiler.getLinkFromQueueToCrawl(linkToVisit, time);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException e)
+            {
                 System.err.println("error in reading from blocking queue: ");
                 continue;
             }
@@ -110,46 +130,55 @@ class Crawler {
             boolean isPolite = isPolite(linkToVisit);
             time = System.currentTimeMillis() - t1;
             Profiler.checkPolitensess(linkToVisit, time, isPolite);
-            if (!isPolite) {
+            if (!isPolite)
+            {
                 Profiler.isImpolite();
                 queue.push(linkToVisit);
                 continue;
             }
 
             // check repeated
-            try {
+            try
+            {
                 t1 = System.currentTimeMillis();
                 boolean isExists = dataStore.exists(normalizeUrl(linkToVisit));
                 time = System.currentTimeMillis() - t1;
                 Profiler.checkExistenceInDataStore(linkToVisit, time, isExists);
                 if (isExists) continue;
-            } catch (IOException e) {
+            } catch (IOException e)
+            {
                 System.err.println("error in check existing in hbase: " + e);
             }
 
             // check content-type
-            try {
+            try
+            {
                 t1 = System.currentTimeMillis();
                 boolean isGoodContentType = isGoodContentType(linkToVisit);
                 time = System.currentTimeMillis() - t1;
                 Profiler.checkContentType(linkToVisit, time, isGoodContentType);
                 if (!isGoodContentType) continue;
-            } catch (IOException e) {
+            } catch (IOException e)
+            {
                 continue;
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException e)
+            {
                 continue;
             }
 
             // make connection and get response
             String html;
-            try {
+            try
+            {
                 t1 = System.currentTimeMillis();
                 html = getPureHtmlFromLink(linkToVisit);
                 time = System.currentTimeMillis() - t1;
                 Profiler.download(linkToVisit, time);
-            } catch (IOException e) {
+            } catch (IOException e)
+            {
                 continue;
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException e)
+            {
                 continue;
             }
 
@@ -173,12 +202,14 @@ class Crawler {
             time = System.currentTimeMillis() - t1;
             Profiler.extractInformationFromDocument(linkToVisit, time);
 
-            try {
+            try
+            {
                 t1 = System.currentTimeMillis();
                 dataStore.put(pageInfo);
                 time = System.currentTimeMillis() - t1;
                 Profiler.putToDataStore(linkToVisit, time);
-            } catch (IOException e) {
+            } catch (IOException e)
+            {
                 System.err.println("errrrror");
                 System.exit(3);
             }
@@ -194,20 +225,25 @@ class Crawler {
         }
     }
 
-    private boolean isPolite(String stringUrl) {
+    private boolean isPolite(String stringUrl)
+    {
         int index = stringUrl.indexOf("/", 8);
         if (index == -1) index = stringUrl.length();
         return !cache.checkIfExist(stringUrl.substring(0, index));
     }
 
-    private boolean isGoodContentType(String link) throws IOException, IllegalArgumentException {
+    private boolean isGoodContentType(String link) throws IOException, IllegalArgumentException
+    {
+//        Connection.Response response2 = Jsoup.connect(link).method(Connection.Method.HEAD).execute();
+//
+//
         long requestTime = System.currentTimeMillis();
         Request request = new Request.Builder().url(link).method("HEAD", null).build();
         requestTime = System.currentTimeMillis() - requestTime;
 
         long responseTime = System.currentTimeMillis();
         Response response = client.newCall(request).execute();
-        responseTime  = System.currentTimeMillis() - responseTime;
+        responseTime = System.currentTimeMillis() - responseTime;
 
         long checkHeaderTime = System.currentTimeMillis();
         String contentType = response.header("Content-type", "text/html");
@@ -221,28 +257,35 @@ class Crawler {
         return contentType.startsWith("text/html");
     }
 
-    private boolean isEnglish(Document document) {
+    private boolean isEnglish(Document document)
+    {
         LanguageDetector languageDetector = new LanguageDetector(document);
         return languageDetector.isEnglish();
     }
 
-    private static String getPureHtmlFromLink(String link) throws IOException {
+    private String getPureHtmlFromLink(String link) throws IOException
+    {
         Request request = new Request.Builder().url(link).build();
         Response response = client.newCall(request).execute();
         return response.body().string();
     }
 
-    private Document parseHtml(String content) {
+    private Document parseHtml(String content)
+    {
         return Jsoup.parse(content);
     }
 
-    public ArrayList<Pair<String, String>> getAllSubLinksWithAnchor(Document document) {
+    public ArrayList<Pair<String, String>> getAllSubLinksWithAnchor(Document document)
+    {
         ArrayList<Pair<String, String>> insideLinks = new ArrayList<Pair<String, String>>();
         Elements elements = document.getElementsByTag("a");
-        if (elements != null) {
-            for (Element tag : elements) {
+        if (elements != null)
+        {
+            for (Element tag : elements)
+            {
                 String href = tag.absUrl("href");
-                if (!href.equals("") && !href.startsWith("mailto") && !href.startsWith("ftp")) {
+                if (!href.equals("") && !href.startsWith("mailto") && !href.startsWith("ftp"))
+                {
                     String anchor = tag.text();
                     insideLinks.add(new Pair<String, String>(href, anchor));
                 }
@@ -252,15 +295,18 @@ class Crawler {
         return insideLinks;
     }
 
-    ArrayList<String> getAllSublinksFromPageInfo(PageInfo pageInfo) {
+    ArrayList<String> getAllSublinksFromPageInfo(PageInfo pageInfo)
+    {
         ArrayList<String> insideLinks = new ArrayList<String>();
-        for (Pair<String, String> pair : pageInfo.getSubLinks()) {
+        for (Pair<String, String> pair : pageInfo.getSubLinks())
+        {
             insideLinks.add(pair.getKey());
         }
         return insideLinks;
     }
 
-    PageInfo getPageInfo(String stringUrl, Document document) {
+    PageInfo getPageInfo(String stringUrl, Document document)
+    {
         PageInfo data = new PageInfo();
         data.setUrl(normalizeUrl(stringUrl));
         data.setSubLinks(getAllSubLinksWithAnchor(document));
@@ -287,11 +333,13 @@ class Crawler {
         return data;
     }
 
-    private void loadProperties() {
+    private void loadProperties()
+    {
         Properties prop = new Properties();
         InputStream input = null;
 
-        try {
+        try
+        {
 
             input = new FileInputStream("config.properties");
             prop.load(input);
@@ -304,51 +352,62 @@ class Crawler {
             topicName = prop.getProperty("topic-name", "test");
             zookeeperClientPort = prop.getProperty("zookeeper-client-port", "2181");
             zookeeperQuorum = prop.getProperty("zookeeper-quorum", "master,slave");
-        } catch (IOException ex) {
+        } catch (IOException ex)
+        {
             System.err.println("error in reading config file:");
             ex.printStackTrace();
-        } finally {
-            if (input != null) {
-                try {
+        } finally
+        {
+            if (input != null)
+            {
+                try
+                {
                     input.close();
-                } catch (IOException e) {
+                } catch (IOException e)
+                {
                     e.printStackTrace();
                 }
             }
         }
     }
 
-    private ArrayList<String> loadSeeds() {
-        try {
+    private ArrayList<String> loadSeeds()
+    {
+        try
+        {
             ArrayList<String> seedUrls = new ArrayList<String>(500);
             File file = new File("seed.txt");
             FileReader fileReader = new FileReader(file);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             String line;
-            while ((line = bufferedReader.readLine()) != null) {
+            while ((line = bufferedReader.readLine()) != null)
+            {
                 seedUrls.add("http://www." + line);
             }
             fileReader.close();
             return seedUrls;
-        } catch (IOException e) {
+        } catch (IOException e)
+        {
             System.err.println("error in loading seed: " + e);
             System.exit(1);
             return null;
         }
     }
 
-    public String normalizeUrl(String url) {
+    public String normalizeUrl(String url)
+    {
         String normalizedUrl;
         url = url.toLowerCase();
         if (url.startsWith("ftp"))
             return null;
-        normalizedUrl = url.replaceFirst("^(http://www\\.|https://www\\.|http://|https://|www\\.)","");
+        normalizedUrl = url.replaceFirst("^(http://www\\.|https://www\\.|http://|https://|www\\.)", "");
         int slashCounter = 0;
-        if(normalizedUrl.endsWith("/")){
-            while(normalizedUrl.length()-slashCounter > 0 && normalizedUrl.charAt(normalizedUrl.length()-slashCounter-1) == '/')
+        if (normalizedUrl.endsWith("/"))
+        {
+            while (normalizedUrl.length() - slashCounter > 0 && normalizedUrl.charAt(normalizedUrl.length() - slashCounter - 1) == '/')
                 slashCounter++;
         }
-        normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length()-slashCounter);
+        normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - slashCounter);
         return normalizedUrl;
     }
 }
