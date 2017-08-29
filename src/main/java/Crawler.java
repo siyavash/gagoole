@@ -38,7 +38,6 @@ class Crawler
         loadQueue();
         loadDataStore();
         client.setReadTimeout(10, TimeUnit.SECONDS);
-
         if (initialMode && useKafka)
         {
             ArrayList<String> seeds = loadSeeds();
@@ -60,7 +59,7 @@ class Crawler
     {
         for (int i = 0; i < NTHREADS; i++)
         {
-            new LinkFilterThread(queue, dataStore, client).start();
+            new LinkFilterThread(queue, dataStore, client, notYetDownloadedLinks).start();
             new DataSenderThread(dataStore, queue, downloadedData).start();
         }
         for (int i = 0; i < 1000; i++) {

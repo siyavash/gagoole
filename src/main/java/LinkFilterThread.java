@@ -6,6 +6,7 @@ import queue.URLQueue;
 import util.Profiler;
 
 import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
 
 
 public class LinkFilterThread extends Thread {
@@ -13,11 +14,13 @@ public class LinkFilterThread extends Thread {
     private DataStore urlDatabase;
     private OkHttpClient client;
     private final LruCache cache = new LruCache();
+    private ArrayBlockingQueue<String> notYetDownloadedLinks;
     //constructor
-    public LinkFilterThread(URLQueue urlArrayBlockingQueue, DataStore urlDatabase, OkHttpClient client) {
+    public LinkFilterThread(URLQueue urlArrayBlockingQueue, DataStore urlDatabase, OkHttpClient client, ArrayBlockingQueue notYetDownloadedLinks) {
         this.urlArrayBlockingQueue = urlArrayBlockingQueue;
         this.urlDatabase = urlDatabase;
         this.client = client;
+        this.notYetDownloadedLinks = notYetDownloadedLinks;
     }
     private String getLinkFromQueue(){
         String candidateLink = null;
@@ -86,6 +89,11 @@ public class LinkFilterThread extends Thread {
             Profiler.checkContentType(linkToVisit, timeDifference, isGoodContentType);
             if (!isGoodContentType)
                 continue;
+            try {
+                notYetDownloadedLinks.put(linkToVisit);
+            } catch (InterruptedException e) {
+                //TODO catch deciding
+            }
         }
     }
 }
