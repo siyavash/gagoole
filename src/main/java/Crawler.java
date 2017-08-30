@@ -3,6 +3,7 @@ import datastore.DataStore;
 import datastore.LocalDataStore;
 import datastore.PageInfoDataStore;
 import javafx.util.Pair;
+import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 import queue.DistributedQueue;
 import queue.LocalQueue;
 import queue.URLQueue;
@@ -56,14 +57,14 @@ class Crawler
 
     public void start()
     {
-        ExecutorService filterSendDownloadPool = Executors.newFixedThreadPool(2 * NTHREADS + 500);
+        ExecutorService filterSendDownloadPool = Executors.newFixedThreadPool(2 * NTHREADS + DLTHREADS);
         for (int i = 0; i < NTHREADS; i++)
         {
             filterSendDownloadPool.submit(new LinkFilterThread(queue, dataStore, notYetDownloadedLinks));
             filterSendDownloadPool.submit(new DataSenderThread(dataStore, queue, downloadedData));
         }
 
-        for (int i = 0; i < 500; i++) {
+        for (int i = 0; i < DLTHREADS; i++) {
             filterSendDownloadPool.submit(new DownloadThread(notYetDownloadedLinks, downloadedData, queue));
         }
         filterSendDownloadPool.shutdown();
