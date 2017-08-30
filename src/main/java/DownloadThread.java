@@ -76,6 +76,7 @@ public class DownloadThread extends Thread
             try
             {
                 downloadedDataBlockingQueue.put(new Pair<>(downloadedData, link));
+                Profiler.setDownloadedSize(downloadedDataBlockingQueue.size());
             } catch (InterruptedException e)
             {
                 e.printStackTrace(); //TODO

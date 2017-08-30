@@ -25,6 +25,7 @@ public class LinkFilterThread extends Thread {
 //            long timeDiff = System.currentTimeMillis() - t0;
 //            Profiler.getLinkFromQueueToCrawl(candidateLink, timeDiff);
         } catch (InterruptedException e) {
+            e.printStackTrace();
             //TODO: catch deciding
         }
         return candidateLink;
@@ -39,6 +40,7 @@ public class LinkFilterThread extends Thread {
         try {
             exist = urlDatabase.exists(linkToVisit);
         } catch (IOException e) {
+            e.printStackTrace();
             //TODO: catch deciding
         }
         return exist;
@@ -53,6 +55,7 @@ public class LinkFilterThread extends Thread {
         try {
             notYetDownloadedLinks.put(linkToVisit);
         } catch (InterruptedException e) {
+            e.printStackTrace();
             //TODO catch deciding
         }
     }
