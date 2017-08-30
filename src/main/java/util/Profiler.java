@@ -195,4 +195,8 @@ public class Profiler
     {
         logger.info("Error occurred after download and pushed back to kafka in time: " + time + ", link: " + link);
     }
+
+    public static void logGapTime(String link, long gapTime) {
+        logger.info("Gap time after download html and before put to downloaded queue: " + gapTime + ", link: " + link);
+    }
 }

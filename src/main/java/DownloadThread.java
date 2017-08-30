@@ -42,14 +42,14 @@ public class DownloadThread extends Thread
             {
                 continue; //TODO check if this is good enough
             }
-
+            long gapTime = 0;
             try
             {
                 long time = System.currentTimeMillis();
                 downloadedData = getPureHtmlFromLink(link);
                 time = System.currentTimeMillis() - time;
                 Profiler.download(link, time);
-
+                gapTime = System.currentTimeMillis();
                 time = System.currentTimeMillis();
                 if(!isHtml(downloadedData))
                 {
@@ -72,6 +72,8 @@ public class DownloadThread extends Thread
 
             try
             {
+                gapTime = System.currentTimeMillis() - gapTime;
+                Profiler.logGapTime(link, gapTime);
                 downloadedDataBlockingQueue.put(new Pair<>(downloadedData, link));
                 Profiler.setDownloadedSize(downloadedDataBlockingQueue.size());
             } catch (InterruptedException e)
