@@ -20,10 +20,10 @@ public class LinkFilterThread extends Thread {
     private String getLinkFromQueue(){
         String candidateLink = null;
         try {
-            long t0 = System.currentTimeMillis();
+//            long t0 = System.currentTimeMillis();
             candidateLink = urlQueue.pop();
-            long timeDiff = System.currentTimeMillis() - t0;
-            Profiler.getLinkFromQueueToCrawl(candidateLink, timeDiff);
+//            long timeDiff = System.currentTimeMillis() - t0;
+//            Profiler.getLinkFromQueueToCrawl(candidateLink, timeDiff);
         } catch (InterruptedException e) {
             //TODO: catch deciding
         }
@@ -62,13 +62,13 @@ public class LinkFilterThread extends Thread {
         while (true){
             long t0, timeDifference;
             //get url
-//            t0 = System.currentTimeMillis();
+            t0 = System.currentTimeMillis();
             Profiler.setQueueSize(urlQueue.size());
+            timeDifference = System.currentTimeMillis() - t0;
+            Profiler.getLinkFromQueueToCrawl("google.com", timeDifference);
             String linkToVisit = getLinkFromQueue();
             if (linkToVisit == null || linkToVisit.startsWith("ftp") || linkToVisit.startsWith("mailto"))
                 continue;
-//            timeDifference = System.currentTimeMillis() - t0;
-//            Profiler.getLinkFromQueueToCrawl(linkToVisit, timeDifference);
             //check politeness
             t0 = System.currentTimeMillis();
             boolean isPolite = checkIfPolite(linkToVisit);
