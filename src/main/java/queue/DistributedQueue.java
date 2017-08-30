@@ -51,7 +51,7 @@ public class DistributedQueue extends Thread implements URLQueue {
     }
 
     public String pop() throws InterruptedException{
-        return arrayBlockingQueue.poll();
+        return arrayBlockingQueue.take();
     }
 
     public void push(ArrayList<String> arrayURLs) {

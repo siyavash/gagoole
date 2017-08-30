@@ -4,10 +4,11 @@ import org.apache.log4j.Logger;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 public class Profiler {
-    private static long consumedFromKafka = 0;
+    private static AtomicLong consumedFromKafka = new AtomicLong(0);
     private static long polites = 0;
     private static long impolite = 0;
     private static long goodLanguage = 0;
@@ -40,7 +41,7 @@ public class Profiler {
                         System.out.println("not yet queue size: " + notYetSize);
                         System.out.println();
 
-                        consumedFromKafka = 0;
+                        consumedFromKafka.set(0);
                         goodContentType = 0;
                         polites = 0;
                         impolite = 0;
@@ -54,10 +55,10 @@ public class Profiler {
         thread.start();
     }
 
-    public synchronized static void getLinkFromQueueToCrawl(String url, long time) {
+    public static void getLinkFromQueueToCrawl(String url, long time) {
         if (time != 0)
         logger.info(String.format("Got link from queue in time %d: %s", time, url));
-        consumedFromKafka++;
+        consumedFromKafka.incrementAndGet();
     }
 
     public synchronized static void checkPolitensess(String url, long time, boolean isPolite) {
