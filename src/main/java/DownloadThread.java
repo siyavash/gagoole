@@ -87,6 +87,9 @@ public class DownloadThread extends Thread
         }
         Request request = new Request.Builder().url(link).build();
         Response response = client.newCall(request).execute();
-        return response.body().string();
+        String body = response.body().string();
+        response.body().close();
+
+        return body;
     }
 }
