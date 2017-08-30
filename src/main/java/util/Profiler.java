@@ -65,24 +65,21 @@ public class Profiler
 
     public static void getLinkFromQueueToCrawl(String url, long time)
     {
-        if (time != 0)
-            logger.info(String.format("Got link from queue in time %d: %s", time, url));
+        logger.info(String.format("Got link from queue in time %d: %s", time, url));
         consumedFromKafka.incrementAndGet();
     }
 
     public static void checkPolitensess(String url, long time, boolean isPolite)
     {
         String politeness = (isPolite ? "is polite" : "not polite");
-        if (time != 0)
-            logger.info(String.format("Checked Politeness (%s) in time %d: %s", politeness, time, url));
+        logger.info(String.format("Checked Politeness (%s) in time %d: %s", politeness, time, url));
         if (isPolite) polites.incrementAndGet();
     }
 
     public static void checkContentType(String url, long time, boolean isGood)
     {
         String goodness = (isGood ? "good" : "bad");
-        if (time != 0)
-            logger.info(String.format("Checked content type (%s) in time %d: %s", isGood, time, url));
+        logger.info(String.format("Checked content type (%s) in time %d: %s", isGood, time, url));
         if (isGood) goodContentType.incrementAndGet();
     }
 
@@ -94,8 +91,7 @@ public class Profiler
     public static void goodLanguage(String url, long time, boolean isEnglish)
     {
         String beingEnglish = (isEnglish ? "is english" : "not english");
-        if (time != 0)
-            logger.info(String.format("Checked good language (%s) in time %d: %s", beingEnglish, time, url));
+        logger.info(String.format("Checked good language (%s) in time %d: %s", beingEnglish, time, url));
         if (isEnglish) goodLanguage.incrementAndGet();
     }
 
@@ -108,27 +104,23 @@ public class Profiler
 
     public static void download(String url, long time)
     {
-        if (time != 0)
-            logger.info(String.format("Downloaded in time %d: %s", time, url));
+        logger.info(String.format("Downloaded in time %d: %s", time, url));
     }
 
     public static void parse(String url, long time)
     {
-        if (time != 0)
-            logger.info(String.format("Parsed in time %d: %s", time, url));
+        logger.info(String.format("Parsed in time %d: %s", time, url));
     }
 
     public static void putToDataStore(String url, long time)
     {
-        if (time != 0)
-            logger.info(String.format("Putted in data store in time %d: %s", time, url));
+        logger.info(String.format("Putted in data store in time %d: %s", time, url));
     }
 
     public static void checkExistenceInDataStore(String url, long time, boolean isExists)
     {
         String existence = (isExists ? "exists" : "does'nt exist");
-        if (time != 0)
-            logger.info(String.format("Check existence in data store (%s) in time %d: %s", existence, time, url));
+        logger.info(String.format("Check existence in data store (%s) in time %d: %s", existence, time, url));
     }
 
     public static void setQueueSize(long size)

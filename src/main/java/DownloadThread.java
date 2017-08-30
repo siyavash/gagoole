@@ -24,6 +24,9 @@ public class DownloadThread extends Thread
         client = new OkHttpClient();
         client.setReadTimeout(1000, TimeUnit.MILLISECONDS);
         client.setConnectTimeout(1000, TimeUnit.MILLISECONDS);
+        client.setFollowRedirects(false);
+        client.setFollowSslRedirects(false);
+        client.setRetryOnConnectionFailure(false);
     }
 
     @Override
