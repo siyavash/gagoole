@@ -1,16 +1,7 @@
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.sun.xml.internal.bind.v2.TODO;
 import javafx.util.Pair;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import queue.URLQueue;
 import util.Profiler;
 
