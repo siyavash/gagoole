@@ -166,7 +166,7 @@ public class DataSenderThread extends Thread
 
     private String normalizeUrl(String link)
     {
-        String normalizedUrl = link.replaceFirst("^(http://www\\.|https://www\\.|http://|https://|www\\.)", "");
+        String normalizedUrl = link.replaceFirst("(www\\.)", "");
 
         int slashCounter = 0;
         if (normalizedUrl.endsWith("/"))
