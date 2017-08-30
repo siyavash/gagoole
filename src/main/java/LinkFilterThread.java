@@ -1,4 +1,3 @@
-import com.squareup.okhttp.OkHttpClient;
 import datastore.DataStore;
 import queue.URLQueue;
 import util.Profiler;
@@ -13,7 +12,7 @@ public class LinkFilterThread extends Thread {
     private final LruCache cache = new LruCache();
     private ArrayBlockingQueue<String> notYetDownloadedLinks;
     //constructor
-    public LinkFilterThread(URLQueue urlQueue, DataStore urlDatabase, ArrayBlockingQueue notYetDownloadedLinks) {
+    public LinkFilterThread(URLQueue urlQueue, DataStore urlDatabase, ArrayBlockingQueue<String> notYetDownloadedLinks) {
         this.urlQueue = urlQueue;
         this.urlDatabase = urlDatabase;
         this.notYetDownloadedLinks = notYetDownloadedLinks;
@@ -44,11 +43,9 @@ public class LinkFilterThread extends Thread {
     }
     private boolean isGoodContentType(String link) {
         link = link.toLowerCase();
-        if (link.endsWith(".jpg") || link.endsWith(".gif") || link.endsWith(".pdf") || link.endsWith(".deb")
-                || link.endsWith(".jpeg") || link.endsWith(".png") || link.endsWith(".txt") || link.endsWith(".exe")
-                    || link.endsWith(".gz") || link.endsWith(".rar") || link.endsWith(".zip") || link.endsWith(".tar.gz"))
-            return false;
-        return true;
+        return !link.endsWith(".jpg") && !link.endsWith(".gif") && !link.endsWith(".pdf") && !link.endsWith(".deb")
+                && !link.endsWith(".jpeg") && !link.endsWith(".png") && !link.endsWith(".txt") && !link.endsWith(".exe")
+                && !link.endsWith(".gz") && !link.endsWith(".rar") && !link.endsWith(".zip") && !link.endsWith(".tar.gz");
     }
     private void addLinkToArrayBlockingQueue(String linkToVisit) {
         try {
