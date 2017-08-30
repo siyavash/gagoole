@@ -9,15 +9,13 @@ import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class DownloadThread extends Thread
-{
+public class DownloadThread extends Thread {
     private ArrayBlockingQueue<String> notYetDownloadedLinksBlockingQueue;
     private ArrayBlockingQueue<Pair<String, String>> downloadedDataBlockingQueue;
     private URLQueue urlQueue;
     private OkHttpClient client;
 
-    public DownloadThread(ArrayBlockingQueue<String> notYetDownloadedLinksBlockingQueue, ArrayBlockingQueue<Pair<String, String>> downloadedDataBlockingQueue, URLQueue urlQueue)
-    {
+    public DownloadThread(ArrayBlockingQueue<String> notYetDownloadedLinksBlockingQueue, ArrayBlockingQueue<Pair<String, String>> downloadedDataBlockingQueue, URLQueue urlQueue) {
         this.downloadedDataBlockingQueue = downloadedDataBlockingQueue;
         this.notYetDownloadedLinksBlockingQueue = notYetDownloadedLinksBlockingQueue;
         this.urlQueue = urlQueue;
@@ -30,39 +28,32 @@ public class DownloadThread extends Thread
     }
 
     @Override
-    public void run()
-    {
-        while (true)
-        {
+    public void run() {
+        while (true) {
             long t1 = System.currentTimeMillis();
             String downloadedData = null;
             String link;
 
-            try
-            {
+            try {
                 link = notYetDownloadedLinksBlockingQueue.take();
-            } catch (InterruptedException e)
-            {
+            } catch (InterruptedException e) {
                 continue; //TODO check if this is good enough
             }
             long gapTime = 0;
-            try
-            {
+            try {
                 long time = System.currentTimeMillis();
                 downloadedData = getPureHtmlFromLink(link);
                 time = System.currentTimeMillis() - time;
                 Profiler.download(link, time);
                 gapTime = System.currentTimeMillis();
                 time = System.currentTimeMillis();
-                if(!isHtml(downloadedData))
-                {
+                if(!isHtml(downloadedData)) {
                     continue;
                 }
                 time = System.currentTimeMillis() - time;
                 Profiler.htmlCheck(link, time);
 
-            } catch (IOException e)
-            {
+            } catch (IOException e) {
                 long time = System.currentTimeMillis();
                 urlQueue.push(link);
                 time = System.currentTimeMillis() - time;
@@ -73,14 +64,12 @@ public class DownloadThread extends Thread
                 //TODO
             }
 
-            try
-            {
+            try {
                 gapTime = System.currentTimeMillis() - gapTime;
                 Profiler.logGapTime(link, gapTime);
                 downloadedDataBlockingQueue.put(new Pair<>(downloadedData, link));
                 Profiler.setDownloadedSize(downloadedDataBlockingQueue.size());
-            } catch (InterruptedException e)
-            {
+            } catch (InterruptedException e) {
                 e.printStackTrace(); //TODO
             }
 
@@ -95,10 +84,8 @@ public class DownloadThread extends Thread
         return downloadedData.contains("<html") && downloadedData.contains("</html>");
     }
 
-    private String getPureHtmlFromLink(String link) throws IOException
-    {
-        if (link == null)
-        {
+    private String getPureHtmlFromLink(String link) throws IOException {
+        if (link == null) {
             return null;
         }
         Request request = new Request.Builder().url(link).build();
