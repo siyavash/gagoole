@@ -16,7 +16,7 @@ class Crawler
 {
 
     private int NTHREADS;
-
+    private int DLTHREADS;
     private URLQueue queue;
     private final LruCache cache = new LruCache();
     private DataStore dataStore;
@@ -114,7 +114,8 @@ class Crawler
             input = new FileInputStream("config.properties");
             prop.load(input);
 
-            NTHREADS = Integer.parseInt(prop.getProperty("threads-number", "500"));
+            NTHREADS = Integer.parseInt(prop.getProperty("filter-send-threads-number", "500"));
+            DLTHREADS = Integer.parseInt(prop.getProperty("download-thread-number", "200"));
             initialMode = prop.getProperty("initial-mode", "true").equals("true");
             useKafka = prop.getProperty("use-kafka", "false").equals("true");
             useHbase = prop.getProperty("use-hbase", "false").equals("true");
