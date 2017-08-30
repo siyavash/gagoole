@@ -3,7 +3,6 @@ import datastore.DataStore;
 import datastore.LocalDataStore;
 import datastore.PageInfoDataStore;
 import javafx.util.Pair;
-import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 import queue.DistributedQueue;
 import queue.LocalQueue;
 import queue.URLQueue;
@@ -19,7 +18,6 @@ class Crawler
     private int NTHREADS;
     private int DLTHREADS;
     private URLQueue queue;
-    private final LruCache cache = new LruCache();
     private DataStore dataStore;
     private boolean initialMode = true;
     private boolean useKafka = false;
