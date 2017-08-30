@@ -9,14 +9,14 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Profiler {
     private static AtomicLong consumedFromKafka = new AtomicLong(0);
-    private static long polites = 0;
-    private static long impolite = 0;
-    private static long goodLanguage = 0;
-    private static long crawled = 0;
-    private static long allCrawled = 0;
-    private static long goodContentType = 0;
+    private static AtomicLong polites = new AtomicLong(0);
+    private static AtomicLong impolite = new AtomicLong(0);
+    private static AtomicLong goodLanguage = new AtomicLong(0);
+    private static AtomicLong crawled = new AtomicLong(0);
+    private static AtomicLong allCrawled = new AtomicLong(0);
+    private static AtomicLong goodContentType = new AtomicLong(0);
     private static AtomicLong queueSize = new AtomicLong(0);
-    private static long notYetSize = 0;
+    private static AtomicLong notYetSize = new AtomicLong(0);
     private static Logger logger = Logger.getLogger(Class.class.getName());
 
     public static void start() {
@@ -42,11 +42,11 @@ public class Profiler {
                         System.out.println();
 
                         consumedFromKafka.set(0);
-                        goodContentType = 0;
-                        polites = 0;
-                        impolite = 0;
-                        goodLanguage = 0;
-                        crawled = 0;
+                        goodContentType.set(0);
+                        polites.set(0);
+                        impolite.set(0);
+                        goodLanguage.set(0);
+                        crawled.set(0);
                     }
                 }, 0, 1000);
             }
@@ -61,53 +61,53 @@ public class Profiler {
         consumedFromKafka.incrementAndGet();
     }
 
-    public synchronized static void checkPolitensess(String url, long time, boolean isPolite) {
+    public static void checkPolitensess(String url, long time, boolean isPolite) {
         String politeness = (isPolite ? "is polite": "not polite");
         if (time != 0)
         logger.info(String.format("Checked Politeness (%s) in time %d: %s", politeness, time, url));
-        if (isPolite) polites++;
+        if (isPolite) polites.incrementAndGet();
     }
 
-    public synchronized static void checkContentType(String url, long time, boolean isGood) {
+    public static void checkContentType(String url, long time, boolean isGood) {
         String goodness = (isGood ? "good": "bad");
         if (time != 0)
             logger.info(String.format("Checked content type (%s) in time %d: %s", isGood, time, url));
-        if (isGood) goodContentType++;
+        if (isGood) goodContentType.incrementAndGet();
     }
 
-    public synchronized static void isImpolite() {
-        impolite++;
+    public static void isImpolite() {
+        impolite.incrementAndGet();
     }
 
-    public synchronized static void goodLanguage(String url, long time, boolean isEnglish) {
+    public static void goodLanguage(String url, long time, boolean isEnglish) {
         String beingEnglish = (isEnglish ? "is english": "not english");
         if (time != 0)
         logger.info(String.format("Checked good language (%s) in time %d: %s", beingEnglish, time, url));
-        if (isEnglish) goodLanguage++;
+        if (isEnglish) goodLanguage.incrementAndGet();
     }
 
-    public synchronized static void extractInformationFromDocument(String url, long time) {
+    public static void extractInformationFromDocument(String url, long time) {
         logger.info(String.format("Extracted info from document in time %d: %s", time, url));
-        allCrawled++;
-        crawled++;
+        allCrawled.incrementAndGet();
+        crawled.incrementAndGet();
     }
 
-    public synchronized static void download(String url, long time) {
+    public static void download(String url, long time) {
         if (time != 0)
             logger.info(String.format("Downloaded in time %d: %s", time, url));
     }
 
-    public synchronized static void parse(String url, long time) {
+    public static void parse(String url, long time) {
         if (time != 0)
         logger.info(String.format("Parsed in time %d: %s", time, url));
     }
 
-    public synchronized static void putToDataStore(String url, long time) {
+    public static void putToDataStore(String url, long time) {
         if (time != 0)
         logger.info(String.format("Putted in data store in time %d: %s", time, url));
     }
 
-    public synchronized static void checkExistenceInDataStore(String url, long time, boolean isExists) {
+    public static void checkExistenceInDataStore(String url, long time, boolean isExists) {
         String existence = (isExists ? "exists": "does'nt exist");
         if (time != 0)
         logger.info(String.format("Check existence in data store (%s) in time %d: %s", existence, time, url));
@@ -117,15 +117,15 @@ public class Profiler {
         queueSize.set(size);
     }
 
-    public synchronized static void setNotYetSize(long size){
-        notYetSize = size;
+    public static void setNotYetSize(long size){
+        notYetSize.set(size);
     }
 
-    public synchronized static void crawled(String url, long time) {
+    public static void crawled(String url, long time) {
         logger.info(String.format("Completely crawled in time %d: %s", time, url));
     }
 
-    public synchronized static void pushToQueue(String url, long time) {
+    public static void pushToQueue(String url, long time) {
         logger.info(String.format("pushed to queue in time: %d %s", time, url));
     }
 
