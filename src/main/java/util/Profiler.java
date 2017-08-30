@@ -18,6 +18,7 @@ public class Profiler
     private static AtomicLong goodContentType = new AtomicLong(0);
     private static AtomicLong queueSize = new AtomicLong(0);
     private static AtomicLong notYetSize = new AtomicLong(0);
+    private static AtomicLong downloadedSize = new AtomicLong(0);
     private static Logger logger = Logger.getLogger(Class.class.getName());
 
     public static void start()
@@ -45,6 +46,7 @@ public class Profiler
                         System.out.println("number of active threads: " + Thread.activeCount());
                         System.out.println("number of all crawled links: " + allCrawled);
                         System.out.println("not yet queue size: " + notYetSize);
+                        System.out.println("downloaded data queue size: " + downloadedSize);
                         System.out.println();
 
                         consumedFromKafka.set(0);
@@ -137,6 +139,11 @@ public class Profiler
     public static void setNotYetSize(long size)
     {
         notYetSize.set(size);
+    }
+
+    public static void setDownloadedSize(long size)
+    {
+        downloadedSize.set(size);
     }
 
     public static void crawled(String url, long time)
