@@ -1,32 +1,47 @@
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.sun.xml.internal.bind.v2.TODO;
 import javafx.util.Pair;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import queue.URLQueue;
 import util.Profiler;
 
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class DownloadThread extends Thread
 {
     private ArrayBlockingQueue<String> notYetDownloadedLinksBlockingQueue;
     private ArrayBlockingQueue<Pair<String, String>> downloadedDataBlockingQueue;
+    private URLQueue urlQueue;
     private OkHttpClient client;
 
-    public DownloadThread(ArrayBlockingQueue<String> notYetDownloadedLinksBlockingQueue, ArrayBlockingQueue<Pair<String, String>> downloadedDataBlockingQueue)
+    public DownloadThread(ArrayBlockingQueue<String> notYetDownloadedLinksBlockingQueue, ArrayBlockingQueue<Pair<String, String>> downloadedDataBlockingQueue, URLQueue urlQueue)
     {
         this.downloadedDataBlockingQueue = downloadedDataBlockingQueue;
         this.notYetDownloadedLinksBlockingQueue = notYetDownloadedLinksBlockingQueue;
+        this.urlQueue = urlQueue;
+        client = new OkHttpClient();
+        client.setReadTimeout(2, TimeUnit.SECONDS);
+        client.setConnectTimeout(2, TimeUnit.SECONDS);
     }
 
     @Override
     public void run()
     {
-        client = new OkHttpClient();
         while (true)
         {
             long t1 = System.currentTimeMillis();
-            String downloadedData;
+            String downloadedData = null;
             String link;
 
             try
@@ -46,9 +61,12 @@ public class DownloadThread extends Thread
 
                 if(!isHtml(downloadedData))
                     continue;
-            } catch (IOException | IllegalArgumentException e)
+            } catch (IOException e)
             {
+                urlQueue.push(link);
                 continue;
+            } catch (IllegalArgumentException e){
+                //TODO
             }
 
             try

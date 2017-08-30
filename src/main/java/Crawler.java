@@ -3,6 +3,9 @@ import datastore.DataStore;
 import datastore.LocalDataStore;
 import datastore.PageInfoDataStore;
 import javafx.util.Pair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import queue.DistributedQueue;
 import queue.LocalQueue;
 import queue.URLQueue;
@@ -36,7 +39,7 @@ class Crawler
         loadProperties();
         loadQueue();
         loadDataStore();
-        client.setReadTimeout(10, TimeUnit.SECONDS);
+        client.setReadTimeout(1, TimeUnit.SECONDS);
         if (initialMode && useKafka)
         {
             ArrayList<String> seeds = loadSeeds();
@@ -63,7 +66,7 @@ class Crawler
         }
         ExecutorService pool = Executors.newFixedThreadPool(500);
         for (int i = 0; i < 500; i++) {
-            pool.submit(new DownloadThread(notYetDownloadedLinks, downloadedData));
+            pool.submit(new DownloadThread(notYetDownloadedLinks, downloadedData, queue));
         }
         pool.shutdown();
         try {
