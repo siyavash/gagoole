@@ -85,7 +85,7 @@ public class DownloadThread extends Thread
 
     private boolean isHtml(String downloadedData) {
         downloadedData = downloadedData.toLowerCase();
-        return downloadedData.contains("<html>") && downloadedData.contains("</html>");
+        return downloadedData.contains("<html") && downloadedData.contains("</html>");
     }
 
     private String getPureHtmlFromLink(String link) throws IOException
