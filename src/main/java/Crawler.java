@@ -56,18 +56,19 @@ class Crawler
 
     public void start()
     {
+        ExecutorService filterSendDownloadPool = Executors.newFixedThreadPool(2 * NTHREADS + 500);
         for (int i = 0; i < NTHREADS; i++)
         {
-            new LinkFilterThread(queue, dataStore, notYetDownloadedLinks).start();
-            new DataSenderThread(dataStore, queue, downloadedData).start();
+            filterSendDownloadPool.submit(new LinkFilterThread(queue, dataStore, notYetDownloadedLinks));
+            filterSendDownloadPool.submit(new DataSenderThread(dataStore, queue, downloadedData));
         }
-        ExecutorService pool = Executors.newFixedThreadPool(500);
+
         for (int i = 0; i < 500; i++) {
-            pool.submit(new DownloadThread(notYetDownloadedLinks, downloadedData, queue));
+            filterSendDownloadPool.submit(new DownloadThread(notYetDownloadedLinks, downloadedData, queue));
         }
-        pool.shutdown();
+        filterSendDownloadPool.shutdown();
         try {
-            pool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+            filterSendDownloadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             //TODO exception handling
         }

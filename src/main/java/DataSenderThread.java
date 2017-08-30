@@ -48,6 +48,8 @@ public class DataSenderThread extends Thread
             }
 
             Document parsedData = parseData(pageData, link);
+            if(parsedData == null)
+                continue;
             if (!isEnglish(parsedData, link))
             {
                 continue;
@@ -193,7 +195,8 @@ public class DataSenderThread extends Thread
     private Document parseData(String pageData, String link)
     {
         long t1 = System.currentTimeMillis();
-
+        if(pageData == null)
+            return null;
         Document document = Jsoup.parse(pageData);
 
         t1 = System.currentTimeMillis() - t1;

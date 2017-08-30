@@ -22,8 +22,8 @@ public class DownloadThread extends Thread
         this.notYetDownloadedLinksBlockingQueue = notYetDownloadedLinksBlockingQueue;
         this.urlQueue = urlQueue;
         client = new OkHttpClient();
-        client.setReadTimeout(2, TimeUnit.SECONDS);
-        client.setConnectTimeout(2, TimeUnit.SECONDS);
+        client.setReadTimeout(500, TimeUnit.MILLISECONDS);
+        client.setConnectTimeout(500, TimeUnit.MILLISECONDS);
     }
 
     @Override
