@@ -15,7 +15,7 @@ public class Profiler {
     private static long crawled = 0;
     private static long allCrawled = 0;
     private static long goodContentType = 0;
-    private static long queueSize = 0;
+    private static AtomicLong queueSize = new AtomicLong(0);
     private static long notYetSize = 0;
     private static Logger logger = Logger.getLogger(Class.class.getName());
 
@@ -113,8 +113,8 @@ public class Profiler {
         logger.info(String.format("Check existence in data store (%s) in time %d: %s", existence, time, url));
     }
 
-    public synchronized static void setQueueSize(long size) {
-        queueSize = size;
+    public static void setQueueSize(long size) {
+        queueSize.set(size);
     }
 
     public synchronized static void setNotYetSize(long size){
