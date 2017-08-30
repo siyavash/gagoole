@@ -64,11 +64,13 @@ public class LinkFilterThread extends Thread {
             //get url
             t0 = System.currentTimeMillis();
             Profiler.setQueueSize(urlQueue.size());
-            timeDifference = System.currentTimeMillis() - t0;
-            Profiler.getLinkFromQueueToCrawl("google.com", timeDifference);
             String linkToVisit = getLinkFromQueue();
             if (linkToVisit == null || linkToVisit.startsWith("ftp") || linkToVisit.startsWith("mailto"))
+            {
                 continue;
+            }
+            timeDifference = System.currentTimeMillis() - t0;
+            Profiler.getLinkFromQueueToCrawl(linkToVisit, timeDifference);
             //check politeness
             t0 = System.currentTimeMillis();
             boolean isPolite = checkIfPolite(linkToVisit);
