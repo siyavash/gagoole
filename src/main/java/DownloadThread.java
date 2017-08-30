@@ -50,11 +50,21 @@ public class DownloadThread extends Thread
                 time = System.currentTimeMillis() - time;
                 Profiler.download(link, time);
 
+                time = System.currentTimeMillis();
                 if(!isHtml(downloadedData))
+                {
                     continue;
+                }
+                time = System.currentTimeMillis() - time;
+                Profiler.htmlCheck(link, time);
+
             } catch (IOException e)
             {
+                long time = System.currentTimeMillis();
                 urlQueue.push(link);
+                time = System.currentTimeMillis() - time;
+                Profiler.pushBackToKafka(link, time);
+
                 continue;
             } catch (IllegalArgumentException e){
                 //TODO
