@@ -150,4 +150,8 @@ public class Profiler {
     {
         logger.info("Download thread done in time " + downloadTime + ", link: " + link);
     }
+
+    public static void getLinkFinished(String linkToVisit, long timeDifference) {
+        logger.info(String.format("fetched link is okay and send to download %d: %s", timeDifference, linkToVisit));
+    }
 }

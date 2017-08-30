@@ -34,7 +34,7 @@ public class LinkFilterThread extends Thread {
         if (index == -1) index = linkToVisit.length();
         return !cache.checkIfExist(linkToVisit.substring(0, index));
     }
-    private boolean checkIfAlreadyExist(String linkToVisit) {
+    private boolean checkIfAlreadyExist(String linkToVisit) {   //I/O work
         boolean exist = true;
         try {
             exist = urlDatabase.exists(linkToVisit);
@@ -60,6 +60,7 @@ public class LinkFilterThread extends Thread {
     @Override
     public void run() {
         while (true){
+            long tTotalStart = System.currentTimeMillis();
             long t0, timeDifference;
             //get url
             t0 = System.currentTimeMillis();
@@ -98,6 +99,8 @@ public class LinkFilterThread extends Thread {
             //finish
             addLinkToArrayBlockingQueue(linkToVisit);
             Profiler.setNotYetSize(notYetDownloadedLinks.size());
+            long totalTimeDiff = System.currentTimeMillis() - tTotalStart;
+            Profiler.getLinkFinished(linkToVisit, totalTimeDiff);
         }
     }
 }
