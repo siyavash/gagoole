@@ -1,24 +1,43 @@
-import datastore.DataStore;
 import queue.URLQueue;
 import util.Profiler;
+
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class FetchProperUrl extends Thread {
 
-    private URLQueue allUrlQueue;
+    private URLQueue allUrlsQueue;
     private final LruCache cache = new LruCache();
     private ArrayBlockingQueue<String> properUrls;
+    private final int FTHREADS;
 
     //constructor
-    public FetchProperUrl(URLQueue allUrlQueue, ArrayBlockingQueue<String> properUrls) {
-        this.allUrlQueue = allUrlQueue;
+    public FetchProperUrl(URLQueue allUrlsQueue, ArrayBlockingQueue<String> properUrls, int fetchThreadNumber) {
+        this.allUrlsQueue = allUrlsQueue;
         this.properUrls = properUrls;
+        this.FTHREADS = fetchThreadNumber;
+        startFetchingThreads();
+    }
+
+    private void startFetchingThreads() {
+        ExecutorService fetchingPool = Executors.newFixedThreadPool(FTHREADS);
+        for (int i = 0; i < FTHREADS; i++) {
+            fetchingPool.submit(this);
+        }
+        fetchingPool.shutdown();
+        try {
+            fetchingPool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            //TODO exception handling
+        }
     }
 
     private String getUrlFromQueue(){
         String candidateUrl = null;
         try {
-            candidateUrl = allUrlQueue.pop();
+            candidateUrl = allUrlsQueue.pop();
         } catch (InterruptedException e) {
             e.printStackTrace();
             //TODO: catch deciding
@@ -39,7 +58,7 @@ public class FetchProperUrl extends Thread {
                 && !url.endsWith(".gz") && !url.endsWith(".rar") && !url.endsWith(".zip") && !url.endsWith(".tar.gz");
     }
 
-    private void addUrlToArrayBlockingQueue(String urlToVisit) {
+    private void addUrlToProperUrls(String urlToVisit) {
         try {
             properUrls.put(urlToVisit);
         } catch (InterruptedException e) {
@@ -57,8 +76,8 @@ public class FetchProperUrl extends Thread {
 
             //get url
             singleFetchingTaskTime = System.currentTimeMillis();
-            Profiler.setQueueSize(allUrlQueue.size());
             String urlToVisit = getUrlFromQueue();
+            Profiler.setQueueSize(allUrlsQueue.size());
             if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
             {
                 continue;
@@ -73,7 +92,7 @@ public class FetchProperUrl extends Thread {
             Profiler.checkPolitensess(urlToVisit, singleFetchingTaskTime, isPolite);
             if (!isPolite) {
                 Profiler.isImpolite();
-                allUrlQueue.push(urlToVisit);
+                allUrlsQueue.push(urlToVisit);
                 continue;
             }
 
@@ -86,10 +105,10 @@ public class FetchProperUrl extends Thread {
                 continue;
 
             //finish
-            addUrlToArrayBlockingQueue(urlToVisit);
+            addUrlToProperUrls(urlToVisit);
             Profiler.setNotYetSize(properUrls.size());
-            long totalTimeDiff = System.currentTimeMillis() - allFetchingTasksTime;
-            Profiler.getLinkFinished(urlToVisit, totalTimeDiff);
+            allFetchingTasksTime = System.currentTimeMillis() - allFetchingTasksTime;
+            Profiler.getLinkFinished(urlToVisit, allFetchingTasksTime);
         }
     }
 
