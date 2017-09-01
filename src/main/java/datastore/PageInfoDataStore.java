@@ -112,6 +112,11 @@ public class PageInfoDataStore implements DataStore
 
     public void put(PageInfo pageInfo) throws IOException
     {
+        if (pageInfo.getUrl().equals("") || pageInfo.getUrl() == null)
+        {
+            return; //TODO good?
+        }
+
         try {
             String subLinks = turnSubLinksToString(pageInfo.getSubLinks());
 
