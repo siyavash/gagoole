@@ -166,4 +166,24 @@ public class Profiler
     public static void logGapTime(String link, long gapTime) {
         logger.info("Gap time after download html and before put to downloaded queue: " + gapTime + ", link: " + link);
     }
+
+    public static void popDownloadedData(String link, long time)
+    {
+        logger.info("Popped data from downloaded data queue in time: " + time + ", link: " + link);
+    }
+
+    public static void putOrganizedData(String link, long time)
+    {
+        logger.info("Sent PageInfo object to organized queue in time: " + time + ", link: " + link);
+    }
+
+    public static void organized(String link, long time)
+    {
+        logger.info("Organizing thread finished in time: " + time + ", link" + link);
+    }
+
+    public static void popOrganizedData(String link, long time)
+    {
+        logger.info("Popped data from organized queue in time: " + time + ", link: " + link);
+    }
 }
