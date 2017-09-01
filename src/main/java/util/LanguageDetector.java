@@ -8,47 +8,42 @@ public class LanguageDetector {
 
     public LanguageDetector(Document document) { doc = document; }
 
-    public boolean isEnglish() {
-        if (checkLangAttribute())
-            return true;
+    public boolean isEnglish()
+    {
+        return !checkLangAttribute() && (/*checkTitle() &&*/ checkAllContent());
 
-        return (checkTitle() && checkAllContent());
     }
 
     private boolean stringChecker(String str) {
-        final int ENCHARS = 128;
-        int nonEnglishChars = 0;
-        int allChars = 0;
+        final int ENGLISH_CHARS_MAX_VALUE = 128;
+        double nonEnglishChars = 0;
+        double allChars = 0;
 
         for (int i = 0; i < str.length(); i++) {
             allChars++;
-            if (str.charAt(i) >= ENCHARS)
+            if (str.charAt(i) >= ENGLISH_CHARS_MAX_VALUE)
                 nonEnglishChars++;
         }
 
-        if (nonEnglishChars > 0.02 * allChars) {
-            return false;
-        } else {
-            return true;
-        }
+        return !(nonEnglishChars > 0.02 * allChars);
     }
 
-    private boolean checkTitle() {
-        String title = doc.title();
-        return stringChecker(title);
-    }
+//    private boolean checkTitle() {
+//        String title = doc.title();
+//        return stringChecker(title);
+//    }
 
     private boolean checkLangAttribute() {
         try {
             Element htmlTag = doc.getElementsByTag("html").first();
             String lang = htmlTag.attr("lang");
             if (lang != null && !lang.equals("")) {
-                return (lang.startsWith("en") || lang.equals("mul"));
+                return !(lang.startsWith("en") || lang.equals("mul"));
             } else {
-                return true;
+                return false;
             }
         } catch (NullPointerException e) {
-            return true;
+            return false;
         }
     }
 
