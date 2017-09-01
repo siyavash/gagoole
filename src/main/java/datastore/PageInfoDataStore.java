@@ -52,6 +52,64 @@ public class PageInfoDataStore implements DataStore
         return result;
     }
 
+    public boolean[] exists(ArrayList<String> urls) throws IOException
+    {
+        ArrayList<Get> gets = new ArrayList<>();
+        boolean[] result = new boolean[urls.size()];
+        for (int i = 0; i < result.length; i++)
+        {
+            result[i] = false;
+            gets.add(new Get(Bytes.toBytes(urls.get(i))));
+        }
+
+        updateExistsResult(waitingPutsStorage, urls, result);
+        updateExistsResult(waitingPutsMiniStorage, urls, result);
+
+        Table table = null;
+
+        try
+        {
+            table = hbaseConnection.getTable(TABLE_NAME);
+            boolean[] mainStorageExistResult = table.existsAll(gets);
+            updateExistsResult(mainStorageExistResult, result);
+        } finally
+        {
+            if (table != null)
+                table.close();
+        }
+
+        return result;
+    }
+
+    private void updateExistsResult(boolean[] mainStorageExistResult, boolean[] result)
+    {
+        for (int i = 0; i < result.length; i++)
+        {
+            if (result[i])
+            {
+                continue;
+            }
+
+            result[i] = mainStorageExistResult[i];
+        }
+    }
+
+    private void updateExistsResult(ConcurrentHashMap<String, Object> waitingPutsStorage, ArrayList<String> urls, boolean[] result)
+    {
+        for (int i = 0; i < result.length; i++)
+        {
+            if (result[i])
+            {
+                continue;
+            }
+
+            if (waitingPutsStorage.containsKey(urls.get(i)))
+            {
+                result[i] = true;
+            }
+        }
+    }
+
     public void put(PageInfo pageInfo) throws IOException
     {
         try {
