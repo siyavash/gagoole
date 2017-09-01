@@ -11,13 +11,16 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PageInfoDataStore implements DataStore
 {
     private Connection hbaseConnection;
     private static final TableName TABLE_NAME = TableName.valueOf("wb");
     private static final byte[] COLUMN_FAMILY = Bytes.toBytes("cf");
-    private ArrayBlockingQueue<Put> putArrayBlockingQueue = new ArrayBlockingQueue<>(10000);
+    private ArrayBlockingQueue<Put> waitingPuts = new ArrayBlockingQueue<>(10000);
+    private ConcurrentHashMap<String, Object> waitingPutsStorage = new ConcurrentHashMap<>(10000);
+    private ConcurrentHashMap<String, Object> waitingPutsMiniStorage = new ConcurrentHashMap<>(200);
     private Logger logger = Logger.getLogger(Class.class.getName());
 
     public PageInfoDataStore(String zookeeperClientPort, String zookeeperQuorum) throws IOException
@@ -31,6 +34,11 @@ public class PageInfoDataStore implements DataStore
 
     public boolean exists(String url) throws IOException
     {
+        if (waitingPutsMiniStorage.containsKey(url) || waitingPutsStorage.containsKey(url))
+        {
+            return true;
+        }
+
         Table table = null;
         boolean result = true;
         try {
@@ -61,10 +69,11 @@ public class PageInfoDataStore implements DataStore
             addColumnToPut(put, Bytes.toBytes("title"), pageInfo.getTitle());
             addColumnToPut(put, Bytes.toBytes("subLinks"), subLinks);
 
-            putArrayBlockingQueue.put(put);
+            waitingPuts.put(put);
+            waitingPutsStorage.put(new String(put.getRow()), new Object());
         } catch (InterruptedException e)
         {
-            e.printStackTrace();
+            e.printStackTrace(); //TODO
         }
     }
 
@@ -125,10 +134,13 @@ public class PageInfoDataStore implements DataStore
                 {
                     try
                     {
-                        puts.add(putArrayBlockingQueue.take());
+                        Put put = waitingPuts.take();
+                        puts.add(put);
+                        waitingPutsMiniStorage.put(new String(put.getRow()), new Object());
+                        waitingPutsStorage.remove(new String(put.getRow()));
                     } catch (InterruptedException e)
                     {
-
+                        //TODO what to do?!
                     }
                 }
 
@@ -139,12 +151,13 @@ public class PageInfoDataStore implements DataStore
                     table = hbaseConnection.getTable(TABLE_NAME);
                     t1 = System.currentTimeMillis();
                     table.put(puts);
+                    waitingPutsMiniStorage.clear();
                     t1 = System.currentTimeMillis() - t1;
                     logger.info("100 put done in " + t1 + " milli seconds");
                     t2 = System.currentTimeMillis();
                 } catch (IOException e)
                 {
-                    logger.error("Failed to put in hbase");
+                    logger.error("Failed to put in hbase"); //TODO
                 } finally
                 {
                     if (table != null)
@@ -155,7 +168,7 @@ public class PageInfoDataStore implements DataStore
                             table.close();
                         } catch (IOException e)
                         {
-                            logger.error("Failed to close the table");
+                            logger.error("Failed to close the table"); //TODO
                         }
                     }
                 }
