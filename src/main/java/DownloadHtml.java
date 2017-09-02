@@ -89,6 +89,11 @@ public class DownloadHtml extends Thread {
             });
         }
         downloadPool.shutdown();
+        try {
+            downloadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            //TODO exception handling
+        }
     }
 
     private void putUrlBody(String urlHtml, String url) {
