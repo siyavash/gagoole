@@ -1,5 +1,4 @@
 import queue.URLQueue;
-import util.Profiler;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -17,13 +16,13 @@ public class FetchProperUrl {
     private URLQueue allUrlsQueue;
     private final LruCache cache = new LruCache();
     private ArrayBlockingQueue<String> properUrls;
-    private final int FTHREADS;
+    private final int THREAD_NUMBER;
 
     //constructor
     public FetchProperUrl(URLQueue allUrlsQueue, ArrayBlockingQueue<String> properUrls) {
         this.allUrlsQueue = allUrlsQueue;
         this.properUrls = properUrls;
-        FTHREADS = readProperty();
+        THREAD_NUMBER = readProperty();
     }
 
     private int readProperty() {
@@ -54,18 +53,23 @@ public class FetchProperUrl {
     }
 
     public void startFetchingThreads() {
-        ExecutorService fetchingPool = Executors.newFixedThreadPool(FTHREADS);
+        if (THREAD_NUMBER == 0)
+        {
+            return;
+        }
+
+        ExecutorService fetchingPool = Executors.newFixedThreadPool(THREAD_NUMBER);
         AtomicInteger atomicInteger = new AtomicInteger(0);
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                System.out.println("proper urls in level 1: " + atomicInteger.get());
+                System.out.println(atomicInteger.get());
                 atomicInteger.set(0);
             }
         }, 0, 1000);
 
-        for (int i = 0; i < FTHREADS; i++) {
+        for (int i = 0; i < THREAD_NUMBER; i++) {
             fetchingPool.submit((Runnable) () -> {
                 while (true){
 

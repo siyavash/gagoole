@@ -1,29 +1,25 @@
 import datastore.DataStore;
-import util.Profiler;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class CheckNewUrl {
 
     private DataStore urlDatabase;
     private ArrayBlockingQueue<String> properUrls;
     private ArrayBlockingQueue<String> newUrls;
-    private final int CTHREADS;
+    private final int THREAD_NUMBER;
 
     public CheckNewUrl(DataStore urlDatabase, ArrayBlockingQueue<String> properUrls, ArrayBlockingQueue<String> newUrls){
         this.urlDatabase = urlDatabase;
         this.properUrls = properUrls;
         this.newUrls = newUrls;
-        CTHREADS = readProperty();
+        THREAD_NUMBER = readProperty();
     }
 
     private int readProperty() {
@@ -54,7 +50,12 @@ public class CheckNewUrl {
     }
 
     public void startCheckingThreads() {
-        ExecutorService checkingPool = Executors.newFixedThreadPool(CTHREADS);
+        if (THREAD_NUMBER == 0)
+        {
+            return;
+        }
+
+        ExecutorService checkingPool = Executors.newFixedThreadPool(THREAD_NUMBER);
 //        AtomicInteger atomicInteger = new AtomicInteger(0);
 //        Timer timer = new Timer();
 //        timer.scheduleAtFixedRate(new TimerTask() {
@@ -64,7 +65,7 @@ public class CheckNewUrl {
 //                atomicInteger.set(0);
 //            }
 //        }, 0, 1000);
-        for (int i = 0; i < CTHREADS; i++) {
+        for (int i = 0; i < THREAD_NUMBER; i++) {
             checkingPool.submit((Runnable) () -> {
                 while(true){
 //                    long allCheckingTime = System.currentTimeMillis();

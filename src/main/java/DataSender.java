@@ -59,6 +59,11 @@ public class DataSender
 
     public void startSending()
     {
+        if (THREAD_NUMBER == 0)
+        {
+            return;
+        }
+
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_NUMBER);
 //        AtomicInteger atomicInteger = new AtomicInteger(0);
 //        Timer timer = new Timer();

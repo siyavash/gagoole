@@ -2,33 +2,28 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import javafx.util.Pair;
-import queue.URLQueue;
-import util.Profiler;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class DownloadHtml {
     private ArrayBlockingQueue<String> newUrls;
     private ArrayBlockingQueue<Pair<String, String>> downloadedData;
 //    private URLQueue allUrlQueue;
     private OkHttpClient client;
-    private final int DTHREADS;
+    private final int THREAD_NUMBER;
 
     public DownloadHtml(ArrayBlockingQueue<String> newUrls, ArrayBlockingQueue<Pair<String, String>> downloadedData/*, URLQueue allUrlQueue*/) {
         this.downloadedData = downloadedData;
         this.newUrls = newUrls;
 //        this.allUrlQueue = allUrlQueue;
-        DTHREADS = readProperty();
+        THREAD_NUMBER = readProperty();
         createAndConfigClient();
     }
 
@@ -69,7 +64,12 @@ public class DownloadHtml {
     }
 
     public void startDownloadThreads() {
-        ExecutorService downloadPool = Executors.newFixedThreadPool(DTHREADS);
+        if (THREAD_NUMBER == 0)
+        {
+            return;
+        }
+
+        ExecutorService downloadPool = Executors.newFixedThreadPool(THREAD_NUMBER);
 //        AtomicInteger atomicInteger = new AtomicInteger(0);
 //        Timer timer = new Timer();
 //        timer.scheduleAtFixedRate(new TimerTask() {
@@ -79,7 +79,7 @@ public class DownloadHtml {
 //                atomicInteger.set(0);
 //            }
 //        }, 0, 1000);
-        for (int i = 0; i < DTHREADS; i++) {
+        for (int i = 0; i < THREAD_NUMBER; i++) {
             downloadPool.submit((Runnable) () -> {
                 while (true) {
 //                    long allDownloadingTasksTime = System.currentTimeMillis();
