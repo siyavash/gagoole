@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class DownloadHtml extends Thread {
+public class DownloadHtml {
     private ArrayBlockingQueue<String> newUrls;
     private ArrayBlockingQueue<Pair<String, String>> downloadedData;
     private URLQueue allUrlQueue;
@@ -89,11 +89,6 @@ public class DownloadHtml extends Thread {
             });
         }
         downloadPool.shutdown();
-        try {
-            downloadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            //TODO exception handling
-        }
     }
 
     private void putUrlBody(String urlHtml, String url) {

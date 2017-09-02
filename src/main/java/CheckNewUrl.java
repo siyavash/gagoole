@@ -10,7 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class CheckNewUrl extends Thread {
+public class CheckNewUrl {
 
     private DataStore urlDatabase;
     private ArrayBlockingQueue<String> properUrls;
@@ -70,11 +70,7 @@ public class CheckNewUrl extends Thread {
             });
         }
         checkingPool.shutdown();
-        try {
-            checkingPool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            //TODO exception handling
-        }
+
     }
 
     private String getProperUrl() {
