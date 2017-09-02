@@ -5,9 +5,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CheckNewUrl {
 
@@ -52,26 +55,35 @@ public class CheckNewUrl {
 
     public void startCheckingThreads() {
         ExecutorService checkingPool = Executors.newFixedThreadPool(CTHREADS);
+        AtomicInteger atomicInteger = new AtomicInteger(0);
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("new Urls after check hbase: " + atomicInteger.get());
+            }
+        }, 0, 1000);
         for (int i = 0; i < CTHREADS; i++) {
             checkingPool.submit((Runnable) () -> {
                 while(true){
-                    long allCheckingTime = System.currentTimeMillis();
-                    long singleCheckingTime = System.currentTimeMillis();
+//                    long allCheckingTime = System.currentTimeMillis();
+//                    long singleCheckingTime = System.currentTimeMillis();
                     String urlToVisit = getProperUrl();
                     if (urlToVisit == null)
                         continue;
-                    singleCheckingTime = System.currentTimeMillis() - singleCheckingTime;
-                    Profiler.getUrlToCheckIfNew(urlToVisit, singleCheckingTime);
-                    singleCheckingTime = System.currentTimeMillis();
+//                    singleCheckingTime = System.currentTimeMillis() - singleCheckingTime;
+//                    Profiler.getUrlToCheckIfNew(urlToVisit, singleCheckingTime);
+//                    singleCheckingTime = System.currentTimeMillis();
                     boolean isInDataStore = checkIfAlreadyExist(urlToVisit);
-                    singleCheckingTime = System.currentTimeMillis() - singleCheckingTime;
-                    Profiler.checkedExistance(urlToVisit, singleCheckingTime);
-                    allCheckingTime = System.currentTimeMillis() - allCheckingTime;
-                    Profiler.checkAllExistanceTaskTime(urlToVisit, allCheckingTime, isInDataStore);
+//                    singleCheckingTime = System.currentTimeMillis() - singleCheckingTime;
+//                    Profiler.checkedExistance(urlToVisit, singleCheckingTime);
+//                    allCheckingTime = System.currentTimeMillis() - allCheckingTime;
+//                    Profiler.checkAllExistanceTaskTime(urlToVisit, allCheckingTime, isInDataStore);
                     if (isInDataStore)
                         continue;
                     putNewUrl(urlToVisit);
-                    Profiler.setNewUrlsSize(newUrls.size());
+//                    Profiler.setNewUrlsSize(newUrls.size());
+                    atomicInteger.incrementAndGet();
                 }
             });
         }

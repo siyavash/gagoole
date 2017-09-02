@@ -9,9 +9,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DataSender
 {
@@ -57,7 +60,14 @@ public class DataSender
     public void startSending()
     {
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_NUMBER);
-
+        AtomicInteger atomicInteger = new AtomicInteger(0);
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("Data sender: " + atomicInteger.get());
+            }
+        }, 0, 1000);
         for (int i = 0; i < THREAD_NUMBER; i++)
         {
             executorService.submit(() -> {
@@ -65,18 +75,19 @@ public class DataSender
                 {
                     try
                     {
-                        long time = System.currentTimeMillis();
+//                        long time = System.currentTimeMillis();
 
                         PageInfo pageInfo = popNewPageInfo();
                         sendToDataStore(pageInfo);
                         pushSubLinksToQueue(pageInfo);
 
-                        time = System.currentTimeMillis() - time;
-                        Profiler.dataSentLog(pageInfo.getUrl(), time);
+//                        time = System.currentTimeMillis() - time;
+//                        Profiler.dataSentLog(pageInfo.getUrl(), time);
                     } catch (InterruptedException ignored)
                     {
 
                     }
+                    atomicInteger.incrementAndGet();
                 }
             });
         }
@@ -85,13 +96,13 @@ public class DataSender
 
     private void pushSubLinksToQueue(PageInfo pageInfo)
     {
-        long time = System.currentTimeMillis();
+//        long time = System.currentTimeMillis();
         ArrayList<String> subLinks = getAllSubLinksFromPageInfo(pageInfo);
 
         urlQueue.push(subLinks);
 
-        time = System.currentTimeMillis() - time;
-        Profiler.pushToQueue(pageInfo.getUrl(), time);
+//        time = System.currentTimeMillis() - time;
+//        Profiler.pushToQueue(pageInfo.getUrl(), time);
     }
 
     private ArrayList<String> getAllSubLinksFromPageInfo(PageInfo pageInfo)
@@ -106,22 +117,22 @@ public class DataSender
 
     private void sendToDataStore(PageInfo pageInfo) throws IOException
     {
-        long time = System.currentTimeMillis();
+//        long time = System.currentTimeMillis();
 
         dataStore.put(pageInfo);
 
-        time = System.currentTimeMillis() - time;
-        Profiler.putToDataStore(pageInfo.getUrl(), time);
+//        time = System.currentTimeMillis() - time;
+//        Profiler.putToDataStore(pageInfo.getUrl(), time);
     }
 
     private PageInfo popNewPageInfo() throws InterruptedException
     {
-        long time = System.currentTimeMillis();
+//        long time = System.currentTimeMillis();
 
         PageInfo pageInfo = organizedData.take();
 
-        time = System.currentTimeMillis() - time;
-        Profiler.popOrganizedData(pageInfo.getUrl(), time);
+//        time = System.currentTimeMillis() - time;
+//        Profiler.popOrganizedData(pageInfo.getUrl(), time);
 
         return pageInfo;
     }

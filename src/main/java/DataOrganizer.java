@@ -12,9 +12,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DataOrganizer
 {
@@ -57,7 +60,14 @@ public class DataOrganizer
     public void startOrganizing()
     {
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_NUMBER);
-
+        AtomicInteger atomicInteger = new AtomicInteger(0);
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("organized : " + atomicInteger.get());
+            }
+        }, 0, 1000);
         for (int i = 0; i < THREAD_NUMBER; i++)
         {
             executorService.submit((Runnable) () -> {
@@ -65,7 +75,7 @@ public class DataOrganizer
                 {
                     try
                     {
-                        long time = System.currentTimeMillis();
+//                        long time = System.currentTimeMillis();
                         Pair<String, String> poppedData = popNewData();
 
 
@@ -89,12 +99,13 @@ public class DataOrganizer
                         sendOrganizedData(pageInfo);
 
 
-                        time = System.currentTimeMillis() - time;
-                        Profiler.organized(link, time);
+//                        time = System.currentTimeMillis() - time;
+//                        Profiler.organized(link, time);
                     } catch (InterruptedException ignored)
                     {
                         //TODO is this enough?
                     }
+                    atomicInteger.incrementAndGet();
                 }
             });
         }
@@ -104,12 +115,12 @@ public class DataOrganizer
 
     private void sendOrganizedData(PageInfo pageInfo) throws InterruptedException
     {
-        long time = System.currentTimeMillis();
+//        long time = System.currentTimeMillis();
 
         organizedData.put(pageInfo);
 
-        time = System.currentTimeMillis() - time;
-        Profiler.putOrganizedData(pageInfo.getUrl(), time);
+//        time = System.currentTimeMillis() - time;
+//        Profiler.putOrganizedData(pageInfo.getUrl(), time);
     }
 
     private PageInfo createPageInfo(Document dataDocument, String link)
@@ -151,8 +162,8 @@ public class DataOrganizer
             pageInfo.setKeyWordsMeta(elements.attr("content"));
         }
 
-        time = System.currentTimeMillis() - time;
-        Profiler.extractInformationFromDocument(link, time);
+//        time = System.currentTimeMillis() - time;
+//        Profiler.extractInformationFromDocument(link, time);
 
         return pageInfo;
     }
@@ -194,39 +205,39 @@ public class DataOrganizer
 
     private Document createDataDocument(String text, String link)
     {
-        long time = System.currentTimeMillis();
+//        long time = System.currentTimeMillis();
 
         if(text == null)
             return null;
         Document document = Jsoup.parse(text);
 
-        time = System.currentTimeMillis() - time;
-        Profiler.parse(link, time);
+//        time = System.currentTimeMillis() - time;
+//        Profiler.parse(link, time);
 
         return document;
     }
 
     private Pair<String, String> popNewData() throws InterruptedException
     {
-        long time = System.currentTimeMillis();
+//        long time = System.currentTimeMillis();
 
         Pair<String, String> poppedData = downloadedData.take();
 
-        time = System.currentTimeMillis() - time;
-        Profiler.popDownloadedData(poppedData.getValue(), time);
+//        time = System.currentTimeMillis() - time;
+//        Profiler.popDownloadedData(poppedData.getValue(), time);
 
         return poppedData;
     }
 
     private boolean isEnglish(Document dataDocument, String link)
     {
-        long time = System.currentTimeMillis();
+//        long time = System.currentTimeMillis();
 
         LanguageDetector languageDetector = new LanguageDetector(dataDocument);
         boolean englishLanguage = languageDetector.isEnglish();
 
-        time = System.currentTimeMillis() - time;
-        Profiler.goodLanguage(link, time, englishLanguage);
+//        time = System.currentTimeMillis() - time;
+//        Profiler.goodLanguage(link, time, englishLanguage);
 
         return englishLanguage;
     }
@@ -239,7 +250,7 @@ public class DataOrganizer
         boolean result = text.contains("<html") && text.contains("</html>");
 
         time = System.currentTimeMillis() - time;
-        Profiler.htmlCheck(link, time);
+//        Profiler.htmlCheck(link, time);
 
         return result;
     }
