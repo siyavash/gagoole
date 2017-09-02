@@ -3,6 +3,7 @@ import datastore.DataStore;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -75,29 +76,66 @@ public class CheckNewUrl {
                 while(true){
 //                    long allCheckingTime = System.currentTimeMillis();
 //                    long singleCheckingTime = System.currentTimeMillis();
-                    String urlToVisit = getProperUrl();
-                    if (urlToVisit == null)
-                        continue;
+
+//                    String urlToVisit = getProperUrl();
+//                    if (urlToVisit == null)
+//                        continue;
+
 //                    singleCheckingTime = System.currentTimeMillis() - singleCheckingTime;
 //                    Profiler.getUrlToCheckIfNew(urlToVisit, singleCheckingTime);
 //                    singleCheckingTime = System.currentTimeMillis();
-                    boolean isInDataStore = checkIfAlreadyExist(urlToVisit);
+
+//                    boolean isInDataStore = checkIfAlreadyExist(urlToVisit);
+
 //                    singleCheckingTime = System.currentTimeMillis() - singleCheckingTime;
 //                    Profiler.checkedExistance(urlToVisit, singleCheckingTime);
 //                    allCheckingTime = System.currentTimeMillis() - allCheckingTime;
 //                    Profiler.checkAllExistanceTaskTime(urlToVisit, allCheckingTime, isInDataStore);
-                    if (isInDataStore)
-                        continue;
+
+//                    if (isInDataStore)
+//                        continue;
 
 //                    putNewUrl(urlToVisit);
 
 //                    Profiler.setNewUrlsSize(newUrls.size());
+
+                    ArrayList<String> urlsToVisit = new ArrayList<>();
+                    for (int j = 0; j < 100; j++)
+                    {
+                        urlsToVisit.add(getProperUrl());
+                    }
+
+                    boolean[] existInDataStore = checkIfAlreadyExist(urlsToVisit);
+
+                    for (int j = 0; j < 100; j++)
+                    {
+                        if (existInDataStore[j])
+                        {
+//                            putNewUrl(urlsToVisit.get(j));
+                        }
+                    }
+
                     atomicInteger.incrementAndGet();
                 }
             });
         }
         checkingPool.shutdown();
 
+    }
+
+    private boolean[] checkIfAlreadyExist(ArrayList<String> urlsToVisit)
+    {
+        boolean[] result = new boolean[0];
+
+        try
+        {
+            result = urlDatabase.exists(urlsToVisit);
+        } catch (IOException e)
+        {
+            e.printStackTrace();//
+        }
+
+        return result;
     }
 
     private String getProperUrl() {
