@@ -77,7 +77,6 @@ public class FetchProperUrl {
                     singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
                     Profiler.checkPolitensess(urlToVisit, singleFetchingTaskTime, isPolite);
                     if (!isPolite) {
-                        Profiler.isImpolite();
                         allUrlsQueue.push(urlToVisit);
                         continue;
                     }

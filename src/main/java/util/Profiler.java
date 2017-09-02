@@ -38,7 +38,7 @@ public class Profiler
                 new Gauge<Long>() {
                     @Override
                     public Long getValue() {
-                        return queueSize.get();
+                        return notYetSize.get();
                     }
                 });
 
@@ -46,7 +46,7 @@ public class Profiler
                 new Gauge<Long>() {
                     @Override
                     public Long getValue() {
-                        return queueSize.get();
+                        return downloadedSize.get();
                     }
                 });
 
