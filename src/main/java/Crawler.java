@@ -11,6 +11,7 @@ import queue.URLQueue;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.*;
 
 class Crawler
@@ -74,6 +75,11 @@ class Crawler
         {
             queue = new LocalQueue();
         }
+
+        new Thread(() -> {
+            while (true)
+                queue.push(UUID.randomUUID().toString());
+        }).start();
     }
 
     private void loadDataStore()

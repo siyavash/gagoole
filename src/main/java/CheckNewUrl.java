@@ -83,7 +83,9 @@ public class CheckNewUrl {
 //                    Profiler.checkAllExistanceTaskTime(urlToVisit, allCheckingTime, isInDataStore);
                     if (isInDataStore)
                         continue;
-                    putNewUrl(urlToVisit);
+
+//                    putNewUrl(urlToVisit);
+
 //                    Profiler.setNewUrlsSize(newUrls.size());
 //                    atomicInteger.incrementAndGet();
                 }
