@@ -75,11 +75,11 @@ class Crawler
         {
             queue = new LocalQueue();
         }
-
-        new Thread(() -> {
-            while (true)
-                queue.push(UUID.randomUUID().toString());
-        }).start();
+//
+//        new Thread(() -> {
+//            while (true)
+//                queue.push(UUID.randomUUID().toString());
+//        }).start();
     }
 
     private void loadDataStore()

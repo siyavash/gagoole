@@ -76,9 +76,12 @@ public class DistributedQueue extends Thread implements URLQueue {
 
     @Override
     public void run() {
-        KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(consumeProps);
+        KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumeProps);
         consumer.subscribe(Arrays.asList(topicName));
         while (!isInterrupted()) {
+            if (arrayBlockingQueue.size() > 100000)
+                continue;
+
             ConsumerRecords<String, String> records = consumer.poll(1000);
             for (ConsumerRecord<String, String> record : records) {
                 try {
