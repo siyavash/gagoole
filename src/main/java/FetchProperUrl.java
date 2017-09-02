@@ -68,7 +68,7 @@ public class FetchProperUrl {
                         continue;
                     }
                     singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
-                    Profiler.getLinkFromQueueToCrawl(urlToVisit, singleFetchingTaskTime);
+                    Profiler.getLinkFromKafkaQueue(urlToVisit, singleFetchingTaskTime);
 
                     //check politeness
                     singleFetchingTaskTime = System.currentTimeMillis();
@@ -76,7 +76,6 @@ public class FetchProperUrl {
                     singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
                     Profiler.checkPolitensess(urlToVisit, singleFetchingTaskTime, isPolite);
                     if (!isPolite) {
-                        Profiler.isImpolite();
                         allUrlsQueue.push(urlToVisit);
                         continue;
                     }
