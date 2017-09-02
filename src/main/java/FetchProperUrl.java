@@ -61,6 +61,7 @@ public class FetchProperUrl {
             @Override
             public void run() {
                 System.out.println("proper urls in level 1: " + atomicInteger.get());
+                atomicInteger.set(0);
             }
         }, 0, 1000);
 

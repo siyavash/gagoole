@@ -76,6 +76,7 @@ public class DownloadHtml {
             @Override
             public void run() {
                 System.out.println("Downloaded htmls: " + atomicInteger.get());
+                atomicInteger.set(0);
             }
         }, 0, 1000);
         for (int i = 0; i < DTHREADS; i++) {

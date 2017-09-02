@@ -61,6 +61,7 @@ public class CheckNewUrl {
             @Override
             public void run() {
                 System.out.println("new Urls after check hbase: " + atomicInteger.get());
+                atomicInteger.set(0);
             }
         }, 0, 1000);
         for (int i = 0; i < CTHREADS; i++) {

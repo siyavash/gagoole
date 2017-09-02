@@ -66,6 +66,7 @@ public class DataOrganizer
             @Override
             public void run() {
                 System.out.println("organized : " + atomicInteger.get());
+                atomicInteger.set(0);
             }
         }, 0, 1000);
         for (int i = 0; i < THREAD_NUMBER; i++)
