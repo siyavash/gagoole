@@ -5,9 +5,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FetchProperUrl {
 
@@ -52,51 +55,62 @@ public class FetchProperUrl {
 
     public void startFetchingThreads() {
         ExecutorService fetchingPool = Executors.newFixedThreadPool(FTHREADS);
+        AtomicInteger atomicInteger = new AtomicInteger(0);
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("proper urls in level 1: " + atomicInteger.get());
+            }
+        }, 0, 1000);
+
         for (int i = 0; i < FTHREADS; i++) {
             fetchingPool.submit((Runnable) () -> {
                 while (true){
 
-                    long allFetchingTasksTime = System.currentTimeMillis();
-                    long singleFetchingTaskTime;
+//                    long allFetchingTasksTime = System.currentTimeMillis();
+//                    long singleFetchingTaskTime;
 
                     //get url
-                    singleFetchingTaskTime = System.currentTimeMillis();
+//                    singleFetchingTaskTime = System.currentTimeMillis();
                     String urlToVisit = getUrlFromQueue();
-                    Profiler.setQueueSize(allUrlsQueue.size());
+//                    Profiler.setQueueSize(allUrlsQueue.size());
                     if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
                     {
                         continue;
                     }
-                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
-                    Profiler.getLinkFromKafkaQueue(urlToVisit, singleFetchingTaskTime);
+//                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
+//                    Profiler.getLinkFromKafkaQueue(urlToVisit, singleFetchingTaskTime);
 
                     //check politeness
-                    singleFetchingTaskTime = System.currentTimeMillis();
+//                    singleFetchingTaskTime = System.currentTimeMillis();
                     boolean isPolite = checkIfPolite(urlToVisit);
-                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
-                    Profiler.checkPolitensess(urlToVisit, singleFetchingTaskTime, isPolite);
+//                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
+//                    Profiler.checkPolitensess(urlToVisit, singleFetchingTaskTime, isPolite);
                     if (!isPolite) {
                         allUrlsQueue.push(urlToVisit);
                         continue;
                     }
 
                     //check content type
-                    singleFetchingTaskTime = System.currentTimeMillis();
+//                    singleFetchingTaskTime = System.currentTimeMillis();
                     boolean isGoodContentType = isGoodContentType(urlToVisit);
-                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
-                    Profiler.checkContentType(urlToVisit, singleFetchingTaskTime, isGoodContentType);
+//                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
+//                    Profiler.checkContentType(urlToVisit, singleFetchingTaskTime, isGoodContentType);
                     if (!isGoodContentType)
                         continue;
 
                     //finish
-                    singleFetchingTaskTime = System.currentTimeMillis();
+//                    singleFetchingTaskTime = System.currentTimeMillis();
                     addUrlToProperUrls(urlToVisit);
-                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
-                    Profiler.pushUrlToProperQueue(urlToVisit, singleFetchingTaskTime);
+//                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
+//                    Profiler.pushUrlToProperQueue(urlToVisit, singleFetchingTaskTime);
 
-                    Profiler.setPropersSize(properUrls.size());
-                    allFetchingTasksTime = System.currentTimeMillis() - allFetchingTasksTime;
-                    Profiler.getLinkFinished(urlToVisit, allFetchingTasksTime);
+//                    Profiler.setPropersSize(properUrls.size());
+//                    allFetchingTasksTime = System.currentTimeMillis() - allFetchingTasksTime;
+//                    Profiler.getLinkFinished(urlToVisit, allFetchingTasksTime);
+
+                    atomicInteger.incrementAndGet();
                 }
             });
         }

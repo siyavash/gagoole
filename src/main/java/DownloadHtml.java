@@ -9,10 +9,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DownloadHtml {
     private ArrayBlockingQueue<String> newUrls;
@@ -67,29 +70,38 @@ public class DownloadHtml {
 
     public void startDownloadThreads() {
         ExecutorService downloadPool = Executors.newFixedThreadPool(DTHREADS);
+        AtomicInteger atomicInteger = new AtomicInteger(0);
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("Downloaded htmls: " + atomicInteger.get());
+            }
+        }, 0, 1000);
         for (int i = 0; i < DTHREADS; i++) {
             downloadPool.submit((Runnable) () -> {
                 while (true) {
-                    long allDownloadingTasksTime = System.currentTimeMillis();
-                    long singleDownloadingTaskTime = System.currentTimeMillis();
+//                    long allDownloadingTasksTime = System.currentTimeMillis();
+//                    long singleDownloadingTaskTime = System.currentTimeMillis();
                     String url = getNewUrl();
                     if (url == null)
                         continue;
-                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
-                    Profiler.getLinkFromQueueToDownload(url, singleDownloadingTaskTime);
-                    singleDownloadingTaskTime = System.currentTimeMillis();
+//                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
+//                    Profiler.getLinkFromQueueToDownload(url, singleDownloadingTaskTime);
+//                    singleDownloadingTaskTime = System.currentTimeMillis();
                     String urlHtml = getPureHtmlFromLink(url);
-                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
-                    Profiler.download(url, singleDownloadingTaskTime);
+//                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
+//                    Profiler.download(url, singleDownloadingTaskTime);
                     if (urlHtml == null)
                         continue;
-                    singleDownloadingTaskTime = System.currentTimeMillis();
+//                    singleDownloadingTaskTime = System.currentTimeMillis();
                     putUrlBody(urlHtml, url);
-                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
-                    Profiler.putUrlBody(url, singleDownloadingTaskTime);
-                    Profiler.setDownloadedSize(downloadedData.size());
-                    allDownloadingTasksTime = System.currentTimeMillis() - allDownloadingTasksTime;
-                    Profiler.downloadThread(url, allDownloadingTasksTime);
+//                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
+//                    Profiler.putUrlBody(url, singleDownloadingTaskTime);
+//                    Profiler.setDownloadedSize(downloadedData.size());
+//                    allDownloadingTasksTime = System.currentTimeMillis() - allDownloadingTasksTime;
+//                    Profiler.downloadThread(url, allDownloadingTasksTime);
+                    atomicInteger.incrementAndGet();
                 }
             });
         }
@@ -117,7 +129,7 @@ public class DownloadHtml {
 
     private String getPureHtmlFromLink(String url) {
         Request request = new Request.Builder().url(url).build();
-        Response response = null;
+        Response response;
         String body = null;
         try {
             response = client.newCall(request).execute();
