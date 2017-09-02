@@ -61,15 +61,15 @@ public class CheckNewUrl {
 
         ExecutorService checkingPool = Executors.newFixedThreadPool(THREAD_NUMBER);
 
-        AtomicInteger atomicInteger = new AtomicInteger(0);
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                System.out.println("new Urls after check hbase: " + atomicInteger.get());
-                atomicInteger.set(0);
-            }
-        }, 0, 1000);
+//        AtomicInteger atomicInteger = new AtomicInteger(0);
+//        Timer timer = new Timer();
+//        timer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                System.out.println("new Urls after check hbase: " + atomicInteger.get());
+//                atomicInteger.set(0);
+//            }
+//        }, 0, 1000);
 
         for (int i = 0; i < THREAD_NUMBER; i++) {
             checkingPool.submit((Runnable) () -> {
@@ -100,22 +100,22 @@ public class CheckNewUrl {
 //                    Profiler.setNewUrlsSize(newUrls.size());
 
                     ArrayList<String> urlsToVisit = new ArrayList<>();
-                    for (int j = 0; j < 100; j++)
+                    for (int j = 0; j < 200; j++)
                     {
                         urlsToVisit.add(getProperUrl());
                     }
 
                     boolean[] existInDataStore = checkIfAlreadyExist(urlsToVisit);
 
-                    for (int j = 0; j < 100; j++)
+                    for (int j = 0; j < 200; j++)
                     {
                         if (existInDataStore[j])
                         {
-//                            putNewUrl(urlsToVisit.get(j));
+                            putNewUrl(urlsToVisit.get(j));
                         }
                     }
 
-                    atomicInteger.incrementAndGet();
+//                    atomicInteger.incrementAndGet();
                 }
             });
         }
