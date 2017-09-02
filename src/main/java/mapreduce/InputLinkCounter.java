@@ -9,8 +9,10 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.mapreduce.TableReducer;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
+
 import java.io.IOException;
 
 public class InputLinkCounter {
@@ -69,11 +71,27 @@ public class InputLinkCounter {
 
     public static class Reducer extends TableReducer<ImmutableBytesWritable, IntWritable, Put> {
 
+        private static final byte[] NUMBER_OF_INPUT_LINKS = "numOfInputLinks".getBytes();
+
         @Override
         protected void reduce(ImmutableBytesWritable key,
                               Iterable<IntWritable> values,
                               Context context) throws IOException, InterruptedException {
+            if(key.equals(new ImmutableBytesWritable("".getBytes()))) {
+                return;
+            }
 
+            String rowKey = new String(key.copyBytes());
+
+            long numberOfInputLinks = 0;
+            for(IntWritable val : values) {
+                numberOfInputLinks += val.get();
+            }
+
+            Put put = new Put(Bytes.toBytes(rowKey));
+            put.addColumn(COLUMN_FAMILY, NUMBER_OF_INPUT_LINKS, Bytes.toBytes(numberOfInputLinks));
+
+            context.write(null, put);
         }
     }
 }
