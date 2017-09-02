@@ -10,7 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class FetchProperUrl extends Thread {
+public class FetchProperUrl {
 
     private URLQueue allUrlsQueue;
     private final LruCache cache = new LruCache();
@@ -99,11 +99,6 @@ public class FetchProperUrl extends Thread {
             });
         }
         fetchingPool.shutdown();
-        try {
-            fetchingPool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            //TODO exception handling
-        }
     }
 
     private String getUrlFromQueue(){
