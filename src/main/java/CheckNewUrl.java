@@ -55,15 +55,15 @@ public class CheckNewUrl {
 
     public void startCheckingThreads() {
         ExecutorService checkingPool = Executors.newFixedThreadPool(CTHREADS);
-        AtomicInteger atomicInteger = new AtomicInteger(0);
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                System.out.println("new Urls after check hbase: " + atomicInteger.get());
-                atomicInteger.set(0);
-            }
-        }, 0, 1000);
+//        AtomicInteger atomicInteger = new AtomicInteger(0);
+//        Timer timer = new Timer();
+//        timer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                System.out.println("new Urls after check hbase: " + atomicInteger.get());
+//                atomicInteger.set(0);
+//            }
+//        }, 0, 1000);
         for (int i = 0; i < CTHREADS; i++) {
             checkingPool.submit((Runnable) () -> {
                 while(true){
@@ -84,7 +84,7 @@ public class CheckNewUrl {
                         continue;
                     putNewUrl(urlToVisit);
 //                    Profiler.setNewUrlsSize(newUrls.size());
-                    atomicInteger.incrementAndGet();
+//                    atomicInteger.incrementAndGet();
                 }
             });
         }

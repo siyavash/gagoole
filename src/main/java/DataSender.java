@@ -60,15 +60,15 @@ public class DataSender
     public void startSending()
     {
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_NUMBER);
-        AtomicInteger atomicInteger = new AtomicInteger(0);
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                System.out.println("Data sender: " + atomicInteger.get());
-                atomicInteger.set(0);
-            }
-        }, 0, 1000);
+//        AtomicInteger atomicInteger = new AtomicInteger(0);
+//        Timer timer = new Timer();
+//        timer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                System.out.println("Data sender: " + atomicInteger.get());
+//                atomicInteger.set(0);
+//            }
+//        }, 0, 1000);
         for (int i = 0; i < THREAD_NUMBER; i++)
         {
             executorService.submit(() -> {
@@ -88,7 +88,7 @@ public class DataSender
                     {
 
                     }
-                    atomicInteger.incrementAndGet();
+//                    atomicInteger.incrementAndGet();
                 }
             });
         }
