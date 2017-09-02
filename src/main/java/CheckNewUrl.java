@@ -8,7 +8,6 @@ import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class CheckNewUrl extends Thread {
 
@@ -56,55 +55,37 @@ public class CheckNewUrl extends Thread {
         for (int i = 0; i < CTHREADS; i++) {
             checkingPool.submit((Runnable) () -> {
                 while(true){
-                    long allCheckingTime = System.currentTimeMillis();
-                    String urlToVisit = getProperUrl();
-                    if (urlToVisit == null)
-                        continue;
-                    boolean isInDataStore = checkIfAlreadyExist(urlToVisit);
-                    allCheckingTime = System.currentTimeMillis() - allCheckingTime;
-                    Profiler.checkExistenceInDataStore(urlToVisit, allCheckingTime, isInDataStore);
-                    if (isInDataStore)
-                        continue;
-                    putNewUrl(urlToVisit);
+                    try{
+                        long allCheckingTime = System.currentTimeMillis();
+                        String urlToVisit = getProperUrl();
+                        if (urlToVisit == null)
+                            continue;
+                        boolean isInDataStore = checkIfAlreadyExist(urlToVisit);
+                        allCheckingTime = System.currentTimeMillis() - allCheckingTime;
+                        Profiler.checkExistenceInDataStore(urlToVisit, allCheckingTime, isInDataStore);
+                        if (isInDataStore)
+                            continue;
+                        putNewUrl(urlToVisit);
+                    } catch (InterruptedException | IOException ignored){
+
+                    }
                 }
             });
         }
         checkingPool.shutdown();
-        try {
-            checkingPool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            //TODO exception handling
-        }
     }
 
-    private String getProperUrl() {
-        String urlToVisit = null;
-        try {
-            urlToVisit = properUrls.take();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            //TODO: catch deciding
-        }
+    private String getProperUrl() throws InterruptedException {
+        String urlToVisit = properUrls.take();
         return urlToVisit;
     }
 
-    private boolean checkIfAlreadyExist(String urlToVisit) {   //I/O work
-        boolean exist = true;
-        try {
-            exist = urlDatabase.exists(urlToVisit);
-        } catch (IOException e) {
-            e.printStackTrace();
-            //TODO: catch deciding
-        }
+    private boolean checkIfAlreadyExist(String urlToVisit) throws IOException {   //I/O work
+        boolean exist = urlDatabase.exists(urlToVisit);
         return exist;
     }
 
-    private void putNewUrl(String urlToVisit) {
-        try {
+    private void putNewUrl(String urlToVisit) throws InterruptedException {
             newUrls.put(urlToVisit);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            //TODO: catch deciding
-        }
     }
 }
