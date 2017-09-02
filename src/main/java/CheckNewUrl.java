@@ -4,9 +4,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CheckNewUrl {
 
@@ -56,15 +59,17 @@ public class CheckNewUrl {
         }
 
         ExecutorService checkingPool = Executors.newFixedThreadPool(THREAD_NUMBER);
-//        AtomicInteger atomicInteger = new AtomicInteger(0);
-//        Timer timer = new Timer();
-//        timer.scheduleAtFixedRate(new TimerTask() {
-//            @Override
-//            public void run() {
-//                System.out.println("new Urls after check hbase: " + atomicInteger.get());
-//                atomicInteger.set(0);
-//            }
-//        }, 0, 1000);
+
+        AtomicInteger atomicInteger = new AtomicInteger(0);
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("new Urls after check hbase: " + atomicInteger.get());
+                atomicInteger.set(0);
+            }
+        }, 0, 1000);
+
         for (int i = 0; i < THREAD_NUMBER; i++) {
             checkingPool.submit((Runnable) () -> {
                 while(true){
@@ -87,7 +92,7 @@ public class CheckNewUrl {
 //                    putNewUrl(urlToVisit);
 
 //                    Profiler.setNewUrlsSize(newUrls.size());
-//                    atomicInteger.incrementAndGet();
+                    atomicInteger.incrementAndGet();
                 }
             });
         }

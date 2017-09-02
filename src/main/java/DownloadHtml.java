@@ -7,10 +7,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DownloadHtml {
     private ArrayBlockingQueue<String> newUrls;
@@ -70,6 +73,7 @@ public class DownloadHtml {
         }
 
         ExecutorService downloadPool = Executors.newFixedThreadPool(THREAD_NUMBER);
+
 //        AtomicInteger atomicInteger = new AtomicInteger(0);
 //        Timer timer = new Timer();
 //        timer.scheduleAtFixedRate(new TimerTask() {
@@ -79,6 +83,7 @@ public class DownloadHtml {
 //                atomicInteger.set(0);
 //            }
 //        }, 0, 1000);
+
         for (int i = 0; i < THREAD_NUMBER; i++) {
             downloadPool.submit((Runnable) () -> {
                 while (true) {
@@ -96,12 +101,15 @@ public class DownloadHtml {
                     if (urlHtml == null)
                         continue;
 //                    singleDownloadingTaskTime = System.currentTimeMillis();
+
                     putUrlBody(urlHtml, url);
+
 //                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
 //                    Profiler.putUrlBody(url, singleDownloadingTaskTime);
 //                    Profiler.setDownloadedSize(downloadedData.size());
 //                    allDownloadingTasksTime = System.currentTimeMillis() - allDownloadingTasksTime;
 //                    Profiler.downloadThread(url, allDownloadingTasksTime);
+
 //                    atomicInteger.incrementAndGet();
                 }
             });
