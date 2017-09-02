@@ -8,7 +8,6 @@ import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class FetchProperUrl {
 
@@ -91,8 +90,12 @@ public class FetchProperUrl {
                         continue;
 
                     //finish
+                    singleFetchingTaskTime = System.currentTimeMillis();
                     addUrlToProperUrls(urlToVisit);
-                    Profiler.setNotYetSize(properUrls.size());
+                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
+                    Profiler.pushUrlToProperQueue(urlToVisit, singleFetchingTaskTime);
+
+                    Profiler.setPropersSize(properUrls.size());
                     allFetchingTasksTime = System.currentTimeMillis() - allFetchingTasksTime;
                     Profiler.getLinkFinished(urlToVisit, allFetchingTasksTime);
                 }

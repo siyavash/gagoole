@@ -71,18 +71,23 @@ public class DownloadHtml {
             downloadPool.submit((Runnable) () -> {
                 while (true) {
                     long allDownloadingTasksTime = System.currentTimeMillis();
-                    long singleDownloadingTaskTime;
-
+                    long singleDownloadingTaskTime = System.currentTimeMillis();
                     String url = getNewUrl();
                     if (url == null)
                         continue;
+                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
+                    Profiler.getLinkFromQueueToDownload(url, singleDownloadingTaskTime);
                     singleDownloadingTaskTime = System.currentTimeMillis();
                     String urlHtml = getPureHtmlFromLink(url);
                     singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
                     Profiler.download(url, singleDownloadingTaskTime);
                     if (urlHtml == null)
                         continue;
+                    singleDownloadingTaskTime = System.currentTimeMillis();
                     putUrlBody(urlHtml, url);
+                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
+                    Profiler.putUrlBody(url, singleDownloadingTaskTime);
+                    Profiler.setDownloadedSize(downloadedData.size());
                     allDownloadingTasksTime = System.currentTimeMillis() - allDownloadingTasksTime;
                     Profiler.downloadThread(url, allDownloadingTasksTime);
                 }
@@ -98,7 +103,6 @@ public class DownloadHtml {
             e.printStackTrace();
             //TODO: catch deciding
         }
-        Profiler.setDownloadedSize(downloadedData.size());
     }
 
     private String getNewUrl() {

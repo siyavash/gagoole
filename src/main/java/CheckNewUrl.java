@@ -8,7 +8,6 @@ import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class CheckNewUrl {
 
@@ -57,15 +56,22 @@ public class CheckNewUrl {
             checkingPool.submit((Runnable) () -> {
                 while(true){
                     long allCheckingTime = System.currentTimeMillis();
+                    long singleCheckingTime = System.currentTimeMillis();
                     String urlToVisit = getProperUrl();
                     if (urlToVisit == null)
                         continue;
+                    singleCheckingTime = System.currentTimeMillis() - singleCheckingTime;
+                    Profiler.getUrlToCheckIfNew(urlToVisit, singleCheckingTime);
+                    singleCheckingTime = System.currentTimeMillis();
                     boolean isInDataStore = checkIfAlreadyExist(urlToVisit);
+                    singleCheckingTime = System.currentTimeMillis() - singleCheckingTime;
+                    Profiler.checkedExistance(urlToVisit, singleCheckingTime);
                     allCheckingTime = System.currentTimeMillis() - allCheckingTime;
-                    Profiler.checkExistenceInDataStore(urlToVisit, allCheckingTime, isInDataStore);
+                    Profiler.checkAllExistanceTaskTime(urlToVisit, allCheckingTime, isInDataStore);
                     if (isInDataStore)
                         continue;
                     putNewUrl(urlToVisit);
+                    Profiler.setNewUrlsSize(newUrls.size());
                 }
             });
         }

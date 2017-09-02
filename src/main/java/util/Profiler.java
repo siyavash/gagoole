@@ -17,7 +17,8 @@ public class Profiler
     private static AtomicLong allCrawled = new AtomicLong(0);
     private static AtomicLong goodContentType = new AtomicLong(0);
     private static AtomicLong queueSize = new AtomicLong(0);
-    private static AtomicLong notYetSize = new AtomicLong(0);
+    private static AtomicLong properSize = new AtomicLong(0);
+    private static AtomicLong newUrlsSize = new AtomicLong(0);
     private static AtomicLong downloadedSize = new AtomicLong(0);
     private static Logger logger = Logger.getLogger(Class.class.getName());
 
@@ -34,16 +35,17 @@ public class Profiler
                     public void run()
                     {
                         System.out.println();
-                        System.out.println("queue size: " + queueSize);
+                        System.out.println("queue size loaded from kafka: " + queueSize);
                         System.out.println("number of fetched links from queue to crawl: " + consumedFromKafka);
                         System.out.println("number of polite domains: " + polites);
                         System.out.println("number of impolite domains: " + impolite);
                         System.out.println("number of good content type: " + goodContentType);
+                        System.out.println("new Urls queue size checked in hbase: " + newUrlsSize);
                         System.out.println("number of links with english language: " + goodLanguage);
                         System.out.println("number of crawled links: " + crawled);
                         System.out.println("number of active threads: " + Thread.activeCount());
                         System.out.println("number of all crawled links: " + allCrawled);
-                        System.out.println("not yet queue size: " + notYetSize);
+                        System.out.println("proper ulr queue size: " + properSize);
                         System.out.println("downloaded data queue size: " + downloadedSize);
                         System.out.println();
 
@@ -62,7 +64,7 @@ public class Profiler
     }
 
     public static void getLinkFromQueueToCrawl(String url, long time) {
-        logger.info(String.format("Got link from queue in time %d: %s", time, url));
+        logger.info(String.format("Link got from queue in time %d: %s", time, url));
         consumedFromKafka.incrementAndGet();
     }
 
@@ -106,7 +108,7 @@ public class Profiler
         logger.info(String.format("Putted in data store in time %d: %s", time, url));
     }
 
-    public static void checkExistenceInDataStore(String url, long time, boolean isExists) {
+    public static void checkAllExistanceTaskTime(String url, long time, boolean isExists) {
         String existence = (isExists ? "exists" : "does'nt exist");
         logger.info(String.format("Check existence in data store (%s) in time %d: %s", existence, time, url));
     }
@@ -115,8 +117,8 @@ public class Profiler
         queueSize.set(size);
     }
 
-    public static void setNotYetSize(long size) {
-        notYetSize.set(size);
+    public static void setPropersSize(long size) {
+        properSize.set(size);
     }
 
     public static void setDownloadedSize(long size) {
@@ -128,7 +130,7 @@ public class Profiler
     }
 
     public static void pushToQueue(String url, long time) {
-        logger.info(String.format("pushed to queue in time: %d %s", time, url));
+        logger.info(String.format("Pushed to queue in time: %d %s", time, url));
     }
 
     public static void writeRequestTimeLog(long requestTime, String link) {
@@ -152,7 +154,7 @@ public class Profiler
     }
 
     public static void getLinkFinished(String linkToVisit, long timeDifference) {
-        logger.info(String.format("fetched link is okay and send to download %d: %s", timeDifference, linkToVisit));
+        logger.info(String.format("fetched link to check if is new %d: %s", timeDifference, linkToVisit));
     }
 
     public static void htmlCheck(String link, long time) {
@@ -186,4 +188,27 @@ public class Profiler
     {
         logger.info("Popped data from organized queue in time: " + time + ", link: " + link);
     }
+    public static void getUrlToCheckIfNew(String urlToVisit, long singleCheckingTime){
+        logger.info("Proper Url is ready to be checked time: " + singleCheckingTime + ", link: " + urlToVisit);
+    }
+    public static void checkedExistance(String urlToVisit, long singleCheckingTime){
+        logger.info("Single Url is checked time: " + singleCheckingTime + ", link: " + urlToVisit);
+    }
+
+    public static void setNewUrlsSize(int size) {
+        newUrlsSize.set(size);
+    }
+
+    public static void pushUrlToProperQueue(String urlToVisit, long singleFetchingTaskTime) {
+        logger.info("Push Url into proper Urls time: " + singleFetchingTaskTime + ", link: " + urlToVisit);
+    }
+
+    public static void getLinkFromQueueToDownload(String url, long singleDownloadingTaskTime) {
+        logger.info("Url got from new Url queue to Download: " + singleDownloadingTaskTime + ", link: " + url);
+    }
+
+    public static void putUrlBody(String url, long singleDownloadingTaskTime) {
+        logger.info("Body got : " + singleDownloadingTaskTime + ", link: " + url);
+    }
+
 }
