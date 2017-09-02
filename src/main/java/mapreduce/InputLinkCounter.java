@@ -18,6 +18,7 @@ import java.io.IOException;
 public class InputLinkCounter {
 
     private static final byte[] COLUMN_FAMILY = "cf".getBytes();
+    private static final byte[] SUB_LINKS = "subLinks".getBytes();
 
     public static void main(String[] args) throws IOException,
                                                   ClassNotFoundException,
@@ -29,6 +30,11 @@ public class InputLinkCounter {
         job.setJarByClass(mapreduce.InputLinkCounter.class);
 
         Scan scan = new Scan();
+
+        scan.addColumn(COLUMN_FAMILY, SUB_LINKS);
+        
+        scan.setCacheBlocks(false);
+        scan.setCaching(500);
 
         TableMapReduceUtil.initTableMapperJob(
                 "wb",
@@ -56,7 +62,6 @@ public class InputLinkCounter {
 
     public static class Mapper extends TableMapper<ImmutableBytesWritable, IntWritable> {
 
-        private static final byte[] SUB_LINKS = "subLinks".getBytes();
         private static final IntWritable one = new IntWritable(1);
 
         @Override
