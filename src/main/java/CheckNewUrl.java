@@ -47,7 +47,7 @@ public class CheckNewUrl {
                 }
             }
         }
-        return Integer.parseInt(prop.getProperty("check-exist-threads-number", "8"));
+        return Integer.parseInt(prop.getProperty("check-exist-threads-number", "200"));
     }
 
     public void startCheckingThreads() {

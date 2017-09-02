@@ -53,7 +53,7 @@ public class DownloadHtml {
                 }
             }
         }
-        return Integer.parseInt(prop.getProperty("download-html-threads-number", "8"));
+        return Integer.parseInt(prop.getProperty("download-html-threads-number", "200"));
     }
 
     private void createAndConfigClient() {
@@ -124,10 +124,10 @@ public class DownloadHtml {
             body = response.body().string();
             response.body().close();
         } catch (IOException e) {
-            long singleDownloadingTaskTime = System.currentTimeMillis();
-            allUrlQueue.push(url);
-            singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
-            Profiler.pushBackToKafka(url, singleDownloadingTaskTime);
+//            long singleDownloadingTaskTime = System.currentTimeMillis();
+//            allUrlQueue.push(url);
+//            singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
+//            Profiler.pushBackToKafka(url, singleDownloadingTaskTime);
         }
 
         return body;
