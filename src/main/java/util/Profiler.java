@@ -1,97 +1,88 @@
 package util;
 
+import com.codahale.metrics.ConsoleReporter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import org.apache.log4j.Logger;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 
 public class Profiler
 {
-    private static AtomicLong consumedFromKafka = new AtomicLong(0);
-    private static AtomicLong polites = new AtomicLong(0);
-    private static AtomicLong impolite = new AtomicLong(0);
-    private static AtomicLong goodLanguage = new AtomicLong(0);
-    private static AtomicLong crawled = new AtomicLong(0);
-    private static AtomicLong allCrawled = new AtomicLong(0);
-    private static AtomicLong goodContentType = new AtomicLong(0);
+    private static Logger logger = Logger.getLogger(Class.class.getName());
+
+    private static final MetricRegistry metrics = new MetricRegistry();
+    private static final Meter fetchedFromQueue = metrics.meter("fetched from queue");
+    private static final Meter polities = metrics.meter("polite links");
+    private static final Meter goodLanguage = metrics.meter("good language");
+    private static final Meter crawled = metrics.meter("crawled");
+    private static final Meter goodContentType= metrics.meter("good content type");
+
     private static AtomicLong queueSize = new AtomicLong(0);
     private static AtomicLong notYetSize = new AtomicLong(0);
     private static AtomicLong downloadedSize = new AtomicLong(0);
-    private static Logger logger = Logger.getLogger(Class.class.getName());
 
     public static void start() {
-
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run()
-            {
-                Timer timer = new Timer();
-                timer.schedule(new TimerTask()
-                {
+        metrics.register(MetricRegistry.name("queueSize"),
+                new Gauge<Long>() {
                     @Override
-                    public void run()
-                    {
-                        System.out.println();
-                        System.out.println("queue size: " + queueSize);
-                        System.out.println("number of fetched links from queue to crawl: " + consumedFromKafka);
-                        System.out.println("number of polite domains: " + polites);
-                        System.out.println("number of impolite domains: " + impolite);
-                        System.out.println("number of good content type: " + goodContentType);
-                        System.out.println("number of links with english language: " + goodLanguage);
-                        System.out.println("number of crawled links: " + crawled);
-                        System.out.println("number of active threads: " + Thread.activeCount());
-                        System.out.println("number of all crawled links: " + allCrawled);
-                        System.out.println("not yet queue size: " + notYetSize);
-                        System.out.println("downloaded data queue size: " + downloadedSize);
-                        System.out.println();
-
-                        consumedFromKafka.set(0);
-                        goodContentType.set(0);
-                        polites.set(0);
-                        impolite.set(0);
-                        goodLanguage.set(0);
-                        crawled.set(0);
+                    public Long getValue() {
+                        return queueSize.get();
                     }
-                }, 0, 1000);
-            }
-        });
-        thread.setPriority(Thread.MAX_PRIORITY);
-        thread.start();
+                });
+
+        metrics.register(MetricRegistry.name("notYetSize"),
+                new Gauge<Long>() {
+                    @Override
+                    public Long getValue() {
+                        return queueSize.get();
+                    }
+                });
+
+        metrics.register(MetricRegistry.name("downloadedSize"),
+                new Gauge<Long>() {
+                    @Override
+                    public Long getValue() {
+                        return queueSize.get();
+                    }
+                });
+
+        ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .build();
+
+        reporter.start(1, TimeUnit.SECONDS);
     }
 
     public static void getLinkFromQueueToCrawl(String url, long time) {
         logger.info(String.format("Got link from queue in time %d: %s", time, url));
-        consumedFromKafka.incrementAndGet();
+        fetchedFromQueue.mark();
     }
 
     public static void checkPolitensess(String url, long time, boolean isPolite) {
         String politeness = (isPolite ? "is polite" : "not polite");
         logger.info(String.format("Checked Politeness (%s) in time %d: %s", politeness, time, url));
-        if (isPolite) polites.incrementAndGet();
+        if (isPolite) polities.mark();
     }
 
     public static void checkContentType(String url, long time, boolean isGood) {
         String goodness = (isGood ? "good" : "bad");
         logger.info(String.format("Checked content type (%s) in time %d: %s", isGood, time, url));
-        if (isGood) goodContentType.incrementAndGet();
-    }
-
-    public static void isImpolite() {
-        impolite.incrementAndGet();
+        if (isGood) goodContentType.mark();
     }
 
     public static void goodLanguage(String url, long time, boolean isEnglish) {
         String beingEnglish = (isEnglish ? "is english" : "not english");
         logger.info(String.format("Checked good language (%s) in time %d: %s", beingEnglish, time, url));
-        if (isEnglish) goodLanguage.incrementAndGet();
+        if (isEnglish) goodLanguage.mark();
     }
 
     public static void extractInformationFromDocument(String url, long time) {
         logger.info(String.format("Extracted info from document in time %d: %s", time, url));
-        allCrawled.incrementAndGet();
-        crawled.incrementAndGet();
+        crawled.mark();
     }
 
     public static void download(String url, long time) {
@@ -111,12 +102,12 @@ public class Profiler
         logger.info(String.format("Check existence in data store (%s) in time %d: %s", existence, time, url));
     }
 
-    public static void setQueueSize(long size) {
-        queueSize.set(size);
-    }
-
     public static void setNotYetSize(long size) {
         notYetSize.set(size);
+    }
+
+    public static void setQueueSize(long size) {
+        queueSize.set(size);
     }
 
     public static void setDownloadedSize(long size) {
