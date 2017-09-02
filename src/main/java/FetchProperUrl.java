@@ -1,6 +1,10 @@
 import queue.URLQueue;
 import util.Profiler;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,17 +18,85 @@ public class FetchProperUrl extends Thread {
     private final int FTHREADS;
 
     //constructor
-    public FetchProperUrl(URLQueue allUrlsQueue, ArrayBlockingQueue<String> properUrls, int fetchThreadNumber) {
+    public FetchProperUrl(URLQueue allUrlsQueue, ArrayBlockingQueue<String> properUrls) {
         this.allUrlsQueue = allUrlsQueue;
         this.properUrls = properUrls;
-        this.FTHREADS = fetchThreadNumber;
-        startFetchingThreads();
+        FTHREADS = readProperty();
     }
 
-    private void startFetchingThreads() {
+    private int readProperty() {
+        Properties prop = new Properties();
+        InputStream input = null;
+        try
+        {
+            input = new FileInputStream("config.properties");
+            prop.load(input);
+        } catch (IOException ex)
+        {
+            System.err.println("error in reading config file:");
+            ex.printStackTrace();
+        } finally
+        {
+            if (input != null)
+            {
+                try
+                {
+                    input.close();
+                } catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return Integer.parseInt(prop.getProperty("fetch-url-threads-number", "8"));
+    }
+
+    public void startFetchingThreads() {
         ExecutorService fetchingPool = Executors.newFixedThreadPool(FTHREADS);
         for (int i = 0; i < FTHREADS; i++) {
-            fetchingPool.submit(this);
+            fetchingPool.submit((Runnable) () -> {
+                while (true){
+
+                    long allFetchingTasksTime = System.currentTimeMillis();
+                    long singleFetchingTaskTime;
+
+                    //get url
+                    singleFetchingTaskTime = System.currentTimeMillis();
+                    String urlToVisit = getUrlFromQueue();
+                    Profiler.setQueueSize(allUrlsQueue.size());
+                    if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
+                    {
+                        continue;
+                    }
+                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
+                    Profiler.getLinkFromQueueToCrawl(urlToVisit, singleFetchingTaskTime);
+
+                    //check politeness
+                    singleFetchingTaskTime = System.currentTimeMillis();
+                    boolean isPolite = checkIfPolite(urlToVisit);
+                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
+                    Profiler.checkPolitensess(urlToVisit, singleFetchingTaskTime, isPolite);
+                    if (!isPolite) {
+                        Profiler.isImpolite();
+                        allUrlsQueue.push(urlToVisit);
+                        continue;
+                    }
+
+                    //check content type
+                    singleFetchingTaskTime = System.currentTimeMillis();
+                    boolean isGoodContentType = isGoodContentType(urlToVisit);
+                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
+                    Profiler.checkContentType(urlToVisit, singleFetchingTaskTime, isGoodContentType);
+                    if (!isGoodContentType)
+                        continue;
+
+                    //finish
+                    addUrlToProperUrls(urlToVisit);
+                    Profiler.setNotYetSize(properUrls.size());
+                    allFetchingTasksTime = System.currentTimeMillis() - allFetchingTasksTime;
+                    Profiler.getLinkFinished(urlToVisit, allFetchingTasksTime);
+                }
+            });
         }
         fetchingPool.shutdown();
         try {
@@ -66,50 +138,4 @@ public class FetchProperUrl extends Thread {
             //TODO: catch deciding
         }
     }
-
-    @Override
-    public void run() {
-        while (true){
-
-            long allFetchingTasksTime = System.currentTimeMillis();
-            long singleFetchingTaskTime;
-
-            //get url
-            singleFetchingTaskTime = System.currentTimeMillis();
-            String urlToVisit = getUrlFromQueue();
-            Profiler.setQueueSize(allUrlsQueue.size());
-            if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
-            {
-                continue;
-            }
-            singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
-            Profiler.getLinkFromQueueToCrawl(urlToVisit, singleFetchingTaskTime);
-
-            //check politeness
-            singleFetchingTaskTime = System.currentTimeMillis();
-            boolean isPolite = checkIfPolite(urlToVisit);
-            singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
-            Profiler.checkPolitensess(urlToVisit, singleFetchingTaskTime, isPolite);
-            if (!isPolite) {
-                Profiler.isImpolite();
-                allUrlsQueue.push(urlToVisit);
-                continue;
-            }
-
-            //check content type
-            singleFetchingTaskTime = System.currentTimeMillis();
-            boolean isGoodContentType = isGoodContentType(urlToVisit);
-            singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
-            Profiler.checkContentType(urlToVisit, singleFetchingTaskTime, isGoodContentType);
-            if (!isGoodContentType)
-                continue;
-
-            //finish
-            addUrlToProperUrls(urlToVisit);
-            Profiler.setNotYetSize(properUrls.size());
-            allFetchingTasksTime = System.currentTimeMillis() - allFetchingTasksTime;
-            Profiler.getLinkFinished(urlToVisit, allFetchingTasksTime);
-        }
-    }
-
 }

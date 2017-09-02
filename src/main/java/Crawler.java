@@ -1,6 +1,7 @@
 import com.squareup.okhttp.OkHttpClient;
 import datastore.DataStore;
 import datastore.LocalDataStore;
+import datastore.PageInfo;
 import datastore.PageInfoDataStore;
 import javafx.util.Pair;
 import queue.DistributedQueue;
@@ -27,8 +28,10 @@ class Crawler
     private String zookeeperClientPort;
     private String zookeeperQuorum;
     private OkHttpClient client = new OkHttpClient();
-    private ArrayBlockingQueue<String> notYetDownloadedLinks = new ArrayBlockingQueue<>(1000000);
+    private ArrayBlockingQueue<String> properUrls = new ArrayBlockingQueue<>(1000000);
+    private ArrayBlockingQueue<String> newUrls = new ArrayBlockingQueue<>(1000000);
     private ArrayBlockingQueue<Pair<String, String>> downloadedData = new ArrayBlockingQueue<>(1000000);
+    private ArrayBlockingQueue<PageInfo> organizedData = new ArrayBlockingQueue<>(1000000);
 
     public Crawler()
     {
@@ -55,22 +58,11 @@ class Crawler
 
     public void start()
     {
-        ExecutorService filterSendDownloadPool = Executors.newFixedThreadPool(2 * NTHREADS + DLTHREADS);
-        for (int i = 0; i < NTHREADS; i++)
-        {
-            filterSendDownloadPool.submit(new LinkFilterThread(queue, dataStore, notYetDownloadedLinks));
-            filterSendDownloadPool.submit(new DataSenderThread(dataStore, queue, downloadedData));
-        }
-
-        for (int i = 0; i < DLTHREADS; i++) {
-            filterSendDownloadPool.submit(new DownloadThread(notYetDownloadedLinks, downloadedData, queue));
-        }
-        filterSendDownloadPool.shutdown();
-        try {
-            filterSendDownloadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            //TODO exception handling
-        }
+        new FetchProperUrl(queue, properUrls).startFetchingThreads();
+        new CheckNewUrl(dataStore, properUrls, newUrls).startCheckingThreads();
+        new DownloadHtml(newUrls, downloadedData, queue).startDownloadThreads();
+        new DataOrganizer(downloadedData, organizedData).startOrganizing();
+        new DataSender(dataStore, queue, organizedData).startSending();
     }
 
     private void loadQueue()
@@ -113,8 +105,6 @@ class Crawler
             input = new FileInputStream("config.properties");
             prop.load(input);
 
-            NTHREADS = Integer.parseInt(prop.getProperty("filter-send-threads-number", "500"));
-            DLTHREADS = Integer.parseInt(prop.getProperty("download-thread-number", "200"));
             initialMode = prop.getProperty("initial-mode", "true").equals("true");
             useKafka = prop.getProperty("use-kafka", "false").equals("true");
             useHbase = prop.getProperty("use-hbase", "false").equals("true");
