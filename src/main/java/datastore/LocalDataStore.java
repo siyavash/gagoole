@@ -1,6 +1,7 @@
 package datastore;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
@@ -13,6 +14,19 @@ public class LocalDataStore implements DataStore {
     @Override
     public boolean exists(String url) throws IOException {
         return store.contains(url);
+    }
+
+    @Override
+    public boolean[] exists(ArrayList<String> urls) throws IOException
+    {
+        boolean[] result = new boolean[urls.size()];
+
+        for (int i = 0; i < urls.size(); i++)
+        {
+            result[i] = store.contains(urls);
+        }
+
+        return result;
     }
 
     @Override
