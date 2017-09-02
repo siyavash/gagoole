@@ -67,11 +67,11 @@ public class InputLinkCounter {
         }
     }
 
-    public static class Reducer extends TableReducer<ImmutableBytesWritable, InputLinkCounter, Put> {
+    public static class Reducer extends TableReducer<ImmutableBytesWritable, IntWritable, Put> {
 
         @Override
         protected void reduce(ImmutableBytesWritable key,
-                              Iterable<InputLinkCounter> values,
+                              Iterable<IntWritable> values,
                               Context context) throws IOException, InterruptedException {
 
         }
