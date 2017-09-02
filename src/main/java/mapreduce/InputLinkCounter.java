@@ -19,7 +19,9 @@ public class InputLinkCounter {
 
     private static final byte[] COLUMN_FAMILY = "cf".getBytes();
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
+    public static void main(String[] args) throws IOException,
+                                                  ClassNotFoundException,
+                                                  InterruptedException {
         Configuration hbaseConfiguration = HBaseConfiguration.create();
         hbaseConfiguration.set("hbase.zookeeper.property.clientPort", "2181");
         hbaseConfiguration.set("hbase.zookeeper.quorum", "localmaster");
@@ -44,7 +46,7 @@ public class InputLinkCounter {
         boolean jobSuccessful = job.waitForCompletion(true);
 
         if(jobSuccessful) {
-            System.out.printf("job done successfully!");
+            System.out.printf("job completed successfully.");
         }
         else {
             System.out.printf("job failed!");
@@ -61,18 +63,23 @@ public class InputLinkCounter {
         protected void map(ImmutableBytesWritable key,
                            Result value,
                            Context context) throws IOException, InterruptedException {
-            String subLinks = new String(value.getValue(COLUMN_FAMILY, SUB_LINKS));
-            if(subLinks.equals("")) {
-                return;
+            try {
+                String subLinks = new String(value.getValue(COLUMN_FAMILY, SUB_LINKS));
+                if (subLinks.equals("")) {
+                    return;
+                }
+
+                String[] linkAnchors = subLinks.split("\n");
+
+                for (String linkAnchor : linkAnchors) {
+                    String[] linkAndAnchor = linkAnchor.split(" , ");
+                    ImmutableBytesWritable link = new ImmutableBytesWritable(linkAndAnchor[0].getBytes());
+
+                    context.write(link, one);
+                }
             }
-
-            String[] linkAnchors = subLinks.split("\n");
-
-            for(String linkAnchor : linkAnchors) {
-                String[] linkAndAnchor = linkAnchor.split(" , ");
-                ImmutableBytesWritable link = new ImmutableBytesWritable(linkAndAnchor[0].getBytes());
-
-                context.write(link, one);
+            catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
