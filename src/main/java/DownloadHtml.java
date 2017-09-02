@@ -20,14 +20,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DownloadHtml {
     private ArrayBlockingQueue<String> newUrls;
     private ArrayBlockingQueue<Pair<String, String>> downloadedData;
-    private URLQueue allUrlQueue;
+//    private URLQueue allUrlQueue;
     private OkHttpClient client;
     private final int DTHREADS;
 
-    public DownloadHtml(ArrayBlockingQueue<String> newUrls, ArrayBlockingQueue<Pair<String, String>> downloadedData, URLQueue allUrlQueue) {
+    public DownloadHtml(ArrayBlockingQueue<String> newUrls, ArrayBlockingQueue<Pair<String, String>> downloadedData/*, URLQueue allUrlQueue*/) {
         this.downloadedData = downloadedData;
         this.newUrls = newUrls;
-        this.allUrlQueue = allUrlQueue;
+//        this.allUrlQueue = allUrlQueue;
         DTHREADS = readProperty();
         createAndConfigClient();
     }
@@ -130,7 +130,7 @@ public class DownloadHtml {
 
     private String getPureHtmlFromLink(String url) {
         Request request = new Request.Builder().url(url).build();
-        Response response;
+        Response response = null;
         String body = null;
         try {
             response = client.newCall(request).execute();
@@ -141,6 +141,18 @@ public class DownloadHtml {
 //            allUrlQueue.push(url);
 //            singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
 //            Profiler.pushBackToKafka(url, singleDownloadingTaskTime);
+        } finally
+        {
+            if (response != null && response.body() != null)
+            {
+                try
+                {
+                    response.body().close();
+                } catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
         }
 
         return body;

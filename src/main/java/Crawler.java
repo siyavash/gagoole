@@ -16,8 +16,8 @@ import java.util.concurrent.*;
 class Crawler
 {
 
-    private int NTHREADS;
-    private int DLTHREADS;
+//    private int NTHREADS;
+//    private int DLTHREADS;
     private URLQueue queue;
     private DataStore dataStore;
     private boolean initialMode = true;
@@ -27,18 +27,18 @@ class Crawler
     private String topicName;
     private String zookeeperClientPort;
     private String zookeeperQuorum;
-    private OkHttpClient client = new OkHttpClient();
-    private ArrayBlockingQueue<String> properUrls = new ArrayBlockingQueue<>(1000000);
-    private ArrayBlockingQueue<String> newUrls = new ArrayBlockingQueue<>(1000000);
-    private ArrayBlockingQueue<Pair<String, String>> downloadedData = new ArrayBlockingQueue<>(1000000);
-    private ArrayBlockingQueue<PageInfo> organizedData = new ArrayBlockingQueue<>(1000000);
+//    private OkHttpClient client = new OkHttpClient();
+    private ArrayBlockingQueue<String> properUrls = new ArrayBlockingQueue<>(100000);
+    private ArrayBlockingQueue<String> newUrls = new ArrayBlockingQueue<>(100000);
+    private ArrayBlockingQueue<Pair<String, String>> downloadedData = new ArrayBlockingQueue<>(100000);
+    private ArrayBlockingQueue<PageInfo> organizedData = new ArrayBlockingQueue<>(100000);
 
     public Crawler()
     {
         loadProperties();
         loadQueue();
         loadDataStore();
-        client.setReadTimeout(1, TimeUnit.SECONDS);
+//        client.setReadTimeout(1, TimeUnit.SECONDS);
         if (initialMode && useKafka)
         {
             ArrayList<String> seeds = loadSeeds();
@@ -46,11 +46,11 @@ class Crawler
             queue.close();
             System.out.println("seed has been published");
             System.exit(20);
-        } else if (initialMode && !useKafka)
+        } else if (initialMode)
         {
             ArrayList<String> seeds = loadSeeds();
             queue.push(seeds);
-        } else if (!initialMode && useKafka)
+        } else if (useKafka)
         {
             queue.startThread();
         }
@@ -60,7 +60,7 @@ class Crawler
     {
         new FetchProperUrl(queue, properUrls).startFetchingThreads();
         new CheckNewUrl(dataStore, properUrls, newUrls).startCheckingThreads();
-        new DownloadHtml(newUrls, downloadedData, queue).startDownloadThreads();
+        new DownloadHtml(newUrls, downloadedData/*, queue*/).startDownloadThreads();
         new DataOrganizer(downloadedData, organizedData).startOrganizing();
         new DataSender(dataStore, queue, organizedData).startSending();
     }
@@ -154,20 +154,20 @@ class Crawler
         }
     }
 
-    public String normalizeUrl(String url)
-    {
-        String normalizedUrl;
-        url = url.toLowerCase();
-        if (url.startsWith("ftp"))
-            return null;
-        normalizedUrl = url.replaceFirst("(www\\.)", "");
-        int slashCounter = 0;
-        if (normalizedUrl.endsWith("/"))
-        {
-            while (normalizedUrl.length() - slashCounter > 0 && normalizedUrl.charAt(normalizedUrl.length() - slashCounter - 1) == '/')
-                slashCounter++;
-        }
-        normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - slashCounter);
-        return normalizedUrl;
-    }
+//    public String normalizeUrl(String url)
+//    {
+//        String normalizedUrl;
+//        url = url.toLowerCase();
+//        if (url.startsWith("ftp"))
+//            return null;
+//        normalizedUrl = url.replaceFirst("(www\\.)", "");
+//        int slashCounter = 0;
+//        if (normalizedUrl.endsWith("/"))
+//        {
+//            while (normalizedUrl.length() - slashCounter > 0 && normalizedUrl.charAt(normalizedUrl.length() - slashCounter - 1) == '/')
+//                slashCounter++;
+//        }
+//        normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - slashCounter);
+//        return normalizedUrl;
+//    }
 }

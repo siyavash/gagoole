@@ -20,7 +20,7 @@ public class PageInfoDataStore implements DataStore
     private static final byte[] COLUMN_FAMILY = Bytes.toBytes("cf");
     private ArrayBlockingQueue<Put> waitingPuts = new ArrayBlockingQueue<>(10000);
     private ConcurrentHashMap<String, Object> waitingPutsStorage = new ConcurrentHashMap<>(10000);
-    private ConcurrentHashMap<String, Object> waitingPutsMiniStorage = new ConcurrentHashMap<>(200);
+    private ConcurrentHashMap<String, Object> waitingPutsMiniStorage = new ConcurrentHashMap<>(100);
     private Logger logger = Logger.getLogger(Class.class.getName());
 
     public PageInfoDataStore(String zookeeperClientPort, String zookeeperQuorum) throws IOException
@@ -193,7 +193,7 @@ public class PageInfoDataStore implements DataStore
                 ArrayList<Put> puts = new ArrayList<>();
                 t2 = System.currentTimeMillis() - t2;
                 logger.info("Started adding Put classes in a list after " + t2 + " milli seconds");
-                for (int i = 0; i < 200; i++)
+                for (int i = 0; i < 100; i++)
                 {
                     try
                     {
@@ -218,7 +218,7 @@ public class PageInfoDataStore implements DataStore
                     t1 = System.currentTimeMillis() - t1;
                     logger.info("100 put done in " + t1 + " milli seconds");
                     t2 = System.currentTimeMillis();
-                } catch (IOException e)
+                } catch (IOException e) //TODO IllegalArgumentException
                 {
                     logger.error("Failed to put in hbase"); //TODO
                 } finally

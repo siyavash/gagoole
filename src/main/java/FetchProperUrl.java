@@ -103,7 +103,9 @@ public class FetchProperUrl {
 
                     //finish
 //                    singleFetchingTaskTime = System.currentTimeMillis();
+
                     addUrlToProperUrls(urlToVisit);
+
 //                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
 //                    Profiler.pushUrlToProperQueue(urlToVisit, singleFetchingTaskTime);
 

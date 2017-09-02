@@ -126,7 +126,7 @@ public class DataOrganizer
 
     private PageInfo createPageInfo(Document dataDocument, String link)
     {
-        long time = System.currentTimeMillis();
+//        long time = System.currentTimeMillis();
 
         PageInfo pageInfo = new PageInfo();
 
@@ -245,12 +245,12 @@ public class DataOrganizer
 
     private boolean isHtml(String text, String link)
     {
-        long time = System.currentTimeMillis();
+//        long time = System.currentTimeMillis();
 
         text = text.toLowerCase();
         boolean result = text.contains("<html") && text.contains("</html>");
 
-        time = System.currentTimeMillis() - time;
+//        time = System.currentTimeMillis() - time;
 //        Profiler.htmlCheck(link, time);
 
         return result;
