@@ -19,7 +19,7 @@ public class InputLinkCounter {
 
     private static final byte[] COLUMN_FAMILY = "cf".getBytes();
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
         Configuration hbaseConfiguration = HBaseConfiguration.create();
         hbaseConfiguration.set("hbase.zookeeper.property.clientPort", "2181");
         hbaseConfiguration.set("hbase.zookeeper.quorum", "localmaster");
@@ -41,6 +41,14 @@ public class InputLinkCounter {
                 Reducer.class,
                 job);
 
+        boolean jobSuccessful = job.waitForCompletion(true);
+
+        if(jobSuccessful) {
+            System.out.printf("job done successfully!");
+        }
+        else {
+            System.out.printf("job failed!");
+        }
 
     }
 
