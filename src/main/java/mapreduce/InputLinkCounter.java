@@ -4,7 +4,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.mapreduce.TableReducer;
 import org.apache.hadoop.io.IntWritable;
@@ -22,6 +24,21 @@ public class InputLinkCounter {
         hbaseConfiguration.set("hbase.zookeeper.quorum", "localmaster");
         Job job = Job.getInstance(hbaseConfiguration, "InputLinkCounter Job");
         job.setJarByClass(mapreduce.InputLinkCounter.class);
+
+        Scan scan = new Scan();
+
+        TableMapReduceUtil.initTableMapperJob(
+                "wb",
+                scan,
+                Mapper.class,
+                ImmutableBytesWritable.class,
+                IntWritable.class,
+                job);
+
+        TableMapReduceUtil.initTableReducerJob(
+                "wb",
+                Reducer.class,
+                job);
     }
 
     public static class Mapper extends TableMapper<ImmutableBytesWritable, IntWritable> {
@@ -40,7 +57,7 @@ public class InputLinkCounter {
         protected void reduce(ImmutableBytesWritable key,
                               Iterable<InputLinkCounter> values,
                               Context context) throws IOException, InterruptedException {
-            
+
         }
     }
 }
