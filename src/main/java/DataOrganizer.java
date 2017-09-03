@@ -81,7 +81,6 @@ public class DataOrganizer
                 {
                     try
                     {
-//                        long time = System.currentTimeMillis();
                         Pair<String, String> poppedData = popNewData();
 
 
@@ -107,13 +106,10 @@ public class DataOrganizer
                         }
 
                         PageInfo pageInfo = createPageInfo(dataDocument, link);
+//                        Profiler.putDone(1);
 
-                        Profiler.putDone(1);
                         sendOrganizedData(pageInfo);
 
-
-//                        time = System.currentTimeMillis() - time;
-//                        Profiler.organized(link, time);
                     } catch (InterruptedException ignored)
                     {
                         //TODO is this enough?

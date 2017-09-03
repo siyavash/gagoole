@@ -103,7 +103,7 @@ public class HtmlCollector
                     String htmlBody = getPureHtmlFromLink(url, timeoutThread);
                     if (htmlBody != null)
                     {
-                        Profiler.downloadDone();
+//                        Profiler.downloadDone();
                         putUrlBody(htmlBody, url);
                     }
 //                    atomicInteger.incrementAndGet();
