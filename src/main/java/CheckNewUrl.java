@@ -66,7 +66,7 @@ public class CheckNewUrl {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                System.out.println("new Urls after check hbase: " + atomicInteger.get());
+                System.out.println("new Urls after check hbase: " + atomicInteger.get() + ", " + properUrls.size());
                 atomicInteger.set(0);
             }
         }, 0, 1000);
@@ -105,11 +105,13 @@ public class CheckNewUrl {
                         urlsToVisit.add(getProperUrl());
                     }
 
-                    boolean[] existInDataStore = checkIfAlreadyExist(urlsToVisit);
+//                    boolean[] existInDataStore = checkIfAlreadyExist(urlsToVisit);
+
+                    System.out.println("fail");
 
                     for (int j = 0; j < 200; j++)
                     {
-                        if (!existInDataStore[j])
+                        if (/*!existInDataStore[j]*/true)
                         {
                             putNewUrl(urlsToVisit.get(j));
                             atomicInteger.incrementAndGet();
