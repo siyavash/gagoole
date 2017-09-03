@@ -81,14 +81,9 @@ public class DataSender
                 {
                     try
                     {
-//                        long time = System.currentTimeMillis();
-
                         PageInfo pageInfo = popNewPageInfo();
                         sendToDataStore(pageInfo);
                         pushSubLinksToQueue(pageInfo);
-
-//                        time = System.currentTimeMillis() - time;
-//                        Profiler.dataSentLog(pageInfo.getUrl(), time);
                     } catch (InterruptedException ignored)
                     {
 

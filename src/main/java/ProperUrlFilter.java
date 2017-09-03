@@ -74,53 +74,27 @@ public class ProperUrlFilter {
         for (int i = 0; i < THREAD_NUMBER; i++) {
             fetchingPool.submit((Runnable) () -> {
                 while (true){
-//                    atomicInteger.incrementAndGet();
-
-//                    long allFetchingTasksTime = System.currentTimeMillis();
-//                    long singleFetchingTaskTime;
-
-                    //get url
-//                    singleFetchingTaskTime = System.currentTimeMillis();
 
                     String urlToVisit = getUrlFromQueue();
-//                    Profiler.setQueueSize(allUrlsQueue.size());
 //                    if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
 //                    {
 //                        continue;
 //                    }
-//                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
-//                    Profiler.getLinkFromKafkaQueue(urlToVisit, singleFetchingTaskTime);
-
                     //check politeness
-//                    singleFetchingTaskTime = System.currentTimeMillis();
                     boolean isPolite = checkIfPolite(urlToVisit);
-//                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
-//                    Profiler.checkPolitensess(urlToVisit, singleFetchingTaskTime, isPolite);
                     if (!isPolite) {
                         allUrlsQueue.push(urlToVisit);
                         continue;
                     }
 
                     //check content type
-//                    singleFetchingTaskTime = System.currentTimeMillis();
                     boolean isGoodContentType = isGoodContentType(urlToVisit);
-//                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
-//                    Profiler.checkContentType(urlToVisit, singleFetchingTaskTime, isGoodContentType);
                     if (!isGoodContentType)
                         continue;
 
                     //finish
-//                    singleFetchingTaskTime = System.currentTimeMillis();
 
                     addUrlToProperUrls(urlToVisit);
-
-//                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
-//                    Profiler.pushUrlToProperQueue(urlToVisit, singleFetchingTaskTime);
-
-//                    Profiler.setPropersSize(properUrls.size());
-//                    allFetchingTasksTime = System.currentTimeMillis() - allFetchingTasksTime;
-//                    Profiler.getLinkFinished(urlToVisit, allFetchingTasksTime);
-
 //                    atomicInteger.incrementAndGet();
                 }
             });

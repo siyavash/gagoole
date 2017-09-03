@@ -7,6 +7,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
+import util.Profiler;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -190,9 +191,10 @@ public class PageInfoDataStore implements DataStore
 
             while (true)
             {
+//                t2 = System.currentTimeMillis() - t2;
+//                logger.info("Started adding Put classes in a list after " + t2 + " milli seconds");
+
                 ArrayList<Put> puts = new ArrayList<>();
-                t2 = System.currentTimeMillis() - t2;
-                logger.info("Started adding Put classes in a list after " + t2 + " milli seconds");
                 for (int i = 0; i < 100; i++)
                 {
                     try
@@ -211,13 +213,15 @@ public class PageInfoDataStore implements DataStore
 
                 try
                 {
+//                    t1 = System.currentTimeMillis();
+//                    t1 = System.currentTimeMillis() - t1;
+//                    logger.info("100 put done in " + t1 + " milli seconds");
+//                    t2 = System.currentTimeMillis();
+
                     table = hbaseConnection.getTable(TABLE_NAME);
-                    t1 = System.currentTimeMillis();
                     table.put(puts);
+                    Profiler.putDone(100);
                     waitingPutsMiniStorage.clear();
-                    t1 = System.currentTimeMillis() - t1;
-                    logger.info("100 put done in " + t1 + " milli seconds");
-                    t2 = System.currentTimeMillis();
                 } catch (IOException e) //TODO IllegalArgumentException
                 {
                     logger.error("Failed to put in hbase"); //TODO

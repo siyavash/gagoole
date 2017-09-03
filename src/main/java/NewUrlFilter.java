@@ -6,12 +6,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Properties;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class NewUrlFilter {
 
@@ -75,40 +72,18 @@ public class NewUrlFilter {
         for (int i = 0; i < THREAD_NUMBER; i++) {
             checkingPool.submit((Runnable) () -> {
                 while(true){
-//                    long allCheckingTime = System.currentTimeMillis();
-//                    long singleCheckingTime = System.currentTimeMillis();
-
-//                    String urlToVisit = getProperUrl();
-//                    if (urlToVisit == null)
-//                        continue;
-
-//                    singleCheckingTime = System.currentTimeMillis() - singleCheckingTime;
-//                    Profiler.getUrlToCheckIfNew(urlToVisit, singleCheckingTime);
-//                    singleCheckingTime = System.currentTimeMillis();
-
-//                    boolean isInDataStore = checkIfAlreadyExist(urlToVisit);
-
-//                    singleCheckingTime = System.currentTimeMillis() - singleCheckingTime;
-//                    Profiler.checkedExistance(urlToVisit, singleCheckingTime);
-//                    allCheckingTime = System.currentTimeMillis() - allCheckingTime;
-//                    Profiler.checkAllExistanceTaskTime(urlToVisit, allCheckingTime, isInDataStore);
-
-//                    if (isInDataStore)
-//                        continue;
-
-//                    putNewUrl(urlToVisit);
-
-//                    Profiler.setNewUrlsSize(newUrls.size());
 
                     ArrayList<String> urlsToVisit = new ArrayList<>();
                     for (int j = 0; j < 200; j++)
                     {
-                        urlsToVisit.add(getProperUrl());
+                        String urlToVisit = getProperUrl();
+                        if (urlToVisit != null)
+                        {
+                            urlsToVisit.add(urlToVisit);
+                        }
                     }
 
                     boolean[] existInDataStore = checkIfAlreadyExist(urlsToVisit);
-
-//                    System.out.println("fail");
 
                     for (int j = 0; j < 200; j++)
                     {
@@ -116,7 +91,7 @@ public class NewUrlFilter {
                         {
                             putNewUrl(urlsToVisit.get(j));
 //                            atomicInteger.incrementAndGet();
-                            Profiler.sendToHBase();
+                            Profiler.existChecked();
                         }
                     }
 
