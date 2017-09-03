@@ -87,7 +87,7 @@ public class DownloadHtml {
 
         for (int i = 0; i < THREAD_NUMBER; i++) {
             downloadPool.submit((Runnable) () -> {
-                TimeoutThread timeoutThread = new TimeoutThread();
+//                TimeoutThread timeoutThread = new TimeoutThread();
 
                 while (true) {
 //                    long allDownloadingTasksTime = System.currentTimeMillis();
@@ -103,7 +103,7 @@ public class DownloadHtml {
 //                        putUrlBody(getPureHtmlFromLink(u), u);
 //                        atomicInteger.incrementAndGet();
 //                    }
-                    putUrlBody(getPureHtmlFromLink(url, timeoutThread), url);
+                    putUrlBody(getPureHtmlFromLink(url), url);
                     atomicInteger.incrementAndGet();
 //                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
 //                    Profiler.getLinkFromQueueToDownload(url, singleDownloadingTaskTime);
@@ -147,11 +147,12 @@ public class DownloadHtml {
         return url;
     }
 
-    private String getPureHtmlFromLink(String url, TimeoutThread timeoutThread) {
+    private String getPureHtmlFromLink(String url) {
         Request request = new Request.Builder().url(url).build();
         Response response = null;
         String body = null;
         try {
+            TimeoutThread timeoutThread = new TimeoutThread();
             Call call = client.newCall(request);
 
             timeoutThread.start();
