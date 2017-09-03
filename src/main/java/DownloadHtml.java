@@ -23,7 +23,7 @@ public class DownloadHtml {
 //    private URLQueue allUrlQueue;
     private OkHttpClient client;
     private final int THREAD_NUMBER;
-    private TimeoutThread timeoutThread = new TimeoutThread();
+    private TimeoutThread timeoutThread;
 
     public DownloadHtml(ArrayBlockingQueue<String> newUrls, ArrayBlockingQueue<Pair<String, String>> downloadedData/*, URLQueue allUrlQueue*/) {
         this.downloadedData = downloadedData;
@@ -88,6 +88,8 @@ public class DownloadHtml {
 
         for (int i = 0; i < THREAD_NUMBER; i++) {
             downloadPool.submit((Runnable) () -> {
+                timeoutThread = new TimeoutThread();
+
                 while (true) {
 //                    long allDownloadingTasksTime = System.currentTimeMillis();
 //                    long singleDownloadingTaskTime = System.currentTimeMillis();
@@ -151,17 +153,17 @@ public class DownloadHtml {
         Response response = null;
         String body = null;
         try {
-            System.out.println(1);
+//            System.out.println(1);
             Call call = client.newCall(request);
             timeoutThread.setCall(call);
 
             timeoutThread.start();
-            System.out.println(2);
+//            System.out.println(2);
             response = call.execute();
-            System.out.println(3);
+//            System.out.println(3);
             if (timeoutThread.isAlive())
             {
-                System.out.println(4);
+//                System.out.println(4);
                 timeoutThread.cancel();
             }
 
