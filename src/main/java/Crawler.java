@@ -78,9 +78,9 @@ class Crawler {
     }
 
     private void configClient() {
-        client.setReadTimeout(1500, TimeUnit.MILLISECONDS);
-        client.setConnectTimeout(1500, TimeUnit.MILLISECONDS);
-        client.setWriteTimeout(1500, TimeUnit.MILLISECONDS);
+        client.setReadTimeout(3, TimeUnit.SECONDS);
+        client.setConnectTimeout(3, TimeUnit.SECONDS);
+        client.setWriteTimeout(3, TimeUnit.SECONDS);
         client.setFollowRedirects(false);
         client.setFollowSslRedirects(false);
         client.setRetryOnConnectionFailure(false);
