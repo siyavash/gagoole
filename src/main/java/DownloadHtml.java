@@ -68,8 +68,7 @@ public class DownloadHtml {
     }
 
     public void startDownloadThreads() {
-        if (THREAD_NUMBER == 0)
-        {
+        if (THREAD_NUMBER == 0) {
             return;
         }
 
