@@ -80,7 +80,7 @@ public class DownloadHtml {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                System.out.println("Downloaded htmls: " + atomicInteger.get());
+                System.out.println("Downloaded htmls: " + atomicInteger.get() + ", " + newUrls.size());
                 atomicInteger.set(0);
             }
         }, 0, 1000);
@@ -110,7 +110,6 @@ public class DownloadHtml {
 //                    Profiler.download(url, singleDownloadingTaskTime);
 
 //                    singleDownloadingTaskTime = System.currentTimeMillis();
-
 
 
 //                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
