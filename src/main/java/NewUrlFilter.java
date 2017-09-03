@@ -1,4 +1,5 @@
 import datastore.DataStore;
+import util.Profiler;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -61,15 +62,15 @@ public class NewUrlFilter {
 
         ExecutorService checkingPool = Executors.newFixedThreadPool(THREAD_NUMBER);
 
-        AtomicInteger atomicInteger = new AtomicInteger(0);
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                System.out.println("new Urls after check hbase: " + atomicInteger.get() + ", " + properUrls.size());
-                atomicInteger.set(0);
-            }
-        }, 0, 1000);
+//        AtomicInteger atomicInteger = new AtomicInteger(0);
+//        Timer timer = new Timer();
+//        timer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                System.out.println("new Urls after check hbase: " + atomicInteger.get() + ", " + properUrls.size());
+//                atomicInteger.set(0);
+//            }
+//        }, 0, 1000);
 
         for (int i = 0; i < THREAD_NUMBER; i++) {
             checkingPool.submit((Runnable) () -> {
@@ -105,16 +106,17 @@ public class NewUrlFilter {
                         urlsToVisit.add(getProperUrl());
                     }
 
-//                    boolean[] existInDataStore = checkIfAlreadyExist(urlsToVisit);
+                    boolean[] existInDataStore = checkIfAlreadyExist(urlsToVisit);
 
 //                    System.out.println("fail");
 
                     for (int j = 0; j < 200; j++)
                     {
-                        if (/*!existInDataStore[j]*/true)
+                        if (!existInDataStore[j])
                         {
                             putNewUrl(urlsToVisit.get(j));
-                            atomicInteger.incrementAndGet();
+//                            atomicInteger.incrementAndGet();
+                            Profiler.sendToHBase();
                         }
                     }
 

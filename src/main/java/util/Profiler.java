@@ -20,6 +20,7 @@ public class Profiler
     private static final Meter goodLanguage = metrics.meter("good language");
     private static final Meter crawled = metrics.meter("crawled");
     private static final Meter goodContentType= metrics.meter("good content type");
+    private static final Meter inHbase = metrics.meter("Sent to HBase");
 
     private static AtomicLong queueSize = new AtomicLong(0);
     private static AtomicLong properSize = new AtomicLong(0);
@@ -27,37 +28,37 @@ public class Profiler
     private static AtomicLong downloadedSize = new AtomicLong(0);
 
     public static void start() {
-        metrics.register(MetricRegistry.name("initial kafka queue size"),
-                new Gauge<Long>() {
-                    @Override
-                    public Long getValue() {
-                        return queueSize.get();
-                    }
-                });
-
-        metrics.register(MetricRegistry.name("proper urls queue size"),
-                new Gauge<Long>() {
-                    @Override
-                    public Long getValue() {
-                        return properSize.get();
-                    }
-                });
-
-        metrics.register(MetricRegistry.name("new urls doesn't exist in hbase"),
-                new Gauge<Long>() {
-                    @Override
-                    public Long getValue() {
-                        return newUrlsSize.get();
-                    }
-                });
-
-        metrics.register(MetricRegistry.name("downloade data queue size"),
-                new Gauge<Long>() {
-                    @Override
-                    public Long getValue() {
-                        return downloadedSize.get();
-                    }
-                });
+//        metrics.register(MetricRegistry.name("initial kafka queue size"),
+//                new Gauge<Long>() {
+//                    @Override
+//                    public Long getValue() {
+//                        return queueSize.get();
+//                    }
+//                });
+//
+//        metrics.register(MetricRegistry.name("proper urls queue size"),
+//                new Gauge<Long>() {
+//                    @Override
+//                    public Long getValue() {
+//                        return properSize.get();
+//                    }
+//                });
+//
+//        metrics.register(MetricRegistry.name("new urls doesn't exist in hbase"),
+//                new Gauge<Long>() {
+//                    @Override
+//                    public Long getValue() {
+//                        return newUrlsSize.get();
+//                    }
+//                });
+//
+//        metrics.register(MetricRegistry.name("downloade data queue size"),
+//                new Gauge<Long>() {
+//                    @Override
+//                    public Long getValue() {
+//                        return downloadedSize.get();
+//                    }
+//                });
 
         ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
                 .convertRatesTo(TimeUnit.SECONDS)
@@ -234,11 +235,8 @@ public class Profiler
         logger.info("Gap time after download html and before put to downloaded queue: " + gapTime + ", link: " + link);
     }
 
-
-
-
-
-
-
-
+    public static void sendToHBase()
+    {
+        inHbase.mark();
+    }
 }

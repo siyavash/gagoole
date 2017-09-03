@@ -61,15 +61,15 @@ public class ProperUrlFilter {
 
         ExecutorService fetchingPool = Executors.newFixedThreadPool(THREAD_NUMBER);
 
-        AtomicInteger atomicInteger = new AtomicInteger(0);
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                System.out.println(atomicInteger.get() + " " + allUrlsQueue.size());
-                atomicInteger.set(0);
-            }
-        }, 0, 1000);
+//        AtomicInteger atomicInteger = new AtomicInteger(0);
+//        Timer timer = new Timer();
+//        timer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                System.out.println(atomicInteger.get() + " " + allUrlsQueue.size());
+//                atomicInteger.set(0);
+//            }
+//        }, 0, 1000);
 
         for (int i = 0; i < THREAD_NUMBER; i++) {
             fetchingPool.submit((Runnable) () -> {
@@ -121,7 +121,7 @@ public class ProperUrlFilter {
 //                    allFetchingTasksTime = System.currentTimeMillis() - allFetchingTasksTime;
 //                    Profiler.getLinkFinished(urlToVisit, allFetchingTasksTime);
 
-                    atomicInteger.incrementAndGet();
+//                    atomicInteger.incrementAndGet();
                 }
             });
         }
