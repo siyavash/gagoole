@@ -17,26 +17,26 @@ public class TimeoutThread extends Thread
         while(true) {
             callPair = null;
             try {
-                System.out.println("1");
+                System.out.print("1 ");
                 callPair = linkedBlockingQueue.take();
-                System.out.println("2");
+                System.out.print("2 ");
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             if (callPair != null) {
-                System.out.println("3");
+                System.out.print("3 ");
                 call = callPair.getKey();
-                System.out.println("4");
+                System.out.print("4 ");
             }
             timeDifference = System.currentTimeMillis() - callPair.getValue();
             try {
                 if (timeDifference <= 1500){
-                    System.out.println("5");
+                    System.out.print("5 ");
                     Thread.sleep(1500 - timeDifference);
-                    System.out.println("6");
+                    System.out.print("6 ");
                 }
                 if (call != null && !call.isCanceled()) {
-                    System.out.println("7");
+                    System.out.print("7 ");
                     call.cancel();
                     System.out.println("8");
                 }
