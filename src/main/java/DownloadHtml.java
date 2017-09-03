@@ -91,11 +91,10 @@ public class DownloadHtml {
 //                    long allDownloadingTasksTime = System.currentTimeMillis();
 //                    long singleDownloadingTaskTime = System.currentTimeMillis();
                     ArrayList<String> urls = new ArrayList<>();
-                    for (int j = 0; j < 200; j++) {
+                    for (int j = 0; j < 300; j++) {
                         urls.add(getNewUrl());
                     }
 
-                    ArrayList<String> htmls = new ArrayList<>();
                     for (String u:urls) {
                         if (u == null)
                             continue;
