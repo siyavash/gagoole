@@ -96,7 +96,7 @@ public class HtmlCollector {
                     if (htmlBody != null)
                     {
                         Profiler.downloadDone();
-                        putUrlBody("hello", url);
+                        putUrlBody(htmlBody, url);
                     }
 //                    atomicInteger.incrementAndGet();
                 }
@@ -107,6 +107,10 @@ public class HtmlCollector {
 
     private void putUrlBody(String urlHtml, String url) {
         try {
+            if (urlHtml == null)
+            {
+                Profiler.putDone(1);
+            }
             downloadedData.put(new Pair<>(urlHtml, url));
         } catch (InterruptedException e) {
             e.printStackTrace();

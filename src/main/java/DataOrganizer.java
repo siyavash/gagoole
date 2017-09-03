@@ -92,7 +92,7 @@ public class DataOrganizer
                         {
                             continue;
                         }
-                        Profiler.putDone(1);
+//                        Profiler.putDone(1);
 
 
                         if (!isHtml(text, link))
