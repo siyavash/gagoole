@@ -83,6 +83,7 @@ public class DataSender
                     {
                         PageInfo pageInfo = popNewPageInfo();
                         sendToDataStore(pageInfo);
+                        Profiler.putDone(1);
                         pushSubLinksToQueue(pageInfo);
                     } catch (InterruptedException ignored)
                     {

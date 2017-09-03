@@ -220,7 +220,7 @@ public class PageInfoDataStore implements DataStore
 
                     table = hbaseConnection.getTable(TABLE_NAME);
                     table.put(puts);
-                    Profiler.putDone(100);
+//                    Profiler.putDone(100);
                     waitingPutsMiniStorage.clear();
                 } catch (IOException e) //TODO IllegalArgumentException
                 {
