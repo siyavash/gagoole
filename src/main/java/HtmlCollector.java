@@ -96,8 +96,8 @@ public class HtmlCollector {
                     if (htmlBody != null)
                     {
                         Profiler.downloadDone();
+                        putUrlBody("hello", url);
                     }
-                    putUrlBody(htmlBody, url);
 //                    atomicInteger.incrementAndGet();
                 }
             });

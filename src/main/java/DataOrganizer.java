@@ -88,6 +88,13 @@ public class DataOrganizer
                         String text = poppedData.getKey();
                         String link = poppedData.getValue();
 
+                        if (text == null)
+                        {
+                            continue;
+                        }
+                        Profiler.putDone(1);
+
+
                         if (!isHtml(text, link))
                         {
                             continue;
@@ -103,7 +110,6 @@ public class DataOrganizer
                         PageInfo pageInfo = createPageInfo(dataDocument, link);
 
                         sendOrganizedData(pageInfo);
-                        Profiler.putDone(1);
 
 
 //                        time = System.currentTimeMillis() - time;
