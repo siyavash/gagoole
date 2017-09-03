@@ -1,3 +1,4 @@
+import com.squareup.okhttp.Call;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -149,7 +150,19 @@ public class DownloadHtml {
         Response response = null;
         String body = null;
         try {
-            response = client.newCall(request).execute();
+            Call call = client.newCall(request);
+
+            new Thread(() -> {
+                try {
+                    Thread.sleep(1500);
+                    if (!call.isCanceled())
+                        call.cancel();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+
+            response = call.execute();
             body = response.body().string();
             response.body().close();
         } catch (IOException e) {
