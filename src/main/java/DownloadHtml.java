@@ -90,17 +90,18 @@ public class DownloadHtml {
                 while (true) {
 //                    long allDownloadingTasksTime = System.currentTimeMillis();
 //                    long singleDownloadingTaskTime = System.currentTimeMillis();
-                    ArrayList<String> urls = new ArrayList<>();
-                    for (int j = 0; j < 300; j++) {
-                        urls.add(getNewUrl());
-                    }
-
-                    for (String u:urls) {
-                        if (u == null)
-                            continue;
-                        putUrlBody(getPureHtmlFromLink(u), u);
-                        atomicInteger.incrementAndGet();
-                    }
+//                    ArrayList<String> urls = new ArrayList<>();
+//                    for (int j = 0; j < 300; j++) {
+//                        urls.add(getNewUrl());
+//                    }
+                    String url = getNewUrl();
+//                    for (String u:urls) {
+//                        if (u == null)
+//                            continue;
+//                        putUrlBody(getPureHtmlFromLink(u), u);
+//                        atomicInteger.incrementAndGet();
+//                    }
+                    putUrlBody(getPureHtmlFromLink(url), url);
 //                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
 //                    Profiler.getLinkFromQueueToDownload(url, singleDownloadingTaskTime);
 //                    singleDownloadingTaskTime = System.currentTimeMillis();
@@ -117,7 +118,7 @@ public class DownloadHtml {
 //                    Profiler.setDownloadedSize(downloadedData.size());
 //                    allDownloadingTasksTime = System.currentTimeMillis() - allDownloadingTasksTime;
 //                    Profiler.downloadThread(url, allDownloadingTasksTime);
-
+                    atomicInteger.incrementAndGet();
 
                 }
             });
