@@ -101,6 +101,7 @@ public class DownloadHtml {
 //                        putUrlBody(getPureHtmlFromLink(u), u);
 //                        atomicInteger.incrementAndGet();
 //                    }
+                    atomicInteger.incrementAndGet();
                     putUrlBody(getPureHtmlFromLink(url), url);
 //                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
 //                    Profiler.getLinkFromQueueToDownload(url, singleDownloadingTaskTime);
@@ -117,7 +118,7 @@ public class DownloadHtml {
 //                    Profiler.setDownloadedSize(downloadedData.size());
 //                    allDownloadingTasksTime = System.currentTimeMillis() - allDownloadingTasksTime;
 //                    Profiler.downloadThread(url, allDownloadingTasksTime);
-                    atomicInteger.incrementAndGet();
+
 
                 }
             });
