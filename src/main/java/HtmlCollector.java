@@ -135,9 +135,17 @@ public class HtmlCollector {
                 throw new IOException();
             }
 
-            Profiler.downloadDone();
             body = response.body().string();
+            if (body != null)
+            {
+                Profiler.downloadDone();
+            }
             response.body().close();
+            if (body != null)
+            {
+                Profiler.putDone(1);
+            }
+
         } catch (IOException e) {
 //            long singleDownloadingTaskTime = System.currentTimeMillis();
 //            allUrlQueue.push(url);
