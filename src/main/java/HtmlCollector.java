@@ -18,14 +18,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class HtmlCollector {
+public class HtmlCollector
+{
     private ArrayBlockingQueue<String> newUrls;
     private ArrayBlockingQueue<Pair<String, String>> downloadedData;
-//    private URLQueue allUrlQueue;
+    //    private URLQueue allUrlQueue;
     private OkHttpClient client;
     private final int THREAD_NUMBER;
 
-    public HtmlCollector(ArrayBlockingQueue<String> newUrls, ArrayBlockingQueue<Pair<String, String>> downloadedData/*, URLQueue allUrlQueue*/) {
+    public HtmlCollector(ArrayBlockingQueue<String> newUrls, ArrayBlockingQueue<Pair<String, String>> downloadedData/*, URLQueue allUrlQueue*/)
+    {
         this.downloadedData = downloadedData;
         this.newUrls = newUrls;
 //        this.allUrlQueue = allUrlQueue;
@@ -33,7 +35,8 @@ public class HtmlCollector {
         createAndConfigClient();
     }
 
-    private int readProperty() {
+    private int readProperty()
+    {
         Properties prop = new Properties();
         InputStream input = null;
         try
@@ -60,7 +63,8 @@ public class HtmlCollector {
         return Integer.parseInt(prop.getProperty("download-html-threads-number", "200"));
     }
 
-    private void createAndConfigClient() {
+    private void createAndConfigClient()
+    {
         client = new OkHttpClient();
         client.setReadTimeout(1500, TimeUnit.MILLISECONDS);
         client.setConnectTimeout(1500, TimeUnit.MILLISECONDS);
@@ -69,8 +73,10 @@ public class HtmlCollector {
         client.setRetryOnConnectionFailure(false);
     }
 
-    public void startDownloadThreads() {
-        if (THREAD_NUMBER == 0) {
+    public void startDownloadThreads()
+    {
+        if (THREAD_NUMBER == 0)
+        {
             return;
         }
 
@@ -86,11 +92,13 @@ public class HtmlCollector {
 //            }
 //        }, 0, 1000);
 
-        for (int i = 0; i < THREAD_NUMBER; i++) {
+        for (int i = 0; i < THREAD_NUMBER; i++)
+        {
             downloadPool.submit((Runnable) () -> {
                 TimeoutThread timeoutThread = new TimeoutThread();
                 timeoutThread.start();
-                while (true) {
+                while (true)
+                {
                     String url = getNewUrl();
                     String htmlBody = getPureHtmlFromLink(url, timeoutThread);
                     if (htmlBody != null)
@@ -105,34 +113,44 @@ public class HtmlCollector {
         downloadPool.shutdown();
     }
 
-    private void putUrlBody(String urlHtml, String url) {
-        try {
-            if (urlHtml == null)
+    private void putUrlBody(String urlHtml, String url)
+    {
+        try
+        {
+            Pair<String, String> dataPair = new Pair<>(urlHtml, url);
+            downloadedData.put(dataPair);
+
+            if (dataPair.getKey() != null)
             {
-                Profiler.putDone(1);
+                Profiler.downloadDone();
             }
-            downloadedData.put(new Pair<>(urlHtml, url));
-        } catch (InterruptedException e) {
+        } catch (InterruptedException e)
+        {
             e.printStackTrace();
             //TODO: catch deciding
         }
     }
 
-    private String getNewUrl() {
+    private String getNewUrl()
+    {
         String url = null;
-        try {
+        try
+        {
             url = newUrls.take();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException e)
+        {
             //TODO: catch deciding
         }
         return url;
     }
 
-    private String getPureHtmlFromLink(String url, TimeoutThread timeoutThread) {
+    private String getPureHtmlFromLink(String url, TimeoutThread timeoutThread)
+    {
         Request request = new Request.Builder().url(url).build();
         Response response = null;
         String body = null;
-        try {
+        try
+        {
             Call call = client.newCall(request);
             timeoutThread.addCall(call, System.currentTimeMillis());
             response = call.execute();
@@ -144,7 +162,8 @@ public class HtmlCollector {
 
             body = response.body().string();
             response.body().close();
-        } catch (IOException e) {
+        } catch (IOException e)
+        {
 //            long singleDownloadingTaskTime = System.currentTimeMillis();
 //            allUrlQueue.push(url);
 //            singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;

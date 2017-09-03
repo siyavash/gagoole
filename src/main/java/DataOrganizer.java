@@ -92,7 +92,6 @@ public class DataOrganizer
                         {
                             continue;
                         }
-//                        Profiler.putDone(1);
 
 
                         if (!isHtml(text, link))
@@ -109,6 +108,7 @@ public class DataOrganizer
 
                         PageInfo pageInfo = createPageInfo(dataDocument, link);
 
+                        Profiler.putDone(1);
                         sendOrganizedData(pageInfo);
 
 
