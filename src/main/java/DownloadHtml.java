@@ -151,13 +151,17 @@ public class DownloadHtml {
         Response response = null;
         String body = null;
         try {
+            System.out.println(1);
             Call call = client.newCall(request);
             timeoutThread.setCall(call);
 
             timeoutThread.start();
+            System.out.println(2);
             response = call.execute();
+            System.out.println(3);
             if (timeoutThread.isAlive())
             {
+                System.out.println(4);
                 timeoutThread.cancel();
             }
 

@@ -107,7 +107,7 @@ public class CheckNewUrl {
 
 //                    boolean[] existInDataStore = checkIfAlreadyExist(urlsToVisit);
 
-                    System.out.println("fail");
+//                    System.out.println("fail");
 
                     for (int j = 0; j < 200; j++)
                     {
