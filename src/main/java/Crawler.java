@@ -1,4 +1,3 @@
-import com.squareup.okhttp.OkHttpClient;
 import datastore.DataStore;
 import datastore.LocalDataStore;
 import datastore.PageInfo;
@@ -11,7 +10,6 @@ import queue.URLQueue;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.concurrent.*;
 
 class Crawler
@@ -59,9 +57,9 @@ class Crawler
 
     public void start()
     {
-        new FetchProperUrl(queue, properUrls).startFetchingThreads();
-        new CheckNewUrl(dataStore, properUrls, newUrls).startCheckingThreads();
-        new DownloadHtml(newUrls, downloadedData/*, queue*/).startDownloadThreads();
+        new ProperUrlFilter(queue, properUrls).startFetchingThreads();
+        new NewUrlFilter(dataStore, properUrls, newUrls).startCheckingThreads();
+        new HtmlCollector(newUrls, downloadedData/*, queue*/).startDownloadThreads();
         new DataOrganizer(downloadedData, organizedData).startOrganizing();
         new DataSender(dataStore, queue, organizedData).startSending();
     }

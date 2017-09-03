@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class FetchProperUrl {
+public class ProperUrlFilter {
 
     private URLQueue allUrlsQueue;
     private final LruCache cache = new LruCache();
@@ -20,7 +20,7 @@ public class FetchProperUrl {
     private final int THREAD_NUMBER;
 
     //constructor
-    public FetchProperUrl(URLQueue allUrlsQueue, ArrayBlockingQueue<String> properUrls) {
+    public ProperUrlFilter(URLQueue allUrlsQueue, ArrayBlockingQueue<String> properUrls) {
         this.allUrlsQueue = allUrlsQueue;
         this.properUrls = properUrls;
         THREAD_NUMBER = readProperty();

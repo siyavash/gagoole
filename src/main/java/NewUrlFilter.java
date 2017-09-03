@@ -12,14 +12,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CheckNewUrl {
+public class NewUrlFilter {
 
     private DataStore urlDatabase;
     private ArrayBlockingQueue<String> properUrls;
     private ArrayBlockingQueue<String> newUrls;
     private final int THREAD_NUMBER;
 
-    public CheckNewUrl(DataStore urlDatabase, ArrayBlockingQueue<String> properUrls, ArrayBlockingQueue<String> newUrls){
+    public NewUrlFilter(DataStore urlDatabase, ArrayBlockingQueue<String> properUrls, ArrayBlockingQueue<String> newUrls){
         this.urlDatabase = urlDatabase;
         this.properUrls = properUrls;
         this.newUrls = newUrls;

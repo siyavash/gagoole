@@ -17,14 +17,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class DownloadHtml {
+public class HtmlCollector {
     private ArrayBlockingQueue<String> newUrls;
     private ArrayBlockingQueue<Pair<String, String>> downloadedData;
 //    private URLQueue allUrlQueue;
     private OkHttpClient client;
     private final int THREAD_NUMBER;
 
-    public DownloadHtml(ArrayBlockingQueue<String> newUrls, ArrayBlockingQueue<Pair<String, String>> downloadedData/*, URLQueue allUrlQueue*/) {
+    public HtmlCollector(ArrayBlockingQueue<String> newUrls, ArrayBlockingQueue<Pair<String, String>> downloadedData/*, URLQueue allUrlQueue*/) {
         this.downloadedData = downloadedData;
         this.newUrls = newUrls;
 //        this.allUrlQueue = allUrlQueue;
@@ -88,7 +88,8 @@ public class DownloadHtml {
         for (int i = 0; i < THREAD_NUMBER; i++) {
             downloadPool.submit((Runnable) () -> {
 //                TimeoutThread timeoutThread = new TimeoutThread();
-
+                TimeoutThread timeoutThread = new TimeoutThread();
+                timeoutThread.start();
                 while (true) {
 //                    long allDownloadingTasksTime = System.currentTimeMillis();
 //                    long singleDownloadingTaskTime = System.currentTimeMillis();
@@ -103,7 +104,7 @@ public class DownloadHtml {
 //                        putUrlBody(getPureHtmlFromLink(u), u);
 //                        atomicInteger.incrementAndGet();
 //                    }
-                    putUrlBody(getPureHtmlFromLink(url), url);
+                    putUrlBody(getPureHtmlFromLink(url, timeoutThread), url);
                     atomicInteger.incrementAndGet();
 //                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
 //                    Profiler.getLinkFromQueueToDownload(url, singleDownloadingTaskTime);
@@ -147,20 +148,14 @@ public class DownloadHtml {
         return url;
     }
 
-    private String getPureHtmlFromLink(String url) {
+    private String getPureHtmlFromLink(String url, TimeoutThread timeoutThread) {
         Request request = new Request.Builder().url(url).build();
         Response response = null;
         String body = null;
         try {
-            TimeoutThread timeoutThread = new TimeoutThread();
             Call call = client.newCall(request);
-
-            timeoutThread.start();
-
+            timeoutThread.addCall(call, System.currentTimeMillis());
             response = call.execute();
-
-            if (timeoutThread.isAlive())
-                timeoutThread.cancel();
 
             body = response.body().string();
             response.body().close();
