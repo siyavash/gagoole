@@ -6,6 +6,7 @@ import javafx.util.Pair;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -74,35 +75,43 @@ public class DownloadHtml {
 
         ExecutorService downloadPool = Executors.newFixedThreadPool(THREAD_NUMBER);
 
-//        AtomicInteger atomicInteger = new AtomicInteger(0);
-//        Timer timer = new Timer();
-//        timer.scheduleAtFixedRate(new TimerTask() {
-//            @Override
-//            public void run() {
-//                System.out.println("Downloaded htmls: " + atomicInteger.get());
-//                atomicInteger.set(0);
-//            }
-//        }, 0, 1000);
+        AtomicInteger atomicInteger = new AtomicInteger(0);
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("Downloaded htmls: " + atomicInteger.get());
+                atomicInteger.set(0);
+            }
+        }, 0, 1000);
 
         for (int i = 0; i < THREAD_NUMBER; i++) {
             downloadPool.submit((Runnable) () -> {
                 while (true) {
 //                    long allDownloadingTasksTime = System.currentTimeMillis();
 //                    long singleDownloadingTaskTime = System.currentTimeMillis();
-                    String url = getNewUrl();
-                    if (url == null)
-                        continue;
+                    ArrayList<String> urls = new ArrayList<>();
+                    for (int j = 0; j < 200; j++) {
+                        urls.add(getNewUrl());
+                    }
+
+                    ArrayList<String> htmls = new ArrayList<>();
+                    for (String u:urls) {
+                        if (u == null)
+                            continue;
+                        putUrlBody(getPureHtmlFromLink(u), u);
+                        atomicInteger.incrementAndGet();
+                    }
 //                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
 //                    Profiler.getLinkFromQueueToDownload(url, singleDownloadingTaskTime);
 //                    singleDownloadingTaskTime = System.currentTimeMillis();
-                    String urlHtml = getPureHtmlFromLink(url);
+
 //                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
 //                    Profiler.download(url, singleDownloadingTaskTime);
-                    if (urlHtml == null)
-                        continue;
+
 //                    singleDownloadingTaskTime = System.currentTimeMillis();
 
-//                    putUrlBody(urlHtml, url);
+
 
 //                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
 //                    Profiler.putUrlBody(url, singleDownloadingTaskTime);
@@ -110,7 +119,7 @@ public class DownloadHtml {
 //                    allDownloadingTasksTime = System.currentTimeMillis() - allDownloadingTasksTime;
 //                    Profiler.downloadThread(url, allDownloadingTasksTime);
 
-//                    atomicInteger.incrementAndGet();
+
                 }
             });
         }
