@@ -131,18 +131,7 @@ class Crawler {
                 System.err.println("error in check existing in hbase: " + e);
             }
 
-            // check content-type
-            try {
-                t1 = System.currentTimeMillis();
-                boolean isGoodContentType = isGoodContentType(linkToVisit);
-                time = System.currentTimeMillis() - t1;
-                Profiler.checkContentType(linkToVisit, time, isGoodContentType);
-                if (!isGoodContentType) continue;
-            } catch (IOException e) {
-                continue;
-            } catch (IllegalArgumentException e) {
-                continue;
-            }
+            if (!isGoodContentType(linkToVisit)) continue;
 
             // make connection and get response
             String html;
@@ -204,11 +193,10 @@ class Crawler {
         return !cache.checkIfExist(stringUrl.substring(0, index));
     }
 
-    private boolean isGoodContentType(String link) throws IOException, IllegalArgumentException {
-        Request request = new Request.Builder().url(link).method("HEAD", null).build();
-        Response response = client.newCall(request).execute();
-        String contentType = response.header("Content-type", "text/html");
-        return contentType.startsWith("text/html");
+    private boolean isGoodContentType(String url) {
+        return !url.endsWith(".jpg") && !url.endsWith(".gif") && !url.endsWith(".pdf") && !url.endsWith(".deb")
+                && !url.endsWith(".jpeg") && !url.endsWith(".png") && !url.endsWith(".txt") && !url.endsWith(".exe")
+                && !url.endsWith(".gz") && !url.endsWith(".rar") && !url.endsWith(".zip") && !url.endsWith(".tar.gz");
     }
 
     private boolean isEnglish(Document document) {

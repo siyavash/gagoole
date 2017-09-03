@@ -13,7 +13,6 @@ public class Profiler {
     private static long goodLanguage = 0;
     private static long crawled = 0;
     private static long allCrawled = 0;
-    private static long goodContentType = 0;
     private static long queueSize = 0;
 
     private static Logger logger = Logger.getLogger(Class.class.getName());
@@ -32,7 +31,6 @@ public class Profiler {
                         System.out.println("number of fetched links from queue to crawl: " + consumedFromKafka);
                         System.out.println("number of polite domains: " + polites);
                         System.out.println("number of impolite domains: " + impolite);
-                        System.out.println("number of good content type: " + goodContentType);
                         System.out.println("number of links with english language: " + goodLanguage);
                         System.out.println("number of crawled links: " + crawled);
                         System.out.println("number of active threads: " + Thread.activeCount());
@@ -40,7 +38,6 @@ public class Profiler {
                         System.out.println();
 
                         consumedFromKafka = 0;
-                        goodContentType = 0;
                         polites = 0;
                         impolite = 0;
                         goodLanguage = 0;
@@ -64,13 +61,6 @@ public class Profiler {
         if (time != 0)
         logger.info(String.format("Checked Politeness (%s) in time %d: %s", politeness, time, url));
         if (isPolite) polites++;
-    }
-
-    public synchronized static void checkContentType(String url, long time, boolean isGood) {
-        String goodness = (isGood ? "good": "bad");
-        if (time != 0)
-            logger.info(String.format("Checked content type (%s) in time %d: %s", isGood, time, url));
-        if (isGood) goodContentType++;
     }
 
     public synchronized static void isImpolite() {
