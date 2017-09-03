@@ -93,7 +93,7 @@ public class HtmlCollector {
                 while (true) {
                     String url = getNewUrl();
                     String htmlBody = getPureHtmlFromLink(url, timeoutThread);
-                    Profiler.downloadDone();
+//                    Profiler.downloadDone();
                     putUrlBody(htmlBody, url);
 //                    atomicInteger.incrementAndGet();
                 }
@@ -130,6 +130,12 @@ public class HtmlCollector {
             timeoutThread.addCall(call, System.currentTimeMillis());
             response = call.execute();
 
+            if (!response.isSuccessful())
+            {
+                throw new IOException();
+            }
+
+            Profiler.downloadDone();
             body = response.body().string();
             response.body().close();
         } catch (IOException e) {

@@ -103,7 +103,7 @@ public class DataOrganizer
                         PageInfo pageInfo = createPageInfo(dataDocument, link);
 
                         sendOrganizedData(pageInfo);
-                        Profiler.putDone(1);
+//                        Profiler.putDone(1);
 
 
 //                        time = System.currentTimeMillis() - time;
@@ -111,6 +111,9 @@ public class DataOrganizer
                     } catch (InterruptedException ignored)
                     {
                         //TODO is this enough?
+                    } catch (Exception e)
+                    {
+                        e.printStackTrace();
                     }
 //                    atomicInteger.incrementAndGet();
                 }
