@@ -23,6 +23,7 @@ public class DownloadHtml {
 //    private URLQueue allUrlQueue;
     private OkHttpClient client;
     private final int THREAD_NUMBER;
+    private TimeoutThread timeoutThread = new TimeoutThread();
 
     public DownloadHtml(ArrayBlockingQueue<String> newUrls, ArrayBlockingQueue<Pair<String, String>> downloadedData/*, URLQueue allUrlQueue*/) {
         this.downloadedData = downloadedData;
@@ -151,18 +152,15 @@ public class DownloadHtml {
         String body = null;
         try {
             Call call = client.newCall(request);
+            timeoutThread.setCall(call);
 
-            new Thread(() -> {
-                try {
-                    Thread.sleep(1500);
-                    if (!call.isCanceled())
-                        call.cancel();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }).start();
-
+            timeoutThread.start();
             response = call.execute();
+            if (timeoutThread.isAlive())
+            {
+                timeoutThread.cancel();
+            }
+
             body = response.body().string();
             response.body().close();
         } catch (IOException e) {
