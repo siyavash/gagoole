@@ -103,7 +103,7 @@ public class DataOrganizer
                         PageInfo pageInfo = createPageInfo(dataDocument, link);
 
                         sendOrganizedData(pageInfo);
-//                        Profiler.putDone(1);
+                        Profiler.putDone(1);
 
 
 //                        time = System.currentTimeMillis() - time;
@@ -111,10 +111,10 @@ public class DataOrganizer
                     } catch (InterruptedException ignored)
                     {
                         //TODO is this enough?
-                    } catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
+                    } /*catch (Exception e)*/
+//                    {
+//                        e.printStackTrace();
+//                    }
 //                    atomicInteger.incrementAndGet();
                 }
             });
@@ -257,7 +257,7 @@ public class DataOrganizer
 //        long time = System.currentTimeMillis();
 
         text = text.toLowerCase();
-        boolean result = text.contains("<html") && text.contains("</html>");
+        boolean result = text.contains("<body")/* && text.contains("</html>")*/;
 
 //        time = System.currentTimeMillis() - time;
 //        Profiler.htmlCheck(link, time);
