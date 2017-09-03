@@ -103,6 +103,7 @@ public class CheckNewUrl {
                     for (int j = 0; j < 200; j++)
                     {
                         urlsToVisit.add(getProperUrl());
+                        atomicInteger.incrementAndGet();
                     }
 
                     boolean[] existInDataStore = checkIfAlreadyExist(urlsToVisit);
@@ -115,7 +116,7 @@ public class CheckNewUrl {
                         }
                     }
 
-                    atomicInteger.incrementAndGet();
+
                 }
             });
         }
