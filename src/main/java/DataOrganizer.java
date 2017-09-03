@@ -103,6 +103,7 @@ public class DataOrganizer
                         PageInfo pageInfo = createPageInfo(dataDocument, link);
 
                         sendOrganizedData(pageInfo);
+                        Profiler.putDone(1);
 
 
 //                        time = System.currentTimeMillis() - time;
