@@ -74,15 +74,15 @@ public class DownloadHtml {
 
         ExecutorService downloadPool = Executors.newFixedThreadPool(THREAD_NUMBER);
 
-        AtomicInteger atomicInteger = new AtomicInteger(0);
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                System.out.println("Downloaded htmls: " + atomicInteger.get());
-                atomicInteger.set(0);
-            }
-        }, 0, 1000);
+//        AtomicInteger atomicInteger = new AtomicInteger(0);
+//        Timer timer = new Timer();
+//        timer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                System.out.println("Downloaded htmls: " + atomicInteger.get());
+//                atomicInteger.set(0);
+//            }
+//        }, 0, 1000);
 
         for (int i = 0; i < THREAD_NUMBER; i++) {
             downloadPool.submit((Runnable) () -> {
@@ -110,7 +110,7 @@ public class DownloadHtml {
 //                    allDownloadingTasksTime = System.currentTimeMillis() - allDownloadingTasksTime;
 //                    Profiler.downloadThread(url, allDownloadingTasksTime);
 
-                    atomicInteger.incrementAndGet();
+//                    atomicInteger.incrementAndGet();
                 }
             });
         }
