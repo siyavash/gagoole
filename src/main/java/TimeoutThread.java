@@ -9,10 +9,10 @@ public class TimeoutThread extends Thread
     {
         try
         {
-            Thread.sleep(20000);
+            Thread.sleep(1500);
             if (!call.isCanceled())
             {
-                System.out.println("inside cancel");
+//                System.out.println("inside cancel");
                 call.cancel();
             }
 

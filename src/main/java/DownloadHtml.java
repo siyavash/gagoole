@@ -23,7 +23,6 @@ public class DownloadHtml {
 //    private URLQueue allUrlQueue;
     private OkHttpClient client;
     private final int THREAD_NUMBER;
-    private TimeoutThread timeoutThread;
 
     public DownloadHtml(ArrayBlockingQueue<String> newUrls, ArrayBlockingQueue<Pair<String, String>> downloadedData/*, URLQueue allUrlQueue*/) {
         this.downloadedData = downloadedData;
@@ -88,7 +87,7 @@ public class DownloadHtml {
 
         for (int i = 0; i < THREAD_NUMBER; i++) {
             downloadPool.submit((Runnable) () -> {
-                timeoutThread = new TimeoutThread();
+                TimeoutThread timeoutThread = new TimeoutThread();
 
                 while (true) {
 //                    long allDownloadingTasksTime = System.currentTimeMillis();
@@ -104,7 +103,7 @@ public class DownloadHtml {
 //                        putUrlBody(getPureHtmlFromLink(u), u);
 //                        atomicInteger.incrementAndGet();
 //                    }
-                    putUrlBody(getPureHtmlFromLink(url), url);
+                    putUrlBody(getPureHtmlFromLink(url, timeoutThread), url);
                     atomicInteger.incrementAndGet();
 //                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
 //                    Profiler.getLinkFromQueueToDownload(url, singleDownloadingTaskTime);
@@ -148,24 +147,19 @@ public class DownloadHtml {
         return url;
     }
 
-    private String getPureHtmlFromLink(String url) {
+    private String getPureHtmlFromLink(String url, TimeoutThread timeoutThread) {
         Request request = new Request.Builder().url(url).build();
         Response response = null;
         String body = null;
         try {
-//            System.out.println(1);
             Call call = client.newCall(request);
-            timeoutThread.setCall(call);
 
             timeoutThread.start();
-//            System.out.println(2);
+
             response = call.execute();
-//            System.out.println(3);
+
             if (timeoutThread.isAlive())
-            {
-//                System.out.println(4);
                 timeoutThread.cancel();
-            }
 
             body = response.body().string();
             response.body().close();
