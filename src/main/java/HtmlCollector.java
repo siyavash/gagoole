@@ -93,7 +93,10 @@ public class HtmlCollector {
                 while (true) {
                     String url = getNewUrl();
                     String htmlBody = getPureHtmlFromLink(url, timeoutThread);
-//                    Profiler.downloadDone();
+                    if (htmlBody != null)
+                    {
+                        Profiler.downloadDone();
+                    }
                     putUrlBody(htmlBody, url);
 //                    atomicInteger.incrementAndGet();
                 }
@@ -136,16 +139,7 @@ public class HtmlCollector {
             }
 
             body = response.body().string();
-            if (body != null)
-            {
-                Profiler.downloadDone();
-            }
             response.body().close();
-            if (body != null)
-            {
-                Profiler.putDone(1);
-            }
-
         } catch (IOException e) {
 //            long singleDownloadingTaskTime = System.currentTimeMillis();
 //            allUrlQueue.push(url);
