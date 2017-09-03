@@ -40,7 +40,7 @@ class Crawler {
         loadProperties();
         loadQueue();
         loadDataStore();
-        client.setReadTimeout(10, TimeUnit.SECONDS);
+        configClient();
 
         if (initialMode && useKafka) {
             ArrayList<String> seeds = loadSeeds();
@@ -75,6 +75,14 @@ class Crawler {
         } else {
             queue = new LocalQueue();
         }
+    }
+
+    private void configClient() {
+        client.setReadTimeout(1500, TimeUnit.MILLISECONDS);
+        client.setConnectTimeout(1500, TimeUnit.MILLISECONDS);
+        client.setFollowRedirects(false);
+        client.setFollowSslRedirects(false);
+        client.setRetryOnConnectionFailure(false);
     }
 
     private void loadDataStore() {
