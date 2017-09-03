@@ -1,115 +1,77 @@
 package util;
 
+import com.codahale.metrics.*;
 import org.apache.log4j.Logger;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 public class Profiler {
-    private static long consumedFromKafka = 0;
-    private static long polites = 0;
-    private static long impolite = 0;
-    private static long goodLanguage = 0;
-    private static long crawled = 0;
-    private static long allCrawled = 0;
-    private static long queueSize = 0;
 
     private static Logger logger = Logger.getLogger(Class.class.getName());
+    private static MetricRegistry metrics = new MetricRegistry();
+
+    private static Meter fetchedFromQueue = metrics.meter("fetchedFromQueue");
+    private static Meter polite = metrics.meter("polite link");
+    private static Meter unique = metrics.meter("unique url");
+    private static Meter downloaded = metrics.meter("downloaded");
+    private static Meter goodLanguage = metrics.meter("goodLanguage");
+    private static Meter crawled = metrics.meter("crawled");
+    private static Histogram linksSize = metrics.histogram("links size");
+
+    private static AtomicLong queueSize = new AtomicLong(0);
 
     public static void start() {
-
-        Thread thread = new Thread(new Runnable() {
+        metrics.register("queue size", new Gauge<Long>() {
             @Override
-            public void run() {
-                Timer timer = new Timer();
-                timer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        System.out.println();
-                        System.out.println("queue size: " + queueSize);
-                        System.out.println("number of fetched links from queue to crawl: " + consumedFromKafka);
-                        System.out.println("number of polite domains: " + polites);
-                        System.out.println("number of impolite domains: " + impolite);
-                        System.out.println("number of links with english language: " + goodLanguage);
-                        System.out.println("number of crawled links: " + crawled);
-                        System.out.println("number of active threads: " + Thread.activeCount());
-                        System.out.println("number of all crawled links: " + allCrawled);
-                        System.out.println();
-
-                        consumedFromKafka = 0;
-                        polites = 0;
-                        impolite = 0;
-                        goodLanguage = 0;
-                        crawled = 0;
-                    }
-                }, 0, 1000);
+            public Long getValue() {
+                return queueSize.get();
             }
         });
-        thread.setPriority(Thread.MAX_PRIORITY);
-        thread.start();
+
+        ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .build();
+
+        reporter.start(1, TimeUnit.SECONDS);
     }
 
-    public synchronized static void getLinkFromQueueToCrawl(String url, long time) {
-        if (time != 0)
-        logger.info(String.format("Got link from queue in time %d: %s", time, url));
-        consumedFromKafka++;
+    public static void getLinkFromQueueToCrawl() {
+        fetchedFromQueue.mark();
     }
 
-    public synchronized static void checkPolitensess(String url, long time, boolean isPolite) {
-        String politeness = (isPolite ? "is polite": "not polite");
-        if (time != 0)
-        logger.info(String.format("Checked Politeness (%s) in time %d: %s", politeness, time, url));
-        if (isPolite) polites++;
+    public static void isPolite() {
+        polite.mark();
     }
 
-    public synchronized static void isImpolite() {
-        impolite++;
+    public static void isUnique() {
+        unique.mark();
     }
 
-    public synchronized static void goodLanguage(String url, long time, boolean isEnglish) {
-        String beingEnglish = (isEnglish ? "is english": "not english");
-        if (time != 0)
-        logger.info(String.format("Checked good language (%s) in time %d: %s", beingEnglish, time, url));
-        if (isEnglish) goodLanguage++;
+    public static void download(String url, long size, long time) {
+        downloaded.mark();
+        linksSize.update(size / 1000);
+        logger.info(String.format("Downloaded in time %d: %s", time, url));
     }
 
-    public synchronized static void extractInformationFromDocument(String url, long time) {
-        logger.info(String.format("Extracted info from document in time %d: %s", time, url));
-        allCrawled++;
-        crawled++;
+    public static void isGoodLanguage() {
+        goodLanguage.mark();
     }
 
-    public synchronized static void download(String url, long time) {
-        if (time != 0)
-            logger.info(String.format("Downloaded in time %d: %s", time, url));
+//    public synchronized static void checkExistenceInDataStore(String url, long time, boolean isExists) {
+//        String existence = (isExists ? "exists": "doesn't exist");
+//        if (time != 0)
+//        logger.info(String.format("Check existence in data store (%s) in time %d: %s", existence, time, url));
+//    }
+
+    public static void setQueueSize(long size) {
+        queueSize.set(size);
     }
 
-    public synchronized static void parse(String url, long time) {
-        if (time != 0)
-        logger.info(String.format("Parsed in time %d: %s", time, url));
-    }
-
-    public synchronized static void putToDataStore(String url, long time) {
-        if (time != 0)
-        logger.info(String.format("Putted in data store in time %d: %s", time, url));
-    }
-
-    public synchronized static void checkExistenceInDataStore(String url, long time, boolean isExists) {
-        String existence = (isExists ? "exists": "does'nt exist");
-        if (time != 0)
-        logger.info(String.format("Check existence in data store (%s) in time %d: %s", existence, time, url));
-    }
-
-    public synchronized static void setQueueSize(long size) {
-        queueSize = size;
-    }
-
-    public synchronized static void crawled(String url, long time) {
+    public static void crawled(String url, long time) {
+        crawled.mark();
         logger.info(String.format("Completely crawled in time %d: %s", time, url));
     }
 
-    public synchronized static void pushToQueue(String url, long time) {
-        logger.info(String.format("pushed to queue in time: %d %s", time, url));
-    }
 }

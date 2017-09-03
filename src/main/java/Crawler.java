@@ -80,6 +80,7 @@ class Crawler {
     private void configClient() {
         client.setReadTimeout(1500, TimeUnit.MILLISECONDS);
         client.setConnectTimeout(1500, TimeUnit.MILLISECONDS);
+        client.setWriteTimeout(1500, TimeUnit.MILLISECONDS);
         client.setFollowRedirects(false);
         client.setFollowSslRedirects(false);
         client.setRetryOnConnectionFailure(false);
@@ -105,36 +106,29 @@ class Crawler {
 
             Profiler.setQueueSize(queue.size());
             // pop from queue
+            startCrawlTime = System.currentTimeMillis();
             try {
-                t1 = System.currentTimeMillis();
-                startCrawlTime = t1;
                 linkToVisit = queue.pop();
                 if (linkToVisit == null || linkToVisit.startsWith("ftp") || linkToVisit.startsWith("mailto")) continue;
-                time = System.currentTimeMillis() - t1;
-                Profiler.getLinkFromQueueToCrawl(linkToVisit, time);
+                Profiler.getLinkFromQueueToCrawl();
             } catch (InterruptedException e) {
                 System.err.println("error in reading from blocking queue: ");
                 continue;
             }
 
             // check politeness
-            t1 = System.currentTimeMillis();
             boolean isPolite = isPolite(linkToVisit);
-            time = System.currentTimeMillis() - t1;
-            Profiler.checkPolitensess(linkToVisit, time, isPolite);
+            Profiler.isPolite();
             if (!isPolite) {
-                Profiler.isImpolite();
                 queue.push(linkToVisit);
                 continue;
             }
 
             // check repeated
             try {
-                t1 = System.currentTimeMillis();
                 boolean isExists = dataStore.exists(normalizeUrl(linkToVisit));
-                time = System.currentTimeMillis() - t1;
-                Profiler.checkExistenceInDataStore(linkToVisit, time, isExists);
                 if (isExists) continue;
+                Profiler.isUnique();
             } catch (IOException e) {
                 System.err.println("error in check existing in hbase: " + e);
             }
@@ -144,10 +138,8 @@ class Crawler {
             // make connection and get response
             String html;
             try {
-                t1 = System.currentTimeMillis();
                 html = getPureHtmlFromLink(linkToVisit);
-                time = System.currentTimeMillis() - t1;
-                Profiler.download(linkToVisit, time);
+                if (html == null) continue;
             } catch (IOException e) {
                 continue;
             } catch (IllegalArgumentException e) {
@@ -155,41 +147,25 @@ class Crawler {
             }
 
             // parse html
-            Document document;
-            t1 = System.currentTimeMillis();
-            document = parseHtml(html);
-            time = System.currentTimeMillis() - t1;
-            Profiler.parse(linkToVisit, time);
+            Document document = parseHtml(html);
 
             // check language
-            t1 = System.currentTimeMillis();
             boolean isEnglish = isEnglish(document);
-            time = System.currentTimeMillis() - t1;
-            Profiler.goodLanguage(linkToVisit, time, isEnglish);
             if (!isEnglish) continue;
+            Profiler.isGoodLanguage();
 
             // extract info
-            t1 = System.currentTimeMillis();
             PageInfo pageInfo = getPageInfo(linkToVisit, document);
-            time = System.currentTimeMillis() - t1;
-            Profiler.extractInformationFromDocument(linkToVisit, time);
 
             try {
-                t1 = System.currentTimeMillis();
                 dataStore.put(pageInfo);
-                time = System.currentTimeMillis() - t1;
-                Profiler.putToDataStore(linkToVisit, time);
             } catch (IOException e) {
                 System.err.println("errrrror");
                 System.exit(3);
             }
 
             ArrayList<String> sublinks = getAllSublinksFromPageInfo(pageInfo);
-
-            t1 = System.currentTimeMillis();
             queue.push(sublinks);
-            time = System.currentTimeMillis() - t1;
-            Profiler.pushToQueue(linkToVisit, time);
 
             Profiler.crawled(linkToVisit, System.currentTimeMillis() - startCrawlTime);
         }
@@ -212,10 +188,21 @@ class Crawler {
         return languageDetector.isEnglish();
     }
 
-    private static String getPureHtmlFromLink(String link) throws IOException {
+    private String getPureHtmlFromLink(String link) throws IOException {
+        long t1 = System.currentTimeMillis();
         Request request = new Request.Builder().url(link).build();
         Response response = client.newCall(request).execute();
-        return response.body().string();
+
+        if (!response.header("Content-type", "text/html").startsWith("text/html")) {
+            response.body().close();
+            return null;
+        }
+
+        String html = response.body().string();
+        response.body().close();
+        if (html.length() == 0) return null;
+        Profiler.download(link, html.length(), System.currentTimeMillis() - t1);
+        return html;
     }
 
     private Document parseHtml(String content) {

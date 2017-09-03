@@ -40,10 +40,10 @@ public class LanguageDetector {
             if (lang != null && !lang.equals("")) {
                 return !(lang.startsWith("en") || lang.equals("mul"));
             } else {
-                return true;
+                return false;
             }
         } catch (NullPointerException e) {
-            return true;
+            return false;
         }
     }
 
