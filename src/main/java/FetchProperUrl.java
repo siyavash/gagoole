@@ -3,6 +3,7 @@ import queue.URLQueue;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -80,37 +81,46 @@ public class FetchProperUrl {
 
                     //get url
 //                    singleFetchingTaskTime = System.currentTimeMillis();
-                    String urlToVisit = getUrlFromQueue();
-//                    Profiler.setQueueSize(allUrlsQueue.size());
-                    if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
+                    ArrayList<String> urlsToVisit = new ArrayList<>();
+                    for (int j = 0; j < 200; j++)
                     {
-                        continue;
+                        urlsToVisit.add(getUrlFromQueue());
                     }
+//                    String urlToVisit = getUrlFromQueue();
+//                    Profiler.setQueueSize(allUrlsQueue.size());
+//                    if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
+//                    {
+//                        continue;
+//                    }
 //                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
 //                    Profiler.getLinkFromKafkaQueue(urlToVisit, singleFetchingTaskTime);
 
                     //check politeness
 //                    singleFetchingTaskTime = System.currentTimeMillis();
-                    boolean isPolite = checkIfPolite(urlToVisit);
+                    boolean[] isPolite = checkIfPolite(urlsToVisit);
+                    boolean[] isGoodContentType = isGoodContentType(urlsToVisit);
 //                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
 //                    Profiler.checkPolitensess(urlToVisit, singleFetchingTaskTime, isPolite);
-                    if (!isPolite) {
-                        allUrlsQueue.push(urlToVisit);
-                        continue;
+                    for (int j = 0; j < 200; j++) {
+                        if (!isPolite[j]) {
+                            allUrlsQueue.push(urlsToVisit.get(j));
+                            continue;
+                        }
+                        if (!isGoodContentType[j])
+                            continue;
+                        addUrlToProperUrls(urlsToVisit.get(j));
                     }
+
 
                     //check content type
 //                    singleFetchingTaskTime = System.currentTimeMillis();
-                    boolean isGoodContentType = isGoodContentType(urlToVisit);
+
 //                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
 //                    Profiler.checkContentType(urlToVisit, singleFetchingTaskTime, isGoodContentType);
-                    if (!isGoodContentType)
-                        continue;
+
 
                     //finish
 //                    singleFetchingTaskTime = System.currentTimeMillis();
-
-                    addUrlToProperUrls(urlToVisit);
 
 //                    singleFetchingTaskTime = System.currentTimeMillis() - singleFetchingTaskTime;
 //                    Profiler.pushUrlToProperQueue(urlToVisit, singleFetchingTaskTime);
@@ -137,17 +147,31 @@ public class FetchProperUrl {
         return candidateUrl;
     }
 
-    private boolean checkIfPolite(String urlToVisit) {
-        int index = urlToVisit.indexOf("/", 8);
-        if (index == -1) index = urlToVisit.length();
-        return !cache.checkIfExist(urlToVisit.substring(0, index));
+    private boolean[] checkIfPolite(ArrayList<String> urlsToVisit) {
+        int n = urlsToVisit.size();
+        boolean [] isPolite = new boolean[n];
+        int i = 0;
+        for (String urlToVisit:urlsToVisit) {
+            int index = urlToVisit.indexOf("/", 8);
+            if (index == -1) index = urlToVisit.length();
+            isPolite[i] = !cache.checkIfExist(urlToVisit.substring(0, index));
+            i++;
+        }
+        return isPolite;
     }
 
-    private boolean isGoodContentType(String url) {
-        url = url.toLowerCase();
-        return !url.endsWith(".jpg") && !url.endsWith(".gif") && !url.endsWith(".pdf") && !url.endsWith(".deb")
-                && !url.endsWith(".jpeg") && !url.endsWith(".png") && !url.endsWith(".txt") && !url.endsWith(".exe")
-                && !url.endsWith(".gz") && !url.endsWith(".rar") && !url.endsWith(".zip") && !url.endsWith(".tar.gz");
+    private boolean[] isGoodContentType(ArrayList<String> urls) {
+        int n = urls.size();
+        boolean [] isGood = new boolean[n];
+        int i = 0;
+        for (String url:urls){
+            url = url.toLowerCase();
+            isGood[i] = !url.endsWith(".jpg") && !url.endsWith(".gif") && !url.endsWith(".pdf") && !url.endsWith(".deb")
+                    && !url.endsWith(".jpeg") && !url.endsWith(".png") && !url.endsWith(".txt") && !url.endsWith(".exe")
+                    && !url.endsWith(".gz") && !url.endsWith(".rar") && !url.endsWith(".zip") && !url.endsWith(".tar.gz");
+            i++;
+        }
+        return isGood;
     }
 
     private void addUrlToProperUrls(String urlToVisit) {
