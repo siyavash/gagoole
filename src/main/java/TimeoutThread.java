@@ -6,7 +6,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class TimeoutThread extends Thread
 {
     private Call call = null;
-    private LinkedBlockingQueue<Pair<Call, Long>> linkedBlockingQueue = null;
+    private LinkedBlockingQueue<Pair<Call, Long>> linkedBlockingQueue = new LinkedBlockingQueue<>();
 
     @Override
     public void run()
@@ -38,11 +38,6 @@ public class TimeoutThread extends Thread
         }
     }
 
-
-    public void cancel()
-    {
-        interrupt();
-    }
 
     public void addCall(Call call, Long time)
     {
