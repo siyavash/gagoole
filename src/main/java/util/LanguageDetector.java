@@ -9,10 +9,10 @@ public class LanguageDetector {
     public LanguageDetector(Document document) { doc = document; }
 
     public boolean isEnglish() {
-        if (checkLangAttribute())
-            return true;
+        if (langAttrIsNotEnglish())
+            return false;
 
-        return (checkTitle() && checkAllContent());
+        return checkAllContent();
     }
 
     private boolean stringChecker(String str) {
@@ -33,17 +33,12 @@ public class LanguageDetector {
         }
     }
 
-    private boolean checkTitle() {
-        String title = doc.title();
-        return stringChecker(title);
-    }
-
-    private boolean checkLangAttribute() {
+    private boolean langAttrIsNotEnglish() {
         try {
             Element htmlTag = doc.getElementsByTag("html").first();
             String lang = htmlTag.attr("lang");
             if (lang != null && !lang.equals("")) {
-                return (lang.startsWith("en") || lang.equals("mul"));
+                return !(lang.startsWith("en") || lang.equals("mul"));
             } else {
                 return true;
             }
