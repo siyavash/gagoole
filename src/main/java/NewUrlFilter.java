@@ -90,7 +90,7 @@ public class NewUrlFilter {
                     {
                         if (!existInDataStore[j])
                         {
-                            Profiler.existChecked();
+//                            Profiler.existChecked();
                             putNewUrl(urlsToVisit.get(j));
 //                            atomicInteger.incrementAndGet();
                         }

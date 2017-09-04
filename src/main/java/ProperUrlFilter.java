@@ -1,4 +1,5 @@
 import queue.URLQueue;
+import util.Profiler;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -76,6 +77,7 @@ public class ProperUrlFilter {
                 while (true){
 
                     String urlToVisit = getUrlFromQueue();
+                    Profiler.existChecked();
 //                    if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
 //                    {
 //                        continue;
