@@ -22,9 +22,13 @@ public class LocalQueue implements URLQueue {
         }
     }
 
-    public void push(String URL) throws InterruptedException {
+    public void push(String URL) {
         if (queue.size() < 900 * 1000)
-            queue.put(URL);
+            try {
+                queue.put(URL);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
     }
 
     public void startThread() {
