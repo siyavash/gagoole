@@ -1,6 +1,7 @@
 package mapreduce;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -12,27 +13,27 @@ import org.apache.hadoop.hbase.mapreduce.TableReducer;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
-public class InputLinkCounter {
+public class InputLinkCounter extends Configured implements Tool {
 
     private static final byte[] COLUMN_FAMILY = "cf".getBytes();
     private static final byte[] SUB_LINKS = "subLinks".getBytes();
+    private static Logger logger = Logger.getLogger(Class.class.getName());
 
-    public static void main(String[] args) throws IOException,
-                                                  ClassNotFoundException,
-                                                  InterruptedException {
-        Configuration hbaseConfiguration = HBaseConfiguration.create();
-        hbaseConfiguration.set("hbase.zookeeper.property.clientPort", "2181");
-        hbaseConfiguration.set("hbase.zookeeper.quorum", "localmaster");
-        Job job = Job.getInstance(hbaseConfiguration, "InputLinkCounter Job");
+    @Override
+    public int run(String[] args) throws Exception {
+        Job job = Job.getInstance(getConf(), "InputLinkCounter");
         job.setJarByClass(mapreduce.InputLinkCounter.class);
 
         Scan scan = new Scan();
 
         scan.addColumn(COLUMN_FAMILY, SUB_LINKS);
-        
+
         scan.setCacheBlocks(false);
         scan.setCaching(500);
 
@@ -56,6 +57,22 @@ public class InputLinkCounter {
         }
         else {
             System.out.printf("job failed!");
+        }
+
+        return jobSuccessful ? 1 : 0;
+    }
+
+    public static void main(String[] args) {
+        Configuration hbaseConfiguration = HBaseConfiguration.create();
+        hbaseConfiguration.set("hbase.zookeeper.property.clientPort", "2181");
+        hbaseConfiguration.set("hbase.zookeeper.quorum", "localmaster");
+
+        try {
+            ToolRunner.run(hbaseConfiguration, new InputLinkCounter(), args);
+        }
+        catch (Exception e) {
+            logger.fatal("could not run the job!", e);
+            e.printStackTrace();
         }
 
     }
