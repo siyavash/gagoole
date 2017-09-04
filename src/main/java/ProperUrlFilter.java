@@ -119,13 +119,6 @@ public class ProperUrlFilter {
         return !cache.checkIfExist(urlToVisit.substring(0, index));
     }
 
-    private boolean isGoodContentType(String url) {
-        url = url.toLowerCase();
-        return !url.endsWith(".jpg") && !url.endsWith(".gif") && !url.endsWith(".pdf") && !url.endsWith(".deb")
-                && !url.endsWith(".jpeg") && !url.endsWith(".png") && !url.endsWith(".txt") && !url.endsWith(".exe")
-                && !url.endsWith(".gz") && !url.endsWith(".rar") && !url.endsWith(".zip") && !url.endsWith(".tar.gz");
-    }
-
     private void addUrlToProperUrls(String urlToVisit) {
         try {
             properUrls.put(urlToVisit);
@@ -133,5 +126,12 @@ public class ProperUrlFilter {
             e.printStackTrace();
             //TODO: catch deciding
         }
+    }
+    private boolean isGoodContentType(String url) {
+        url = url.toLowerCase();
+        return !url.endsWith(".jpg") && !url.endsWith(".gif") && !url.endsWith(".pdf") && !url.endsWith(".deb")
+                && !url.endsWith(".jpeg") && !url.endsWith(".png") && !url.endsWith(".txt") && !url.endsWith(".exe")
+                && !url.endsWith(".gz") && !url.endsWith(".rar") && !url.endsWith(".zip") && !url.endsWith(".tar.gz");
+
     }
 }

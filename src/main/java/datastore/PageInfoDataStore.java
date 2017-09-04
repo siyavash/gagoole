@@ -60,7 +60,8 @@ public class PageInfoDataStore implements DataStore
         for (int i = 0; i < result.length; i++)
         {
             result[i] = false;
-            gets.add(new Get(Bytes.toBytes(urls.get(i))));
+            Get get = new Get(Bytes.toBytes(urls.get(i)));
+            get.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("bodyText"));
         }
 
         updateExistsResult(waitingPutsStorage, urls, result);

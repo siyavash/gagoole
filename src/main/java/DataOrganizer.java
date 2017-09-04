@@ -87,6 +87,12 @@ public class DataOrganizer
                         String text = poppedData.getKey();
                         String link = poppedData.getValue();
 
+                        boolean isGoodContent = isGoodContent(link);
+                        if (!isGoodContent)
+                        {
+                            continue;
+                        }
+
                         if (text == null)
                         {
                             continue;
@@ -123,6 +129,14 @@ public class DataOrganizer
         }
 
         executorService.shutdown();
+    }
+
+    private boolean isGoodContent(String url) {
+        url = url.toLowerCase();
+        return !url.endsWith(".jpg") && !url.endsWith(".gif") && !url.endsWith(".pdf") && !url.endsWith(".deb")
+                && !url.endsWith(".jpeg") && !url.endsWith(".png") && !url.endsWith(".txt") && !url.endsWith(".exe")
+                && !url.endsWith(".gz") && !url.endsWith(".rar") && !url.endsWith(".zip") && !url.endsWith(".tar.gz");
+
     }
 
     private void sendOrganizedData(PageInfo pageInfo) throws InterruptedException
