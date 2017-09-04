@@ -205,9 +205,9 @@ public class DataOrganizer
         String normalizedUrl = link.replaceFirst("(www\\.)", "");
 
         int slashCounter = 0;
-        if (normalizedUrl.endsWith("/"))
+        if (normalizedUrl.endsWith("/") || normalizedUrl.endsWith(" "))
         {
-            while (normalizedUrl.length() - slashCounter > 0 && normalizedUrl.charAt(normalizedUrl.length() - slashCounter - 1) == '/')
+            while (normalizedUrl.length()-slashCounter > 0 && (normalizedUrl.charAt(normalizedUrl.length()-slashCounter-1) == '/' || normalizedUrl.charAt(normalizedUrl.length()-slashCounter-1) == ' '))
                 slashCounter++;
         }
         normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - slashCounter);
