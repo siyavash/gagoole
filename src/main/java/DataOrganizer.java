@@ -81,12 +81,17 @@ public class DataOrganizer
                 {
                     try
                     {
-//                        long time = System.currentTimeMillis();
                         Pair<String, String> poppedData = popNewData();
 
 
                         String text = poppedData.getKey();
                         String link = poppedData.getValue();
+
+                        if (text == null)
+                        {
+                            continue;
+                        }
+
 
                         if (!isHtml(text, link))
                         {
@@ -101,16 +106,17 @@ public class DataOrganizer
                         }
 
                         PageInfo pageInfo = createPageInfo(dataDocument, link);
+//                        Profiler.putDone(1);
 
                         sendOrganizedData(pageInfo);
 
-
-//                        time = System.currentTimeMillis() - time;
-//                        Profiler.organized(link, time);
                     } catch (InterruptedException ignored)
                     {
                         //TODO is this enough?
-                    }
+                    } /*catch (Exception e)*/
+//                    {
+//                        e.printStackTrace();
+//                    }
 //                    atomicInteger.incrementAndGet();
                 }
             });
@@ -253,7 +259,7 @@ public class DataOrganizer
 //        long time = System.currentTimeMillis();
 
         text = text.toLowerCase();
-        boolean result = text.contains("<html") && text.contains("</html>");
+        boolean result = text.contains("<body")/* && text.contains("</html>")*/;
 
 //        time = System.currentTimeMillis() - time;
 //        Profiler.htmlCheck(link, time);

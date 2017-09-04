@@ -3,6 +3,7 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import javafx.util.Pair;
+import util.Profiler;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -17,14 +18,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class HtmlCollector {
+public class HtmlCollector
+{
     private ArrayBlockingQueue<String> newUrls;
     private ArrayBlockingQueue<Pair<String, String>> downloadedData;
-//    private URLQueue allUrlQueue;
+    //    private URLQueue allUrlQueue;
     private OkHttpClient client;
     private final int THREAD_NUMBER;
 
-    public HtmlCollector(ArrayBlockingQueue<String> newUrls, ArrayBlockingQueue<Pair<String, String>> downloadedData/*, URLQueue allUrlQueue*/) {
+    public HtmlCollector(ArrayBlockingQueue<String> newUrls, ArrayBlockingQueue<Pair<String, String>> downloadedData/*, URLQueue allUrlQueue*/)
+    {
         this.downloadedData = downloadedData;
         this.newUrls = newUrls;
 //        this.allUrlQueue = allUrlQueue;
@@ -32,7 +35,8 @@ public class HtmlCollector {
         createAndConfigClient();
     }
 
-    private int readProperty() {
+    private int readProperty()
+    {
         Properties prop = new Properties();
         InputStream input = null;
         try
@@ -59,7 +63,8 @@ public class HtmlCollector {
         return Integer.parseInt(prop.getProperty("download-html-threads-number", "200"));
     }
 
-    private void createAndConfigClient() {
+    private void createAndConfigClient()
+    {
         client = new OkHttpClient();
         client.setReadTimeout(1500, TimeUnit.MILLISECONDS);
         client.setConnectTimeout(1500, TimeUnit.MILLISECONDS);
@@ -68,98 +73,97 @@ public class HtmlCollector {
         client.setRetryOnConnectionFailure(false);
     }
 
-    public void startDownloadThreads() {
-        if (THREAD_NUMBER == 0) {
+    public void startDownloadThreads()
+    {
+        if (THREAD_NUMBER == 0)
+        {
             return;
         }
 
         ExecutorService downloadPool = Executors.newFixedThreadPool(THREAD_NUMBER);
 
-        AtomicInteger atomicInteger = new AtomicInteger(0);
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                System.out.println("Downloaded htmls: " + atomicInteger.get() + ", " + newUrls.size());
-                atomicInteger.set(0);
-            }
-        }, 0, 1000);
+//        AtomicInteger atomicInteger = new AtomicInteger(0);
+//        Timer timer = new Timer();
+//        timer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                System.out.println("Downloaded htmls: " + atomicInteger.get() + ", " + newUrls.size());
+//                atomicInteger.set(0);
+//            }
+//        }, 0, 1000);
 
-        for (int i = 0; i < THREAD_NUMBER; i++) {
+        for (int i = 0; i < THREAD_NUMBER; i++)
+        {
             downloadPool.submit((Runnable) () -> {
-//                TimeoutThread timeoutThread = new TimeoutThread();
                 TimeoutThread timeoutThread = new TimeoutThread();
                 timeoutThread.start();
-                while (true) {
-//                    long allDownloadingTasksTime = System.currentTimeMillis();
-//                    long singleDownloadingTaskTime = System.currentTimeMillis();
-//                    ArrayList<String> urls = new ArrayList<>();
-//                    for (int j = 0; j < 300; j++) {
-//                        urls.add(getNewUrl());
-//                    }
+                while (true)
+                {
                     String url = getNewUrl();
-//                    for (String u:urls) {
-//                        if (u == null)
-//                            continue;
-//                        putUrlBody(getPureHtmlFromLink(u), u);
-//                        atomicInteger.incrementAndGet();
-//                    }
-                    putUrlBody(getPureHtmlFromLink(url, timeoutThread), url);
-                    atomicInteger.incrementAndGet();
-//                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
-//                    Profiler.getLinkFromQueueToDownload(url, singleDownloadingTaskTime);
-//                    singleDownloadingTaskTime = System.currentTimeMillis();
-
-//                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
-//                    Profiler.download(url, singleDownloadingTaskTime);
-
-//                    singleDownloadingTaskTime = System.currentTimeMillis();
-
-
-//                    singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
-//                    Profiler.putUrlBody(url, singleDownloadingTaskTime);
-//                    Profiler.setDownloadedSize(downloadedData.size());
-//                    allDownloadingTasksTime = System.currentTimeMillis() - allDownloadingTasksTime;
-//                    Profiler.downloadThread(url, allDownloadingTasksTime);
-
-
+                    String htmlBody = getPureHtmlFromLink(url, timeoutThread);
+                    if (htmlBody != null)
+                    {
+//                        Profiler.downloadDone();
+                        putUrlBody(htmlBody, url);
+                    }
+//                    atomicInteger.incrementAndGet();
                 }
             });
         }
         downloadPool.shutdown();
     }
 
-    private void putUrlBody(String urlHtml, String url) {
-        try {
-            downloadedData.put(new Pair<>(urlHtml, url));
-        } catch (InterruptedException e) {
+    private void putUrlBody(String urlHtml, String url)
+    {
+        try
+        {
+            Pair<String, String> dataPair = new Pair<>(urlHtml, url);
+            downloadedData.put(dataPair);
+
+            if (dataPair.getKey() != null)
+            {
+                Profiler.downloadDone();
+            }
+        } catch (InterruptedException e)
+        {
             e.printStackTrace();
             //TODO: catch deciding
         }
     }
 
-    private String getNewUrl() {
+    private String getNewUrl()
+    {
         String url = null;
-        try {
+        try
+        {
             url = newUrls.take();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException e)
+        {
             //TODO: catch deciding
         }
         return url;
     }
 
-    private String getPureHtmlFromLink(String url, TimeoutThread timeoutThread) {
+    private String getPureHtmlFromLink(String url, TimeoutThread timeoutThread)
+    {
         Request request = new Request.Builder().url(url).build();
         Response response = null;
         String body = null;
-        try {
+        try
+        {
             Call call = client.newCall(request);
             timeoutThread.addCall(call, System.currentTimeMillis());
             response = call.execute();
 
+            if (!response.isSuccessful())
+            {
+                throw new IOException();
+            }
+
             body = response.body().string();
             response.body().close();
-        } catch (IOException e) {
+        } catch (IOException e)
+        {
 //            long singleDownloadingTaskTime = System.currentTimeMillis();
 //            allUrlQueue.push(url);
 //            singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
