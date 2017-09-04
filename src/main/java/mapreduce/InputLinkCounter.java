@@ -82,9 +82,7 @@ public class InputLinkCounter extends Configured implements Tool {
         private static final IntWritable one = new IntWritable(1);
 
         @Override
-        protected void map(ImmutableBytesWritable key,
-                           Result value,
-                           Context context) throws IOException, InterruptedException {
+        protected void map(ImmutableBytesWritable key, Result value, Context context) {
             try {
                 String subLinks = new String(value.getValue(COLUMN_FAMILY, SUB_LINKS));
                 if (subLinks.equals("")) {
@@ -97,7 +95,14 @@ public class InputLinkCounter extends Configured implements Tool {
                     String[] linkAndAnchor = linkAnchor.split(" , ");
                     ImmutableBytesWritable link = new ImmutableBytesWritable(linkAndAnchor[0].getBytes());
 
-                    context.write(link, one);
+                    try {
+                        context.write(link, one);
+                    }
+                    catch (Exception e) {
+                        logger.error("mapper could not write to context", e);
+                        e.printStackTrace();
+                    }
+
                 }
             }
             catch (Exception e) {
@@ -111,9 +116,7 @@ public class InputLinkCounter extends Configured implements Tool {
         private static final byte[] NUMBER_OF_INPUT_LINKS = "numOfInputLinks".getBytes();
 
         @Override
-        protected void reduce(ImmutableBytesWritable key,
-                              Iterable<IntWritable> values,
-                              Context context) throws IOException, InterruptedException {
+        protected void reduce(ImmutableBytesWritable key, Iterable<IntWritable> values, Context context) {
             if(key.equals(new ImmutableBytesWritable("".getBytes()))) {
                 return;
             }
@@ -128,7 +131,13 @@ public class InputLinkCounter extends Configured implements Tool {
             Put put = new Put(Bytes.toBytes(rowKey));
             put.addColumn(COLUMN_FAMILY, NUMBER_OF_INPUT_LINKS, Bytes.toBytes(numberOfInputLinks));
 
-            context.write(null, put);
+            try {
+                context.write(null, put);
+            }
+            catch (Exception e) {
+                logger.error("reducer could not write to contest", e);
+                e.printStackTrace();
+            }
         }
     }
 }
