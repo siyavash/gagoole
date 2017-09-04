@@ -23,6 +23,7 @@ public class Profiler
     private static final Meter existChecks = metrics.meter("Exist checked");
     private static final Meter downloaded = metrics.meter("Download done");
     private static final Meter puts = metrics.meter("Put done");
+    private static final Meter organized = metrics.meter("Organized");
 
     private static AtomicLong queueSize = new AtomicLong(0);
     private static AtomicLong properSize = new AtomicLong(0);
@@ -262,5 +263,10 @@ public class Profiler
     public static void putDone(long numberOfPuts)
     {
         puts.mark(numberOfPuts);
+    }
+
+    public static void organizeDone()
+    {
+        organized.mark();
     }
 }

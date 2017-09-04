@@ -112,7 +112,7 @@ public class DataOrganizer
                         }
 
                         PageInfo pageInfo = createPageInfo(dataDocument, link);
-//                        Profiler.putDone(1);
+                        Profiler.organizeDone();
 
                         sendOrganizedData(pageInfo);
 
