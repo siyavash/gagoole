@@ -102,10 +102,15 @@ public class HtmlCollector
                 while (true)
                 {
                     String url = getNewUrl();
-                    String htmlBody = getPureHtmlFromLink(url/*, timeoutThread*/);
+                    String htmlBody = null;
+                    try{
+                        htmlBody = getPureHtmlFromLink(url/*, timeoutThread*/);
+                    } catch (ExecutionException e){
+                        continue;
+                    }
                     if (htmlBody != null)
                     {
-//                        Profiler.downloadDone();
+                        Profiler.downloadDone();
                         putUrlBody(htmlBody, url);
                     }
 //                    atomicInteger.incrementAndGet();
@@ -115,7 +120,7 @@ public class HtmlCollector
         downloadPool.shutdown();
     }
 
-    private String getPureHtmlFromLink(String url/*, TimeoutThread timeoutThread*/) {
+    private String getPureHtmlFromLink(String url/*, TimeoutThread timeoutThread*/) throws ExecutionException{
         final HttpGet request1 = new HttpGet(url);
         Future<HttpResponse> future = httpclient.execute(request1, null);
         HttpResponse response = null;
