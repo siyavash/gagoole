@@ -26,9 +26,7 @@ public class HtmlCollector
     private ArrayBlockingQueue<String> newUrls;
     private ArrayBlockingQueue<Pair<String, String>> downloadedData;
     //    private URLQueue allUrlQueue;
-//    private OkHttpClient client;
-//    private CloseableHttpAsyncClient httpclient = HttpAsyncClients.createDefault();
-//    private ArrayBlockingQueue<String> htmlBodies = new ArrayBlockingQueue(10000);
+    private OkHttpClient client;
     private final int THREAD_NUMBER;
 
 
@@ -38,8 +36,7 @@ public class HtmlCollector
         this.downloadedData = downloadedData;
         this.newUrls = newUrls;
         THREAD_NUMBER = readProperty();
-//        createAndConfigClient();
-//        httpclient.start();
+        createAndConfigClient();
     }
 
     private int readProperty()
@@ -70,15 +67,15 @@ public class HtmlCollector
         return Integer.parseInt(prop.getProperty("download-html-threads-number", "200"));
     }
 
-//    private void createAndConfigClient()
-//    {
-//        client = new OkHttpClient();
-//        client.setReadTimeout(1500, TimeUnit.MILLISECONDS);
-//        client.setConnectTimeout(1500, TimeUnit.MILLISECONDS);
-//        client.setFollowRedirects(false);
-//        client.setFollowSslRedirects(false);
-//        client.setRetryOnConnectionFailure(false);
-//    }
+    private void createAndConfigClient()
+    {
+        client = new OkHttpClient();
+        client.setReadTimeout(1500, TimeUnit.MILLISECONDS);
+        client.setConnectTimeout(1500, TimeUnit.MILLISECONDS);
+        client.setFollowRedirects(false);
+        client.setFollowSslRedirects(false);
+        client.setRetryOnConnectionFailure(false);
+    }
 
     public void startDownloadThreads()
     {
@@ -102,38 +99,21 @@ public class HtmlCollector
         for (int i = 0; i < THREAD_NUMBER; i++)
         {
             downloadPool.submit((Runnable) () -> {
-//                TimeoutThread timeoutThread = new TimeoutThread();
-//                timeoutThread.start();
+                TimeoutThread timeoutThread = new TimeoutThread();
+                timeoutThread.start();
                 while (true)
                 {
-                    String[] urls = new String[50];
-                    for (int j = 0; j < 50; j++) {
-                        urls[j] = getNewUrl();
-                    }
-                    getPureHtml(urls);
-//                    String htmlBody = null;
-//                    String url = getNewUrl();
-//                    try{
-//                        htmlBody = getPureHtmlFromLink(url/*, timeoutThread*/);
-//                    } catch (ExecutionException e){
-//                        continue;
-//                    }
-//                    try {
-//                        htmlBody = getPureHtml(urls);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                    try {
-//                        htmlBody = htmlBodies.take();
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                    if (htmlBody != null)
-//                    {
-//                        Profiler.downloadDone();
+                    String htmlBody;
+                    String url = getNewUrl();
+
+                    htmlBody = getPureHtmlFromLink(url, timeoutThread);
+
+                    if (htmlBody != null)
+                    {
+                        Profiler.downloadDone();
 //                        System.out.println(url);
-//                        putUrlBody(htmlBody, url);
-//                    }
+                        putUrlBody(htmlBody, url);
+                    }
 //                    atomicInteger.incrementAndGet();
                 }
             });
@@ -141,91 +121,24 @@ public class HtmlCollector
         downloadPool.shutdown();
     }
 
-//    private String getPureHtmlFromLink(String url/*, TimeoutThread timeoutThread*/) throws ExecutionException {
-//        final HttpGet request1 = new HttpGet(url);
-//        Future<HttpResponse> future = httpclient.execute(request1, null);
-//        HttpResponse response = null;
-//        try {
-//            response = future.get();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        } catch (ExecutionException e) {
-//            e.printStackTrace();
-//        }
-//
-//// Get the response
-//        BufferedReader rd = null;
-//        try {
-//            rd = new BufferedReader
-//                    (new InputStreamReader(
-//                            response.getEntity().getContent()));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        String line = "";
-//        StringBuilder textView = null;
-//        try {
-//            while ((line = rd.readLine()) != null) {
-//                textView.append(line);
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        return textView.toString();
-//    }
 
-    public void getPureHtml(String [] urls) {
-        ConnectingIOReactor ioReactor = null;
-        try {
-            ioReactor = new DefaultConnectingIOReactor();
-        } catch (IOReactorException e) {
-            e.printStackTrace();
-        }
-        PoolingNHttpClientConnectionManager cm =
-                new PoolingNHttpClientConnectionManager(ioReactor);
-        CloseableHttpAsyncClient client =
-                HttpAsyncClients.custom().setConnectionManager(cm).build();
-        client.start();
+    private void putUrlBody(String urlHtml, String url)
+    {
+        try
+        {
+            Pair<String, String> dataPair = new Pair<>(urlHtml, url);
+            downloadedData.put(dataPair);
 
-        String[] toGet = urls;
-
-
-        BatchDownloader[] threads = new BatchDownloader[toGet.length];
-        for (int i = 0; i < threads.length; i++) {
-            HttpGet request = new HttpGet(toGet[i]);
-            threads[i] = new BatchDownloader(client, request, downloadedData, toGet[i]);
-        }
-
-        for (BatchDownloader thread : threads) {
-            thread.start();
-        }
-        for (BatchDownloader thread : threads) {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            if (dataPair.getKey() != null)
+            {
+                Profiler.downloadDone();
             }
+        } catch (InterruptedException e)
+        {
+            e.printStackTrace();
+            //TODO: catch deciding
         }
     }
-
-//    private void putUrlBody(String urlHtml, String url)
-//    {
-//        try
-//        {
-//            Pair<String, String> dataPair = new Pair<>(urlHtml, url);
-//            downloadedData.put(dataPair);
-//
-//            if (dataPair.getKey() != null)
-//            {
-//                Profiler.downloadDone();
-//            }
-//        } catch (InterruptedException e)
-//        {
-//            e.printStackTrace();
-//            //TODO: catch deciding
-//        }
-//    }
 
     private String getNewUrl()
     {
@@ -240,45 +153,45 @@ public class HtmlCollector
         return url;
     }
 
-//    private String getPureHtmlFromLink(String url, TimeoutThread timeoutThread)
-//    {
-//        Request request = new Request.Builder().url(url).build();
-//        Response response = null;
-//        String body = null;
-//        try
-//        {
-//            Call call = client.newCall(request);
-//            timeoutThread.addCall(call, System.currentTimeMillis());
-//            response = call.execute();
-//
-//            if (!response.isSuccessful())
-//            {
-//                throw new IOException();
-//            }
-//
-//            body = response.body().string();
-//            response.body().close();
-//        } catch (IOException e)
-//        {
-////            long singleDownloadingTaskTime = System.currentTimeMillis();
-////            allUrlQueue.push(url);
-////            singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
-////            Profiler.pushBackToKafka(url, singleDownloadingTaskTime);
-//        } finally
-//        {
-//            if (response != null && response.body() != null)
-//            {
-//                try
-//                {
-//                    response.body().close();
-//                } catch (IOException e)
-//                {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//
-//        return body;
-//    }
+    private String getPureHtmlFromLink(String url, TimeoutThread timeoutThread)
+    {
+        Request request = new Request.Builder().url(url).build();
+        Response response = null;
+        String body = null;
+        try
+        {
+            Call call = client.newCall(request);
+            timeoutThread.addCall(call, System.currentTimeMillis());
+            response = call.execute();
+
+            if (!response.isSuccessful())
+            {
+                throw new IOException();
+            }
+
+            body = response.body().string();
+            response.body().close();
+        } catch (IOException e)
+        {
+//            long singleDownloadingTaskTime = System.currentTimeMillis();
+//            allUrlQueue.push(url);
+//            singleDownloadingTaskTime = System.currentTimeMillis() - singleDownloadingTaskTime;
+//            Profiler.pushBackToKafka(url, singleDownloadingTaskTime);
+        } finally
+        {
+            if (response != null && response.body() != null)
+            {
+                try
+                {
+                    response.body().close();
+                } catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return body;
+    }
 
 }
