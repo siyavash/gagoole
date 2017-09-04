@@ -110,9 +110,9 @@ public class HtmlCollector
 
                     if (htmlBody != null)
                     {
-                        Profiler.downloadDone();
 //                        System.out.println(url);
                         putUrlBody(htmlBody, url);
+                        Profiler.downloadDone();
                     }
 //                    atomicInteger.incrementAndGet();
                 }

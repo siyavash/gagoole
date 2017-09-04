@@ -83,13 +83,14 @@ public class NewUrlFilter {
                         }
                     }
 
-                    Profiler.existChecked();
+
                     boolean[] existInDataStore = checkIfAlreadyExist(urlsToVisit);
 
                     for (int j = 0; j < 200; j++)
                     {
                         if (!existInDataStore[j])
                         {
+                            Profiler.existChecked();
                             putNewUrl(urlsToVisit.get(j));
 //                            atomicInteger.incrementAndGet();
                         }
