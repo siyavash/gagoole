@@ -178,7 +178,7 @@ public class PageInfoDataStore implements DataStore
 
 
             stringBuilder.append(linkName);
-            stringBuilder.append(" , ");
+            stringBuilder.append("\n");
             stringBuilder.append(anchorName);
             stringBuilder.append("\n");
         }
