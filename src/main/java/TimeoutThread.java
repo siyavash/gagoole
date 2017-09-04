@@ -1,5 +1,6 @@
 import com.squareup.okhttp.Call;
 import javafx.util.Pair;
+import util.Profiler;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -16,7 +17,7 @@ public class TimeoutThread extends Thread
         while(true) {
             callPair = null;
             try {
-
+                Profiler.setLinkedSize(linkedBlockingQueue.size());
                 callPair = linkedBlockingQueue.take();
 
             } catch (InterruptedException e) {

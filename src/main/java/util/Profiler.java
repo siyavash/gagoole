@@ -1,6 +1,7 @@
 package util;
 
 import com.codahale.metrics.ConsoleReporter;
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import org.apache.log4j.Logger;
@@ -27,6 +28,7 @@ public class Profiler
     private static AtomicLong properSize = new AtomicLong(0);
     private static AtomicLong newUrlsSize = new AtomicLong(0);
     private static AtomicLong downloadedSize = new AtomicLong(0);
+    private static AtomicLong linkedSize = new AtomicLong(0);
 
     public static void start() {
 //        metrics.register(MetricRegistry.name("initial kafka queue size"),
@@ -36,6 +38,13 @@ public class Profiler
 //                        return queueSize.get();
 //                    }
 //                });
+        metrics.register(MetricRegistry.name("linked size"),
+                new Gauge<Long>() {
+                    @Override
+                    public Long getValue() {
+                        return linkedSize.get();
+                    }
+                });
 //
 //        metrics.register(MetricRegistry.name("proper urls queue size"),
 //                new Gauge<Long>() {
@@ -86,6 +95,10 @@ public class Profiler
 //    public static void setNewUrlsSize(int size) {
 //        newUrlsSize.set(size);
 //    }
+
+    public static void setLinkedSize(int size) {
+        linkedSize.set(size);
+    }
 
 
     /*****************************************************************************/

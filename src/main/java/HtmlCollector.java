@@ -3,6 +3,8 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import javafx.util.Pair;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
 import util.Profiler;
 
 import java.io.FileInputStream;
@@ -25,6 +27,8 @@ public class HtmlCollector
     //    private URLQueue allUrlQueue;
     private OkHttpClient client;
     private final int THREAD_NUMBER;
+
+
 
     public HtmlCollector(ArrayBlockingQueue<String> newUrls, ArrayBlockingQueue<Pair<String, String>> downloadedData/*, URLQueue allUrlQueue*/)
     {
