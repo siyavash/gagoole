@@ -7,6 +7,10 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
+import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
+import org.apache.http.nio.reactor.ConnectingIOReactor;
+import org.apache.http.nio.reactor.IOReactorException;
 import util.Profiler;
 
 import java.io.*;
@@ -23,7 +27,8 @@ public class HtmlCollector
     private ArrayBlockingQueue<Pair<String, String>> downloadedData;
     //    private URLQueue allUrlQueue;
 //    private OkHttpClient client;
-    private CloseableHttpAsyncClient httpclient = HttpAsyncClients.createDefault();
+//    private CloseableHttpAsyncClient httpclient = HttpAsyncClients.createDefault();
+//    private ArrayBlockingQueue<String> htmlBodies = new ArrayBlockingQueue(10000);
     private final int THREAD_NUMBER;
 
 
@@ -34,7 +39,7 @@ public class HtmlCollector
         this.newUrls = newUrls;
         THREAD_NUMBER = readProperty();
 //        createAndConfigClient();
-        httpclient.start();
+//        httpclient.start();
     }
 
     private int readProperty()
@@ -101,18 +106,34 @@ public class HtmlCollector
 //                timeoutThread.start();
                 while (true)
                 {
-                    String url = getNewUrl();
-                    String htmlBody = null;
-                    try{
-                        htmlBody = getPureHtmlFromLink(url/*, timeoutThread*/);
-                    } catch (ExecutionException e){
-                        continue;
+                    String[] urls = new String[50];
+                    for (int j = 0; j < 50; j++) {
+                        urls[j] = getNewUrl();
                     }
-                    if (htmlBody != null)
-                    {
-                        Profiler.downloadDone();
-                        putUrlBody(htmlBody, url);
-                    }
+                    getPureHtml(urls);
+//                    String htmlBody = null;
+//                    String url = getNewUrl();
+//                    try{
+//                        htmlBody = getPureHtmlFromLink(url/*, timeoutThread*/);
+//                    } catch (ExecutionException e){
+//                        continue;
+//                    }
+//                    try {
+//                        htmlBody = getPureHtml(urls);
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                    }
+//                    try {
+//                        htmlBody = htmlBodies.take();
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                    if (htmlBody != null)
+//                    {
+//                        Profiler.downloadDone();
+//                        System.out.println(url);
+//                        putUrlBody(htmlBody, url);
+//                    }
 //                    atomicInteger.incrementAndGet();
                 }
             });
@@ -120,57 +141,91 @@ public class HtmlCollector
         downloadPool.shutdown();
     }
 
-    private String getPureHtmlFromLink(String url/*, TimeoutThread timeoutThread*/) throws ExecutionException{
-        final HttpGet request1 = new HttpGet(url);
-        Future<HttpResponse> future = httpclient.execute(request1, null);
-        HttpResponse response = null;
+//    private String getPureHtmlFromLink(String url/*, TimeoutThread timeoutThread*/) throws ExecutionException {
+//        final HttpGet request1 = new HttpGet(url);
+//        Future<HttpResponse> future = httpclient.execute(request1, null);
+//        HttpResponse response = null;
+//        try {
+//            response = future.get();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        } catch (ExecutionException e) {
+//            e.printStackTrace();
+//        }
+//
+//// Get the response
+//        BufferedReader rd = null;
+//        try {
+//            rd = new BufferedReader
+//                    (new InputStreamReader(
+//                            response.getEntity().getContent()));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        String line = "";
+//        StringBuilder textView = null;
+//        try {
+//            while ((line = rd.readLine()) != null) {
+//                textView.append(line);
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        return textView.toString();
+//    }
+
+    public void getPureHtml(String [] urls) {
+        ConnectingIOReactor ioReactor = null;
         try {
-            response = future.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
+            ioReactor = new DefaultConnectingIOReactor();
+        } catch (IOReactorException e) {
             e.printStackTrace();
         }
+        PoolingNHttpClientConnectionManager cm =
+                new PoolingNHttpClientConnectionManager(ioReactor);
+        CloseableHttpAsyncClient client =
+                HttpAsyncClients.custom().setConnectionManager(cm).build();
+        client.start();
 
-// Get the response
-        BufferedReader rd = null;
-        try {
-            rd = new BufferedReader
-                    (new InputStreamReader(
-                            response.getEntity().getContent()));
-        } catch (IOException e) {
-            e.printStackTrace();
+        String[] toGet = urls;
+
+
+        BatchDownloader[] threads = new BatchDownloader[toGet.length];
+        for (int i = 0; i < threads.length; i++) {
+            HttpGet request = new HttpGet(toGet[i]);
+            threads[i] = new BatchDownloader(client, request, downloadedData, toGet[i]);
         }
 
-        String line = "";
-        StringBuilder textView = null;
-        try {
-            while ((line = rd.readLine()) != null) {
-                textView.append(line);
+        for (BatchDownloader thread : threads) {
+            thread.start();
+        }
+        for (BatchDownloader thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-        return textView.toString();
     }
 
-    private void putUrlBody(String urlHtml, String url)
-    {
-        try
-        {
-            Pair<String, String> dataPair = new Pair<>(urlHtml, url);
-            downloadedData.put(dataPair);
-
-            if (dataPair.getKey() != null)
-            {
-                Profiler.downloadDone();
-            }
-        } catch (InterruptedException e)
-        {
-            e.printStackTrace();
-            //TODO: catch deciding
-        }
-    }
+//    private void putUrlBody(String urlHtml, String url)
+//    {
+//        try
+//        {
+//            Pair<String, String> dataPair = new Pair<>(urlHtml, url);
+//            downloadedData.put(dataPair);
+//
+//            if (dataPair.getKey() != null)
+//            {
+//                Profiler.downloadDone();
+//            }
+//        } catch (InterruptedException e)
+//        {
+//            e.printStackTrace();
+//            //TODO: catch deciding
+//        }
+//    }
 
     private String getNewUrl()
     {

@@ -11,7 +11,7 @@ public interface URLQueue {
 
     void push(ArrayList<String> arrayURLs);
 
-    void push(String URL);
+    void push(String URL) throws InterruptedException;
 
     void startThread();
 
