@@ -40,6 +40,10 @@ public class InputLinkCounter extends Configured implements Tool {
 
                 for (String linkAnchor : linkAnchors) {
                     String[] linkAndAnchor = linkAnchor.split(" , ");
+                    if(linkAndAnchor[0].length() >= Short.MAX_VALUE) {
+                        continue;
+                    }
+
                     ImmutableBytesWritable link = new ImmutableBytesWritable(linkAndAnchor[0].getBytes());
 
                     try {
@@ -128,7 +132,7 @@ public class InputLinkCounter extends Configured implements Tool {
     public static void main(String[] args) {
         Configuration hbaseConfiguration = HBaseConfiguration.create();
         hbaseConfiguration.set("hbase.zookeeper.property.clientPort", "2181");
-        hbaseConfiguration.set("hbase.zookeeper.quorum", "localmaster");
+        hbaseConfiguration.set("hbase.zookeeper.quorum", "master,slave");
 
         try {
             ToolRunner.run(hbaseConfiguration, new InputLinkCounter(), args);
