@@ -17,13 +17,76 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
 
-import java.io.IOException;
 
 public class InputLinkCounter extends Configured implements Tool {
 
     private static final byte[] COLUMN_FAMILY = "cf".getBytes();
     private static final byte[] SUB_LINKS = "subLinks".getBytes();
     private static Logger logger = Logger.getLogger(Class.class.getName());
+
+    public static class Mapper extends TableMapper<ImmutableBytesWritable, IntWritable> {
+
+        private static final IntWritable one = new IntWritable(1);
+
+        @Override
+        protected void map(ImmutableBytesWritable key, Result value, Context context) {
+            try {
+                String subLinks = new String(value.getValue(COLUMN_FAMILY, SUB_LINKS));
+                if (subLinks.equals("")) {
+                    return;
+                }
+
+                String[] linkAnchors = subLinks.split("\n");
+
+                for (String linkAnchor : linkAnchors) {
+                    String[] linkAndAnchor = linkAnchor.split(" , ");
+                    ImmutableBytesWritable link = new ImmutableBytesWritable(linkAndAnchor[0].getBytes());
+
+                    try {
+                        context.write(link, one);
+                    }
+                    catch (Exception e) {
+                        logger.error("mapper could not write to context", e);
+                        e.printStackTrace();
+                    }
+
+                }
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static class Reducer extends TableReducer<ImmutableBytesWritable, IntWritable, Put> {
+
+        private static final byte[] NUMBER_OF_INPUT_LINKS = "numOfInputLinks".getBytes();
+
+        @Override
+        protected void reduce(ImmutableBytesWritable key, Iterable<IntWritable> values, Context context) {
+            if(key.equals(new ImmutableBytesWritable("".getBytes()))) {
+                return;
+            }
+
+            String rowKey = new String(key.copyBytes());
+
+            long numberOfInputLinks = 0;
+            for(IntWritable value : values) {
+                numberOfInputLinks += value.get();
+            }
+
+            Put put = new Put(Bytes.toBytes(rowKey));
+            put.addColumn(COLUMN_FAMILY, NUMBER_OF_INPUT_LINKS, Bytes.toBytes(numberOfInputLinks));
+
+            try {
+                context.write(null, put);
+            }
+            catch (Exception e) {
+                logger.error("reducer could not write to contest", e);
+                e.printStackTrace();
+            }
+        }
+    }
 
     @Override
     public int run(String[] args) throws Exception {
@@ -73,71 +136,6 @@ public class InputLinkCounter extends Configured implements Tool {
         catch (Exception e) {
             logger.fatal("could not run the job!", e);
             e.printStackTrace();
-        }
-
-    }
-
-    public static class Mapper extends TableMapper<ImmutableBytesWritable, IntWritable> {
-
-        private static final IntWritable one = new IntWritable(1);
-
-        @Override
-        protected void map(ImmutableBytesWritable key, Result value, Context context) {
-            try {
-                String subLinks = new String(value.getValue(COLUMN_FAMILY, SUB_LINKS));
-                if (subLinks.equals("")) {
-                    return;
-                }
-
-                String[] linkAnchors = subLinks.split("\n");
-
-                for (String linkAnchor : linkAnchors) {
-                    String[] linkAndAnchor = linkAnchor.split(" , ");
-                    ImmutableBytesWritable link = new ImmutableBytesWritable(linkAndAnchor[0].getBytes());
-
-                    try {
-                        context.write(link, one);
-                    }
-                    catch (Exception e) {
-                        logger.error("mapper could not write to context", e);
-                        e.printStackTrace();
-                    }
-
-                }
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public static class Reducer extends TableReducer<ImmutableBytesWritable, IntWritable, Put> {
-
-        private static final byte[] NUMBER_OF_INPUT_LINKS = "numOfInputLinks".getBytes();
-
-        @Override
-        protected void reduce(ImmutableBytesWritable key, Iterable<IntWritable> values, Context context) {
-            if(key.equals(new ImmutableBytesWritable("".getBytes()))) {
-                return;
-            }
-
-            String rowKey = new String(key.copyBytes());
-
-            long numberOfInputLinks = 0;
-            for(IntWritable val : values) {
-                numberOfInputLinks += val.get();
-            }
-
-            Put put = new Put(Bytes.toBytes(rowKey));
-            put.addColumn(COLUMN_FAMILY, NUMBER_OF_INPUT_LINKS, Bytes.toBytes(numberOfInputLinks));
-
-            try {
-                context.write(null, put);
-            }
-            catch (Exception e) {
-                logger.error("reducer could not write to contest", e);
-                e.printStackTrace();
-            }
         }
     }
 }
