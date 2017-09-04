@@ -32,7 +32,6 @@ public class HtmlCollector
     {
         this.downloadedData = downloadedData;
         this.newUrls = newUrls;
-//        this.allUrlQueue = allUrlQueue;
         THREAD_NUMBER = readProperty();
 //        createAndConfigClient();
         httpclient.start();

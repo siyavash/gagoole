@@ -87,11 +87,11 @@ public class NewUrlFilter {
 
                     for (int j = 0; j < 200; j++)
                     {
+                        Profiler.existChecked();
                         if (!existInDataStore[j])
                         {
                             putNewUrl(urlsToVisit.get(j));
 //                            atomicInteger.incrementAndGet();
-                            Profiler.existChecked();
                         }
                     }
 
