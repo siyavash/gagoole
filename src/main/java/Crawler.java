@@ -122,7 +122,7 @@ class Crawler
             String line;
             while ((line = bufferedReader.readLine()) != null)
             {
-                seedUrls.add("http://www." + line);
+                seedUrls.add("http://" + line);
             }
             fileReader.close();
             return seedUrls;

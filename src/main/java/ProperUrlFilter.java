@@ -55,6 +55,7 @@ public class ProperUrlFilter {
 
                     try
                     {
+                        Profiler.setQueueSize(allUrlsQueue.size());
                         String urlToVisit = allUrlsQueue.pop();
 //                    if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
 //                    {
