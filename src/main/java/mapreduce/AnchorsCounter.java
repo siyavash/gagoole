@@ -10,49 +10,52 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.mapreduce.TableReducer;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
-
-public class InputLinkCounter extends Configured implements Tool {
+public class AnchorsCounter extends Configured implements Tool {
 
     private static final byte[] COLUMN_FAMILY = "cf".getBytes();
     private static final byte[] SUB_LINKS = "subLinks".getBytes();
-    private static Logger logger = Logger.getLogger(Class.class.getName());
 
-    public static class Mapper extends TableMapper<ImmutableBytesWritable, IntWritable> {
-
-        private static final IntWritable one = new IntWritable(1);
-
+    public static class Mapper extends TableMapper<ImmutableBytesWritable, ImmutableBytesWritable> {
         @Override
         protected void map(ImmutableBytesWritable key,
                            Result value,
-                           Context context)  throws IOException, InterruptedException{
+                           Context context) throws IOException, InterruptedException {
             try {
                 String subLinks = new String(value.getValue(COLUMN_FAMILY, SUB_LINKS));
-                if (subLinks.equals("")) {
+                if(subLinks.equals("")) {
                     return;
                 }
 
                 String[] linkAnchors = subLinks.split("\n");
-
-                for (int i = 0; i < linkAnchors.length; i += 2) {
+                for(int i = 0; i < linkAnchors.length; i += 2) {
                     String link = linkAnchors[i];
-                    if(link.length() >= Short.MAX_VALUE) {
+                    if(link.equals("") || link.length() >= Short.MAX_VALUE) {
+                        continue;
+                    }
+                    String anchor = linkAnchors[i + 1];
+                    if(anchor == null ||
+                       anchor.equals("") ||
+                       anchor.equals("that") ||
+                       anchor.equals("this") ||
+                       anchor.equals("link") ||
+                       anchor.equals("here")) {
                         continue;
                     }
 
                     try {
-                        context.write(new ImmutableBytesWritable(link.getBytes()), one);
+                        context.write(new ImmutableBytesWritable(link.getBytes()),
+                                      new ImmutableBytesWritable(anchor.getBytes()));
                     }
                     catch (Exception e) {
-                        logger.error("mapper could not write to context", e);
                         e.printStackTrace();
                     }
                 }
@@ -63,33 +66,43 @@ public class InputLinkCounter extends Configured implements Tool {
         }
     }
 
-    public static class Reducer extends TableReducer<ImmutableBytesWritable, IntWritable, Put> {
+    public static class Reducer extends TableReducer<ImmutableBytesWritable, ImmutableBytesWritable, Put> {
 
-        private static final byte[] NUMBER_OF_INPUT_LINKS = "numOfInputLinks".getBytes();
+        private static final byte[] ANCHORS = "anchors".getBytes();
 
         @Override
         protected void reduce(ImmutableBytesWritable key,
-                              Iterable<IntWritable> values,
+                              Iterable<ImmutableBytesWritable> values,
                               Context context) throws IOException, InterruptedException {
-            if(key.equals(new ImmutableBytesWritable("".getBytes()))) {
-                return;
+            Map<String, Integer> map = new HashMap<String, Integer>();
+            for(ImmutableBytesWritable value : values) {
+                String anchor = new String(value.copyBytes());
+                if(map.containsKey(anchor)) {
+                    map.put(anchor, map.get(anchor) + 1);
+                }
+                else {
+                    map.put(anchor, 1);
+                }
             }
 
-            String rowKey = new String(key.copyBytes());
+            Iterator it = map.entrySet().iterator();
+            StringBuilder anchors = new StringBuilder("\n");
+            while(it.hasNext()) {
+                Map.Entry pair = (Map.Entry)it.next();
 
-            long numberOfInputLinks = 0;
-            for(IntWritable value : values) {
-                numberOfInputLinks += value.get();
+                anchors.append(pair.getKey());
+                anchors.append('\n');
+                anchors.append(pair.getValue());
+                anchors.append('\n');
             }
 
-            Put put = new Put(Bytes.toBytes(rowKey));
-            put.addColumn(COLUMN_FAMILY, NUMBER_OF_INPUT_LINKS, Bytes.toBytes(numberOfInputLinks));
+            Put put = new Put(key.get());
+            put.addColumn(COLUMN_FAMILY, ANCHORS, new String(anchors).getBytes());
 
             try {
                 context.write(null, put);
             }
             catch (Exception e) {
-                logger.error("reducer could not write to contest", e);
                 e.printStackTrace();
             }
         }
@@ -97,27 +110,27 @@ public class InputLinkCounter extends Configured implements Tool {
 
     @Override
     public int run(String[] args) throws Exception {
-        Job job = Job.getInstance(getConf(), "InputLinkCounter");
-        job.setJarByClass(mapreduce.InputLinkCounter.class);
+        Job job = Job.getInstance(getConf(), "AnchorsCounter");
+        job.setJarByClass(AnchorsCounter.class);
 
         Scan scan = new Scan();
 
-        scan.addColumn(COLUMN_FAMILY, SUB_LINKS);
-
-        scan.setCacheBlocks(false);
         scan.setCaching(500);
+        scan.setCacheBlocks(false);
+
+        scan.addColumn(COLUMN_FAMILY, SUB_LINKS);
 
         TableMapReduceUtil.initTableMapperJob(
                 "wb",
                 scan,
-                Mapper.class,
+                AnchorsCounter.Mapper.class,
                 ImmutableBytesWritable.class,
-                IntWritable.class,
+                ImmutableBytesWritable.class,
                 job);
 
         TableMapReduceUtil.initTableReducerJob(
                 "wb",
-                Reducer.class,
+                AnchorsCounter.Reducer.class,
                 job);
 
         boolean jobSuccessful = job.waitForCompletion(true);
@@ -138,10 +151,9 @@ public class InputLinkCounter extends Configured implements Tool {
         hbaseConfiguration.set("hbase.zookeeper.quorum", "master,slave");
 
         try {
-            ToolRunner.run(hbaseConfiguration, new InputLinkCounter(), args);
+            ToolRunner.run(hbaseConfiguration, new AnchorsCounter(), args);
         }
         catch (Exception e) {
-            logger.fatal("could not run the job!", e);
             e.printStackTrace();
         }
     }
