@@ -57,10 +57,10 @@ public class ProperUrlFilter {
                     {
                         Profiler.setQueueSize(allUrlsQueue.size());
                         String urlToVisit = allUrlsQueue.pop();
-                    if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
-                    {
-                        continue;
-                    }
+//                        if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
+//                        {
+//                            continue;
+//                        }
                         //check politeness
                         boolean isPolite = checkIfPolite(urlToVisit);
                         if (!isPolite) {
