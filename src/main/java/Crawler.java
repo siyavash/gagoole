@@ -6,6 +6,7 @@ import javafx.util.Pair;
 import queue.DistributedQueue;
 import queue.LocalQueue;
 import queue.URLQueue;
+import util.Profiler;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -14,9 +15,6 @@ import java.util.concurrent.*;
 
 class Crawler
 {
-
-//    private int NTHREADS;
-//    private int DLTHREADS;
     private URLQueue queue;
     private DataStore dataStore;
     private boolean initialMode = true;
@@ -26,7 +24,6 @@ class Crawler
     private String topicName;
     private String zookeeperClientPort;
     private String zookeeperQuorum;
-//    private OkHttpClient client = new OkHttpClient();
     private ArrayBlockingQueue<String> properUrls = new ArrayBlockingQueue<>(1000000);
     private ArrayBlockingQueue<String> newUrls = new ArrayBlockingQueue<>(100000);
     private ArrayBlockingQueue<Pair<String, String>> downloadedData = new ArrayBlockingQueue<>(100000);
@@ -37,7 +34,6 @@ class Crawler
         loadProperties();
         loadQueue();
         loadDataStore();
-//        client.setReadTimeout(1, TimeUnit.SECONDS);
         if (initialMode && useKafka)
         {
             ArrayList<String> seeds = loadSeeds();
@@ -73,11 +69,6 @@ class Crawler
         {
             queue = new LocalQueue();
         }
-//
-//        new Thread(() -> {
-//            while (true)
-//                queue.push(UUID.randomUUID().toString());
-//        }).start();
     }
 
     private void loadDataStore()
@@ -89,7 +80,7 @@ class Crawler
                 dataStore = new PageInfoDataStore(zookeeperClientPort, zookeeperQuorum);
             } catch (IOException e)
             {
-                System.err.println("Error in initialising hbase: " + e);
+                Profiler.fatal("Error in initializing hbase: " + e.getMessage());
                 System.exit(1);
             }
         } else
@@ -101,38 +92,23 @@ class Crawler
     private void loadProperties()
     {
         Properties prop = new Properties();
-        InputStream input = null;
 
-        try
+        try(InputStream input = new FileInputStream("config.properties"))
         {
-
-            input = new FileInputStream("config.properties");
             prop.load(input);
 
-            initialMode = prop.getProperty("initial-mode", "true").equals("true");
-            useKafka = prop.getProperty("use-kafka", "false").equals("true");
-            useHbase = prop.getProperty("use-hbase", "false").equals("true");
-            bootstrapServer = prop.getProperty("bootstrap-server", "master:9092, slave:9092");
-            topicName = prop.getProperty("topic-name", "test");
-            zookeeperClientPort = prop.getProperty("zookeeper-client-port", "2181");
-            zookeeperQuorum = prop.getProperty("zookeeper-quorum", "master,slave");
         } catch (IOException ex)
         {
-            System.err.println("error in reading config file:");
-            ex.printStackTrace();
-        } finally
-        {
-            if (input != null)
-            {
-                try
-                {
-                    input.close();
-                } catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-            }
+            Profiler.error("Error while reading config file");
         }
+
+        initialMode = prop.getProperty("initial-mode", "true").equals("true");
+        useKafka = prop.getProperty("use-kafka", "false").equals("true");
+        useHbase = prop.getProperty("use-hbase", "false").equals("true");
+        bootstrapServer = prop.getProperty("bootstrap-server", "master:9092, slave:9092");
+        topicName = prop.getProperty("topic-name", "test");
+        zookeeperClientPort = prop.getProperty("zookeeper-client-port", "2181");
+        zookeeperQuorum = prop.getProperty("zookeeper-quorum", "master,slave");
     }
 
     private ArrayList<String> loadSeeds()
@@ -158,20 +134,4 @@ class Crawler
         }
     }
 
-//    public String normalizeUrl(String url)
-//    {
-//        String normalizedUrl;
-//        url = url.toLowerCase();
-//        if (url.startsWith("ftp"))
-//            return null;
-//        normalizedUrl = url.replaceFirst("(www\\.)", "");
-//        int slashCounter = 0;
-//        if (normalizedUrl.endsWith("/"))
-//        {
-//            while (normalizedUrl.length() - slashCounter > 0 && normalizedUrl.charAt(normalizedUrl.length() - slashCounter - 1) == '/')
-//                slashCounter++;
-//        }
-//        normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - slashCounter);
-//        return normalizedUrl;
-//    }
 }
