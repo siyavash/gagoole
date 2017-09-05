@@ -127,6 +127,15 @@ public class AnchorsCounter extends Configured implements Tool {
                 AnchorsCounter.Reducer.class,
                 job);
 
-        return 0;
+        boolean jobSuccessful = job.waitForCompletion(true);
+
+        if(jobSuccessful) {
+            System.out.println("job completed successfully.");
+        }
+        else {
+            System.out.println("job failed!");
+        }
+
+        return jobSuccessful ? 1 : 0;
     }
 }
