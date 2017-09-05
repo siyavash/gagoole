@@ -28,21 +28,33 @@ public class DataSender
         this.dataStore = dataStore;
         this.urlQueue = urlQueue;
         this.organizedData = organizedData;
-        THREAD_NUMBER = readProperty();
-    }
 
-    private int readProperty() {
         Properties prop = new Properties();
+        InputStream input = null;
 
-        try (InputStream input = new FileInputStream("config.properties"))
+        try
         {
+            input = new FileInputStream("config.properties");
             prop.load(input);
         } catch (IOException ex)
         {
-            Profiler.error("Error while reading config file");
+            System.err.println("error in reading config file:");
+            ex.printStackTrace();
+        } finally
+        {
+            if (input != null)
+            {
+                try
+                {
+                    input.close();
+                } catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
         }
 
-        return Integer.parseInt(prop.getProperty("sender-thread-number", "100"));
+        THREAD_NUMBER = Integer.parseInt(prop.getProperty("sender-thread-number", "100"));
     }
 
     public void startSending()
@@ -53,7 +65,15 @@ public class DataSender
         }
 
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_NUMBER);
-
+//        AtomicInteger atomicInteger = new AtomicInteger(0);
+//        Timer timer = new Timer();
+//        timer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                System.out.println("Data sender: " + atomicInteger.get());
+//                atomicInteger.set(0);
+//            }
+//        }, 0, 1000);
         for (int i = 0; i < THREAD_NUMBER; i++)
         {
             executorService.submit(() -> {
@@ -61,14 +81,15 @@ public class DataSender
                 {
                     try
                     {
-                        PageInfo pageInfo = organizedData.take();
-                        dataStore.put(pageInfo);
-                        pushSubLinksToQueue(pageInfo);
+                        PageInfo pageInfo = popNewPageInfo();
+                        sendToDataStore(pageInfo);
                         Profiler.putDone(1);
+                        pushSubLinksToQueue(pageInfo);
                     } catch (InterruptedException ignored)
                     {
 
                     }
+//                    atomicInteger.incrementAndGet();
                 }
             });
         }
@@ -77,8 +98,13 @@ public class DataSender
 
     private void pushSubLinksToQueue(PageInfo pageInfo)
     {
+//        long time = System.currentTimeMillis();
         ArrayList<String> subLinks = getAllSubLinksFromPageInfo(pageInfo);
+
         urlQueue.push(subLinks);
+
+//        time = System.currentTimeMillis() - time;
+//        Profiler.pushToQueue(pageInfo.getUrl(), time);
     }
 
     private ArrayList<String> getAllSubLinksFromPageInfo(PageInfo pageInfo)
@@ -89,5 +115,27 @@ public class DataSender
             subLinks.add(pair.getKey());
         }
         return subLinks;
+    }
+
+    private void sendToDataStore(PageInfo pageInfo) throws IOException
+    {
+//        long time = System.currentTimeMillis();
+
+        dataStore.put(pageInfo);
+
+//        time = System.currentTimeMillis() - time;
+//        Profiler.putToDataStore(pageInfo.getUrl(), time);
+    }
+
+    private PageInfo popNewPageInfo() throws InterruptedException
+    {
+//        long time = System.currentTimeMillis();
+
+        PageInfo pageInfo = organizedData.take();
+
+//        time = System.currentTimeMillis() - time;
+//        Profiler.popOrganizedData(pageInfo.getUrl(), time);
+
+        return pageInfo;
     }
 }

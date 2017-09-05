@@ -84,13 +84,8 @@ public class Profiler
         failedDownload.mark();
     }
 
-    public static void error(String message)
+    public static void error(String errorMessage)
     {
-        logger.error(message);
-    }
-
-    public static void fatal(String message)
-    {
-        logger.fatal(message);
+        logger.error(errorMessage);
     }
 }

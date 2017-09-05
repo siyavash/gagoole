@@ -12,9 +12,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DataOrganizer
 {
@@ -26,21 +29,32 @@ public class DataOrganizer
     {
         this.downloadedData = downloadedData;
         this.organizedData = organizedData;
-        THREAD_NUMBER = readProperty();
-    }
-
-    private int readProperty() {
         Properties prop = new Properties();
+        InputStream input = null;
 
-        try (InputStream input = new FileInputStream("config.properties"))
+        try
         {
+            input = new FileInputStream("config.properties");
             prop.load(input);
         } catch (IOException ex)
         {
-            Profiler.error("Error while reading config file");
+            System.err.println("error in reading config file:");
+            ex.printStackTrace();
+        } finally
+        {
+            if (input != null)
+            {
+                try
+                {
+                    input.close();
+                } catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
         }
 
-        return Integer.parseInt(prop.getProperty("organizer-thread-number", "8"));
+        THREAD_NUMBER = Integer.parseInt(prop.getProperty("organizer-thread-number", "8"));
     }
 
     public void startOrganizing()
@@ -51,7 +65,15 @@ public class DataOrganizer
         }
 
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_NUMBER);
-
+//        AtomicInteger atomicInteger = new AtomicInteger(0);
+//        Timer timer = new Timer();
+//        timer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                System.out.println("organized : " + atomicInteger.get());
+//                atomicInteger.set(0);
+//            }
+//        }, 0, 1000);
         for (int i = 0; i < THREAD_NUMBER; i++)
         {
             executorService.submit((Runnable) () -> {
@@ -59,7 +81,7 @@ public class DataOrganizer
                 {
                     try
                     {
-                        Pair<String, String> poppedData = downloadedData.take();
+                        Pair<String, String> poppedData = popNewData();
 
 
                         String text = poppedData.getKey();
@@ -77,14 +99,14 @@ public class DataOrganizer
                         }
 
 
-                        if (!isHtml(text))
+                        if (!isHtml(text, link))
                         {
                             continue;
                         }
 
-                        Document dataDocument = createDataDocument(text);
+                        Document dataDocument = createDataDocument(text, link);
 
-                        if (!isEnglish(dataDocument))
+                        if (!isEnglish(dataDocument, link))
                         {
                             continue;
                         }
@@ -92,12 +114,16 @@ public class DataOrganizer
                         PageInfo pageInfo = createPageInfo(dataDocument, link);
                         Profiler.organizeDone();
 
-                        organizedData.put(pageInfo);
+                        sendOrganizedData(pageInfo);
 
                     } catch (InterruptedException ignored)
                     {
-
-                    }
+                        //TODO is this enough?
+                    } /*catch (Exception e)*/
+//                    {
+//                        e.printStackTrace();
+//                    }
+//                    atomicInteger.incrementAndGet();
                 }
             });
         }
@@ -113,8 +139,20 @@ public class DataOrganizer
 
     }
 
+    private void sendOrganizedData(PageInfo pageInfo) throws InterruptedException
+    {
+//        long time = System.currentTimeMillis();
+
+        organizedData.put(pageInfo);
+
+//        time = System.currentTimeMillis() - time;
+//        Profiler.putOrganizedData(pageInfo.getUrl(), time);
+    }
+
     private PageInfo createPageInfo(Document dataDocument, String link)
     {
+//        long time = System.currentTimeMillis();
+
         PageInfo pageInfo = new PageInfo();
 
         pageInfo.setUrl(normalizeUrl(link));
@@ -149,6 +187,9 @@ public class DataOrganizer
         {
             pageInfo.setKeyWordsMeta(elements.attr("content"));
         }
+
+//        time = System.currentTimeMillis() - time;
+//        Profiler.extractInformationFromDocument(link, time);
 
         return pageInfo;
     }
@@ -188,25 +229,54 @@ public class DataOrganizer
         return normalizedUrl;
     }
 
-    private Document createDataDocument(String text)
+    private Document createDataDocument(String text, String link)
     {
+//        long time = System.currentTimeMillis();
+
         if(text == null)
             return null;
+        Document document = Jsoup.parse(text);
 
-        return Jsoup.parse(text);
+//        time = System.currentTimeMillis() - time;
+//        Profiler.parse(link, time);
+
+        return document;
     }
 
-    private boolean isEnglish(Document dataDocument)
+    private Pair<String, String> popNewData() throws InterruptedException
     {
+//        long time = System.currentTimeMillis();
+
+        Pair<String, String> poppedData = downloadedData.take();
+
+//        time = System.currentTimeMillis() - time;
+//        Profiler.popDownloadedData(poppedData.getValue(), time);
+
+        return poppedData;
+    }
+
+    private boolean isEnglish(Document dataDocument, String link)
+    {
+//        long time = System.currentTimeMillis();
+
         LanguageDetector languageDetector = new LanguageDetector(dataDocument);
+        boolean englishLanguage = languageDetector.isEnglish();
 
-        return languageDetector.isEnglish();
+//        time = System.currentTimeMillis() - time;
+//        Profiler.goodLanguage(link, time, englishLanguage);
+
+        return englishLanguage;
     }
 
-    private boolean isHtml(String text)
+    private boolean isHtml(String text, String link)
     {
+//        long time = System.currentTimeMillis();
+
         text = text.toLowerCase();
         boolean result = text.contains("<body")/* && text.contains("</html>")*/;
+
+//        time = System.currentTimeMillis() - time;
+//        Profiler.htmlCheck(link, time);
 
         return result;
     }
