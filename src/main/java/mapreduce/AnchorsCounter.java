@@ -12,6 +12,7 @@ import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.mapreduce.TableReducer;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -145,5 +146,12 @@ public class AnchorsCounter extends Configured implements Tool {
         Configuration hbaseConfiguration = HBaseConfiguration.create();
         hbaseConfiguration.set("hbase.zookeeper.property.clientPort", "2181");
         hbaseConfiguration.set("hbase.zookeeper.quorum", "master,slave");
+
+        try {
+            ToolRunner.run(hbaseConfiguration, new InputLinkCounter(), args);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
