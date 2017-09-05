@@ -5,6 +5,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.mapreduce.TableReducer;
 import org.apache.hadoop.mapreduce.Job;
@@ -113,6 +114,18 @@ public class AnchorsCounter extends Configured implements Tool {
 
         scan.addColumn(COLUMN_FAMILY, SUB_LINKS);
 
+        TableMapReduceUtil.initTableMapperJob(
+                "wb",
+                scan,
+                AnchorsCounter.Mapper.class,
+                ImmutableBytesWritable.class,
+                ImmutableBytesWritable.class,
+                job);
+
+        TableMapReduceUtil.initTableReducerJob(
+                "wb",
+                AnchorsCounter.Reducer.class,
+                job);
 
         return 0;
     }
