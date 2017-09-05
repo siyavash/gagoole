@@ -22,18 +22,8 @@ public class Profiler
     private static final Meter organized = metrics.meter("Organized");
 
     private static AtomicLong linkedSize = new AtomicLong(0);
-    private static AtomicLong queueSize = new AtomicLong(0);
 
     public static void start() {
-
-        metrics.register(MetricRegistry.name("initial kafka queue size"),
-                new Gauge<Long>() {
-                    @Override
-                    public Long getValue() {
-                        return queueSize.get();
-                    }
-                });
-
         metrics.register(MetricRegistry.name("linked size"),
                 (Gauge<Long>) () -> linkedSize.get());
 
@@ -47,9 +37,6 @@ public class Profiler
 
     public static void setLinkedSize(int size) {
         linkedSize.set(size);
-    }
-    public static void setQueueSize(int size) {
-        queueSize.set(size);
     }
 
     /*****************************************************************************/
@@ -84,8 +71,13 @@ public class Profiler
         failedDownload.mark();
     }
 
-    public static void error(String errorMessage)
+    public static void error(String message)
     {
-        logger.error(errorMessage);
+        logger.error(message);
+    }
+
+    public static void fatal(String message)
+    {
+        logger.fatal(message);
     }
 }
