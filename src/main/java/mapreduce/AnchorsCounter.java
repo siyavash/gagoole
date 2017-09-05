@@ -148,7 +148,7 @@ public class AnchorsCounter extends Configured implements Tool {
         hbaseConfiguration.set("hbase.zookeeper.quorum", "master,slave");
 
         try {
-            ToolRunner.run(hbaseConfiguration, new InputLinkCounter(), args);
+            ToolRunner.run(hbaseConfiguration, new AnchorsCounter(), args);
         }
         catch (Exception e) {
             e.printStackTrace();
