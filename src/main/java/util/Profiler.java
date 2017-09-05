@@ -4,6 +4,7 @@ import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import org.apache.log4j.Logger;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -11,8 +12,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Profiler
 {
+    private static Logger logger = Logger.getLogger(Class.class.getName());
     private static final MetricRegistry metrics = new MetricRegistry();
     private static final Meter existChecks = metrics.meter("Exist checked");
+    private static final Meter existCheckFails = metrics.meter("Exist check failed");
     private static final Meter downloaded = metrics.meter("Download done");
     private static final Meter failedDownload = metrics.meter("Download failed");
     private static final Meter puts = metrics.meter("Put done");
@@ -43,6 +46,11 @@ public class Profiler
         existChecks.mark();
     }
 
+    public static void existCheckFail()
+    {
+        existCheckFails.mark();
+    }
+
     public static void downloadDone()
     {
         downloaded.mark();
@@ -61,5 +69,10 @@ public class Profiler
     public static void downloadFailed()
     {
         failedDownload.mark();
+    }
+
+    public static void error(String errorMessage)
+    {
+        logger.error(errorMessage);
     }
 }

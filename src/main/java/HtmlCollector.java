@@ -33,28 +33,15 @@ public class HtmlCollector
     private int readProperty()
     {
         Properties prop = new Properties();
-        InputStream input = null;
-        try
+
+        try (InputStream input = new FileInputStream("config.properties"))
         {
-            input = new FileInputStream("config.properties");
             prop.load(input);
         } catch (IOException ex)
         {
-            System.err.println("error in reading config file:");
-            ex.printStackTrace();
-        } finally
-        {
-            if (input != null)
-            {
-                try
-                {
-                    input.close();
-                } catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-            }
+            Profiler.error("Error while reading config file");
         }
+
         return Integer.parseInt(prop.getProperty("download-html-threads-number", "200"));
     }
 

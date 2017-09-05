@@ -29,28 +29,15 @@ public class ProperUrlFilter {
 
     private int readProperty() {
         Properties prop = new Properties();
-        InputStream input = null;
-        try
+
+        try (InputStream input = new FileInputStream("config.properties"))
         {
-            input = new FileInputStream("config.properties");
             prop.load(input);
         } catch (IOException ex)
         {
-            System.err.println("error in reading config file:");
-            ex.printStackTrace();
-        } finally
-        {
-            if (input != null)
-            {
-                try
-                {
-                    input.close();
-                } catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-            }
+            Profiler.error("Error while reading config file");
         }
+
         return Integer.parseInt(prop.getProperty("fetch-url-threads-number", "8"));
     }
 
@@ -62,57 +49,41 @@ public class ProperUrlFilter {
 
         ExecutorService fetchingPool = Executors.newFixedThreadPool(THREAD_NUMBER);
 
-//        AtomicInteger atomicInteger = new AtomicInteger(0);
-//        Timer timer = new Timer();
-//        timer.scheduleAtFixedRate(new TimerTask() {
-//            @Override
-//            public void run() {
-//                System.out.println(atomicInteger.get() + " " + allUrlsQueue.size());
-//                atomicInteger.set(0);
-//            }
-//        }, 0, 1000);
-
         for (int i = 0; i < THREAD_NUMBER; i++) {
             fetchingPool.submit((Runnable) () -> {
                 while (true){
 
-                    String urlToVisit = getUrlFromQueue();
-                    Profiler.existChecked();
+                    try
+                    {
+                        String urlToVisit = allUrlsQueue.pop();
 //                    if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
 //                    {
 //                        continue;
 //                    }
-                    //check politeness
-                    boolean isPolite = checkIfPolite(urlToVisit);
-                    if (!isPolite) {
-                        allUrlsQueue.push(urlToVisit);
-                        continue;
+                        //check politeness
+                        boolean isPolite = checkIfPolite(urlToVisit);
+                        if (!isPolite) {
+                            allUrlsQueue.push(urlToVisit);
+                            continue;
+                        }
+
+                        //check content type
+                        boolean isGoodContentType = isGoodContentType(urlToVisit);
+                        if (!isGoodContentType)
+                            continue;
+
+                        //finish
+                        properUrls.put(urlToVisit);
+
+                    } catch (InterruptedException ignored)
+                    {
+
                     }
 
-                    //check content type
-                    boolean isGoodContentType = isGoodContentType(urlToVisit);
-                    if (!isGoodContentType)
-                        continue;
-
-                    //finish
-
-                    addUrlToProperUrls(urlToVisit);
-//                    atomicInteger.incrementAndGet();
                 }
             });
         }
         fetchingPool.shutdown();
-    }
-
-    private String getUrlFromQueue(){
-        String candidateUrl = null;
-        try {
-            candidateUrl = allUrlsQueue.pop();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            //TODO: catch deciding
-        }
-        return candidateUrl;
     }
 
     private boolean checkIfPolite(String urlToVisit) {
@@ -121,14 +92,6 @@ public class ProperUrlFilter {
         return !cache.checkIfExist(urlToVisit.substring(0, index));
     }
 
-    private void addUrlToProperUrls(String urlToVisit) {
-        try {
-            properUrls.put(urlToVisit);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            //TODO: catch deciding
-        }
-    }
     private boolean isGoodContentType(String url) {
         url = url.toLowerCase();
         return !url.endsWith(".jpg") && !url.endsWith(".gif") && !url.endsWith(".pdf") && !url.endsWith(".deb")
