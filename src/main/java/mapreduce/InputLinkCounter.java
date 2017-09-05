@@ -68,7 +68,9 @@ public class InputLinkCounter extends Configured implements Tool {
         private static final byte[] NUMBER_OF_INPUT_LINKS = "numOfInputLinks".getBytes();
 
         @Override
-        protected void reduce(ImmutableBytesWritable key, Iterable<IntWritable> values, Context context) {
+        protected void reduce(ImmutableBytesWritable key,
+                              Iterable<IntWritable> values,
+                              Context context) throws IOException, InterruptedException {
             if(key.equals(new ImmutableBytesWritable("".getBytes()))) {
                 return;
             }
