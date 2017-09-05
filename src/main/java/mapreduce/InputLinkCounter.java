@@ -17,6 +17,8 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
+
 
 public class InputLinkCounter extends Configured implements Tool {
 
@@ -29,7 +31,9 @@ public class InputLinkCounter extends Configured implements Tool {
         private static final IntWritable one = new IntWritable(1);
 
         @Override
-        protected void map(ImmutableBytesWritable key, Result value, Context context) {
+        protected void map(ImmutableBytesWritable key,
+                           Result value,
+                           Context context)  throws IOException, InterruptedException{
             try {
                 String subLinks = new String(value.getValue(COLUMN_FAMILY, SUB_LINKS));
                 if (subLinks.equals("")) {
@@ -38,22 +42,19 @@ public class InputLinkCounter extends Configured implements Tool {
 
                 String[] linkAnchors = subLinks.split("\n");
 
-                for (String linkAnchor : linkAnchors) {
-                    String[] linkAndAnchor = linkAnchor.split(" , ");
-                    if(linkAndAnchor[0].length() >= Short.MAX_VALUE) {
+                for (int i = 0; i < linkAnchors.length; i += 2) {
+                    String link = linkAnchors[i];
+                    if(link.length() >= Short.MAX_VALUE) {
                         continue;
                     }
 
-                    ImmutableBytesWritable link = new ImmutableBytesWritable(linkAndAnchor[0].getBytes());
-
                     try {
-                        context.write(link, one);
+                        context.write(new ImmutableBytesWritable(link.getBytes()), one);
                     }
                     catch (Exception e) {
                         logger.error("mapper could not write to context", e);
                         e.printStackTrace();
                     }
-
                 }
             }
             catch (Exception e) {
@@ -120,10 +121,10 @@ public class InputLinkCounter extends Configured implements Tool {
         boolean jobSuccessful = job.waitForCompletion(true);
 
         if(jobSuccessful) {
-            System.out.printf("job completed successfully.");
+            System.out.println("job completed successfully.");
         }
         else {
-            System.out.printf("job failed!");
+            System.out.println("job failed!");
         }
 
         return jobSuccessful ? 1 : 0;
