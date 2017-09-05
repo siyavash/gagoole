@@ -20,7 +20,7 @@ public class DistributedQueue extends Thread implements URLQueue {
     private final ArrayBlockingQueue<String> arrayBlockingQueue = new ArrayBlockingQueue<String>(1000000);
     private Properties publishProps = new Properties();
     private Properties consumeProps = new Properties();
-    private final String groupId = "gagooler";
+    private final String groupId = "url-consumer";
 
     public DistributedQueue(String bootstrapServers, String topicName) {
         this.topicName = topicName;
