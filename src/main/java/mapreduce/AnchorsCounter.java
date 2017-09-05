@@ -1,14 +1,19 @@
 package mapreduce;
 
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
+import org.apache.hadoop.hbase.mapreduce.TableReducer;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class AnchorsCounter extends Configured implements Tool {
 
@@ -54,6 +59,48 @@ public class AnchorsCounter extends Configured implements Tool {
         }
     }
 
+    public static class Reducer extends TableReducer<ImmutableBytesWritable, ImmutableBytesWritable, Put> {
+
+        private static final byte[] ANCHORS = "anchors".getBytes();
+
+        @Override
+        protected void reduce(ImmutableBytesWritable key,
+                              Iterable<ImmutableBytesWritable> values,
+                              Context context) throws IOException, InterruptedException {
+            Map<String, Integer> map = new HashMap<String, Integer>();
+            for(ImmutableBytesWritable value : values) {
+                String anchor = new String(value.copyBytes());
+                if(map.containsKey(anchor)) {
+                    map.put(anchor, map.get(anchor) + 1);
+                }
+                else {
+                    map.put(anchor, 1);
+                }
+            }
+
+            Iterator it = map.entrySet().iterator();
+            StringBuilder anchors = new StringBuilder("\n");
+            while(it.hasNext()) {
+                Map.Entry pair = (Map.Entry)it.next();
+
+                anchors.append(pair.getKey());
+                anchors.append('\n');
+                anchors.append(pair.getValue());
+                anchors.append('\n');
+            }
+
+            Put put = new Put(key.get());
+            put.addColumn(COLUMN_FAMILY, ANCHORS, new String(anchors).getBytes());
+
+            try {
+                context.write(null, put);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     @Override
     public int run(String[] args) throws Exception {
         Job job = Job.getInstance(getConf(), "AnchorsCounter");
@@ -66,7 +113,7 @@ public class AnchorsCounter extends Configured implements Tool {
 
         scan.addColumn(COLUMN_FAMILY, SUB_LINKS);
 
-        
+
         return 0;
     }
 }
