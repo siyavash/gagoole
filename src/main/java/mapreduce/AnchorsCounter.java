@@ -1,6 +1,8 @@
 package mapreduce;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
@@ -137,5 +139,11 @@ public class AnchorsCounter extends Configured implements Tool {
         }
 
         return jobSuccessful ? 1 : 0;
+    }
+
+    public static void main(String[] args) {
+        Configuration hbaseConfiguration = HBaseConfiguration.create();
+        hbaseConfiguration.set("hbase.zookeeper.property.clientPort", "2181");
+        hbaseConfiguration.set("hbase.zookeeper.quorum", "master,slave");
     }
 }
