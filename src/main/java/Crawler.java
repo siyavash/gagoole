@@ -28,8 +28,8 @@ class Crawler
     private String zookeeperQuorum;
 //    private OkHttpClient client = new OkHttpClient();
     private ArrayBlockingQueue<String> properUrls = new ArrayBlockingQueue<>(1000000);
-    private ArrayBlockingQueue<String> newUrls = new ArrayBlockingQueue<>(1000000);
-    private ArrayBlockingQueue<Pair<String, String>> downloadedData = new ArrayBlockingQueue<>(1000000);
+    private ArrayBlockingQueue<String> newUrls = new ArrayBlockingQueue<>(100000);
+    private ArrayBlockingQueue<Pair<String, String>> downloadedData = new ArrayBlockingQueue<>(100000);
     private ArrayBlockingQueue<PageInfo> organizedData = new ArrayBlockingQueue<>(1000000);
 
     public Crawler()
@@ -146,7 +146,7 @@ class Crawler
             String line;
             while ((line = bufferedReader.readLine()) != null)
             {
-                seedUrls.add("http://www." + line);
+                seedUrls.add("http://" + line);
             }
             fileReader.close();
             return seedUrls;

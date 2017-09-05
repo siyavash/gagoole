@@ -5,9 +5,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.exceptions.IllegalArgumentIOException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
-import util.Profiler;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ public class PageInfoDataStore implements DataStore
         }
 
         Table table = null;
-        boolean result = true;
+        boolean result;
         try {
             table = hbaseConnection.getTable(TABLE_NAME);
             Get get = new Get(Bytes.toBytes(url));
@@ -60,30 +60,27 @@ public class PageInfoDataStore implements DataStore
         for (int i = 0; i < result.length; i++)
         {
             result[i] = false;
-            gets.add(new Get(Bytes.toBytes(urls.get(i))));
+            Get get = new Get(Bytes.toBytes(urls.get(i)));
+            get.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("bodyText"));
+            gets.add(get);
         }
 
-        updateExistsResult(waitingPutsStorage, urls, result);
-        updateExistsResult(waitingPutsMiniStorage, urls, result);
-
-        Table table = null;
-
-        try
-        {
-            table = hbaseConnection.getTable(TABLE_NAME);
-            boolean[] mainStorageExistResult = table.existsAll(gets);
-            updateExistsResult(mainStorageExistResult, result);
-        } finally
-        {
-            if (table != null)
-                table.close();
-        }
+        checkInsideStorage(waitingPutsStorage, urls, result);
+        checkInsideStorage(waitingPutsMiniStorage, urls, result);
+        checkMainStorage(result, gets);
 
         return result;
     }
 
-    private void updateExistsResult(boolean[] mainStorageExistResult, boolean[] result)
+    private void checkMainStorage(boolean[] result, ArrayList<Get> gets) throws IOException
     {
+        boolean[] mainStorageExistResult;
+
+        try(Table table = hbaseConnection.getTable(TABLE_NAME))
+        {
+            mainStorageExistResult = table.existsAll(gets);
+        }
+
         for (int i = 0; i < result.length; i++)
         {
             if (result[i])
@@ -95,7 +92,7 @@ public class PageInfoDataStore implements DataStore
         }
     }
 
-    private void updateExistsResult(ConcurrentHashMap<String, Object> waitingPutsStorage, ArrayList<String> urls, boolean[] result)
+    private void checkInsideStorage(ConcurrentHashMap<String, Object> waitingPutsStorage, ArrayList<String> urls, boolean[] result)
     {
         for (int i = 0; i < result.length; i++)
         {
@@ -115,7 +112,7 @@ public class PageInfoDataStore implements DataStore
     {
         if (pageInfo.getUrl().equals("") || pageInfo.getUrl() == null)
         {
-            return; //TODO good?
+            return;
         }
 
         try {
@@ -137,7 +134,7 @@ public class PageInfoDataStore implements DataStore
             waitingPutsStorage.put(new String(put.getRow()), new Object());
         } catch (InterruptedException e)
         {
-            e.printStackTrace(); //TODO
+            logger.error("Failed to put to ArrayBlockingQueue in DataStore");
         }
     }
 
@@ -176,7 +173,7 @@ public class PageInfoDataStore implements DataStore
 
 
             stringBuilder.append(linkName);
-            stringBuilder.append(" , ");
+            stringBuilder.append("\n");
             stringBuilder.append(anchorName);
             stringBuilder.append("\n");
         }
@@ -187,13 +184,8 @@ public class PageInfoDataStore implements DataStore
     private void startPuttingToTable()
     {
         new Thread(() -> {
-            long t1, t2 = 0;
-
             while (true)
             {
-//                t2 = System.currentTimeMillis() - t2;
-//                logger.info("Started adding Put classes in a list after " + t2 + " milli seconds");
-
                 ArrayList<Put> puts = new ArrayList<>();
                 for (int i = 0; i < 100; i++)
                 {
@@ -205,39 +197,21 @@ public class PageInfoDataStore implements DataStore
                         waitingPutsStorage.remove(new String(put.getRow()));
                     } catch (InterruptedException e)
                     {
-                        //TODO what to do?!
+                        logger.error("Failed to get from ArrayBlockingQueue in DataStore");
                     }
                 }
 
-                Table table = null;
-
-                try
+                try(Table table = hbaseConnection.getTable(TABLE_NAME))
                 {
-//                    t1 = System.currentTimeMillis();
-//                    t1 = System.currentTimeMillis() - t1;
-//                    logger.info("100 put done in " + t1 + " milli seconds");
-//                    t2 = System.currentTimeMillis();
 
-                    table = hbaseConnection.getTable(TABLE_NAME);
                     table.put(puts);
-//                    Profiler.putDone(100);
                     waitingPutsMiniStorage.clear();
+                } catch (IllegalArgumentIOException e)
+                {
+                    logger.error("KeyValue size is too big. Change default settings");
                 } catch (IOException e) //TODO IllegalArgumentException
                 {
                     logger.error("Failed to put in hbase"); //TODO
-                } finally
-                {
-                    if (table != null)
-                    {
-
-                        try
-                        {
-                            table.close();
-                        } catch (IOException e)
-                        {
-                            logger.error("Failed to close the table"); //TODO
-                        }
-                    }
                 }
             }
         }).start();

@@ -14,13 +14,21 @@ public class LocalQueue implements URLQueue {
     public void push(ArrayList<String> arrayURLs) {
         for (String url : arrayURLs) {
             if (queue.size() < 900 * 1000)
-                queue.add(url);
+                try {
+                    queue.put(url);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
         }
     }
 
     public void push(String URL) {
         if (queue.size() < 900 * 1000)
-            queue.add(URL);
+            try {
+                queue.put(URL);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
     }
 
     public void startThread() {

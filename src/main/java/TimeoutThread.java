@@ -15,33 +15,28 @@ public class TimeoutThread extends Thread
         Call call = null;
         long timeDifference = 0;
         while(true) {
-            callPair = null;
             try {
                 Profiler.setLinkedSize(linkedBlockingQueue.size());
                 callPair = linkedBlockingQueue.take();
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            if (callPair != null) {
-                call = callPair.getKey();
-                timeDifference = System.currentTimeMillis() - callPair.getValue();
-            }
-            try {
+                if (callPair != null) {
+                    call = callPair.getKey();
+                    timeDifference = System.currentTimeMillis() - callPair.getValue();
+                }
                 if (timeDifference <= 1500){
                     Thread.sleep(1500 - timeDifference);
                 }
                 if (call != null && !call.isCanceled()) {
                     call.cancel();
                 }
-            } catch (InterruptedException e) {
-                //TODO
+
+            } catch (InterruptedException ignored) {
+
             }
         }
     }
 
 
-    public void addCall(Call call, Long time)
+    void addCall(Call call, Long time)
     {
         try {
             this.linkedBlockingQueue.put(new Pair<>(call, time));

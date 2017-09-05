@@ -20,7 +20,7 @@ public class DistributedQueue extends Thread implements URLQueue {
     private final ArrayBlockingQueue<String> arrayBlockingQueue = new ArrayBlockingQueue<String>(1000000);
     private Properties publishProps = new Properties();
     private Properties consumeProps = new Properties();
-    private final String groupId = "url-consumer";
+    private final String groupId = "gagooler";
 
     public DistributedQueue(String bootstrapServers, String topicName) {
         this.topicName = topicName;
@@ -34,7 +34,7 @@ public class DistributedQueue extends Thread implements URLQueue {
         publishProps.put("key.serializer", StringSerializer.class.getName());
         publishProps.put("value.serializer", StringSerializer.class.getName());
 
-        producer = new KafkaProducer<String, String>(publishProps);
+        producer = new KafkaProducer<>(publishProps);
 
         //below is for subscribe
         consumeProps.put("bootstrap.servers", bootstrapServers);
@@ -82,7 +82,7 @@ public class DistributedQueue extends Thread implements URLQueue {
             if (arrayBlockingQueue.size() > 100000)
                 continue;
 
-            ConsumerRecords<String, String> records = consumer.poll(1000);
+            ConsumerRecords<String, String> records = consumer.poll(10000);
             for (ConsumerRecord<String, String> record : records) {
                 try {
                     arrayBlockingQueue.put(record.value());

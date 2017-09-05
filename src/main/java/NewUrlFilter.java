@@ -10,48 +10,39 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class NewUrlFilter {
+public class NewUrlFilter
+{
 
     private DataStore urlDatabase;
     private ArrayBlockingQueue<String> properUrls;
     private ArrayBlockingQueue<String> newUrls;
     private final int THREAD_NUMBER;
 
-    public NewUrlFilter(DataStore urlDatabase, ArrayBlockingQueue<String> properUrls, ArrayBlockingQueue<String> newUrls){
+    public NewUrlFilter(DataStore urlDatabase, ArrayBlockingQueue<String> properUrls, ArrayBlockingQueue<String> newUrls)
+    {
         this.urlDatabase = urlDatabase;
         this.properUrls = properUrls;
         this.newUrls = newUrls;
         THREAD_NUMBER = readProperty();
     }
 
-    private int readProperty() {
+    private int readProperty()
+    {
         Properties prop = new Properties();
-        InputStream input = null;
-        try
+
+        try (InputStream input = new FileInputStream("config.properties"))
         {
-            input = new FileInputStream("config.properties");
             prop.load(input);
         } catch (IOException ex)
         {
-            System.err.println("error in reading config file:");
-            ex.printStackTrace();
-        } finally
-        {
-            if (input != null)
-            {
-                try
-                {
-                    input.close();
-                } catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-            }
+            Profiler.error("Error while reading config file");
         }
+
         return Integer.parseInt(prop.getProperty("check-exist-threads-number", "200"));
     }
 
-    public void startCheckingThreads() {
+    public void startCheckingThreads()
+    {
         if (THREAD_NUMBER == 0)
         {
             return;
@@ -59,40 +50,42 @@ public class NewUrlFilter {
 
         ExecutorService checkingPool = Executors.newFixedThreadPool(THREAD_NUMBER);
 
-//        AtomicInteger atomicInteger = new AtomicInteger(0);
-//        Timer timer = new Timer();
-//        timer.scheduleAtFixedRate(new TimerTask() {
-//            @Override
-//            public void run() {
-//                System.out.println("new Urls after check hbase: " + atomicInteger.get() + ", " + properUrls.size());
-//                atomicInteger.set(0);
-//            }
-//        }, 0, 1000);
-
-        for (int i = 0; i < THREAD_NUMBER; i++) {
+        for (int i = 0; i < THREAD_NUMBER; i++)
+        {
             checkingPool.submit((Runnable) () -> {
-                while(true){
+                while (true)
+                {
 
-                    ArrayList<String> urlsToVisit = new ArrayList<>();
-                    for (int j = 0; j < 200; j++)
+                    try
                     {
-                        String urlToVisit = getProperUrl();
-                        if (urlToVisit != null)
+                        ArrayList<String> urlsToVisit = new ArrayList<>();
+                        for (int j = 0; j < 200; j++)
                         {
-                            urlsToVisit.add(urlToVisit);
+                            String urlToVisit = properUrls.take();
+                            if (urlToVisit != null)
+                            {
+                                urlsToVisit.add(urlToVisit);
+                            }
                         }
-                    }
 
-                    boolean[] existInDataStore = checkIfAlreadyExist(urlsToVisit);
 
-                    for (int j = 0; j < 200; j++)
+                        boolean[] existInDataStore = urlDatabase.exists(urlsToVisit);
+
+                        for (int j = 0; j < 200; j++)
+                        {
+                            if (!existInDataStore[j])
+                            {
+                                Profiler.existChecked();
+                                newUrls.put(urlsToVisit.get(j));
+                            }
+                        }
+
+                    } catch (InterruptedException ignored)
                     {
-                        if (!existInDataStore[j])
-                        {
-                            putNewUrl(urlsToVisit.get(j));
-//                            atomicInteger.incrementAndGet();
-                            Profiler.existChecked();
-                        }
+
+                    } catch (IOException e)
+                    {
+                        Profiler.existCheckFail();
                     }
 
 
@@ -101,51 +94,5 @@ public class NewUrlFilter {
         }
         checkingPool.shutdown();
 
-    }
-
-    private boolean[] checkIfAlreadyExist(ArrayList<String> urlsToVisit)
-    {
-        boolean[] result = new boolean[0];
-
-        try
-        {
-            result = urlDatabase.exists(urlsToVisit);
-        } catch (IOException e)
-        {
-            e.printStackTrace();//
-        }
-
-        return result;
-    }
-
-    private String getProperUrl() {
-        String urlToVisit = null;
-        try {
-            urlToVisit = properUrls.take();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            //TODO: catch deciding
-        }
-        return urlToVisit;
-    }
-
-    private boolean checkIfAlreadyExist(String urlToVisit) {   //I/O work
-        boolean exist = true;
-        try {
-            exist = urlDatabase.exists(urlToVisit);
-        } catch (IOException e) {
-            e.printStackTrace();
-            //TODO: catch deciding
-        }
-        return exist;
-    }
-
-    private void putNewUrl(String urlToVisit) {
-        try {
-            newUrls.put(urlToVisit);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            //TODO: catch deciding
-        }
     }
 }
