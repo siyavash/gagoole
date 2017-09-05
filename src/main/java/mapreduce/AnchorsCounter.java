@@ -38,6 +38,9 @@ public class AnchorsCounter extends Configured implements Tool {
                 String[] linkAnchors = subLinks.split("\n");
                 for(int i = 0; i < linkAnchors.length; i += 2) {
                     String link = linkAnchors[i];
+                    if(link.equals("") || link.length() >= Short.MAX_VALUE) {
+                        continue;
+                    }
                     String anchor = linkAnchors[i + 1];
                     if(anchor == null ||
                        anchor.equals("") ||
