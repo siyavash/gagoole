@@ -4,14 +4,10 @@ import util.Profiler;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Properties;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProperUrlFilter {
 
@@ -55,12 +51,11 @@ public class ProperUrlFilter {
 
                     try
                     {
-                        Profiler.setQueueSize(allUrlsQueue.size());
                         String urlToVisit = allUrlsQueue.pop();
-//                        if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
-//                        {
-//                            continue;
-//                        }
+                        if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
+                        {
+                            continue;
+                        }
                         //check politeness
                         boolean isPolite = checkIfPolite(urlToVisit);
                         if (!isPolite) {
