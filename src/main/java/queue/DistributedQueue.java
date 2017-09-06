@@ -20,7 +20,7 @@ public class DistributedQueue extends Thread implements URLQueue {
     private final ArrayBlockingQueue<String> arrayBlockingQueue = new ArrayBlockingQueue<String>(1000000);
     private Properties publishProps = new Properties();
     private Properties consumeProps = new Properties();
-    private final String groupId = "EntekhabVahed";
+    private final String groupId = "khaste";
 
     public DistributedQueue(String bootstrapServers, String topicName) {
         this.topicName = topicName;
@@ -60,7 +60,7 @@ public class DistributedQueue extends Thread implements URLQueue {
     }
 
     public void push(String URL) {
-        ProducerRecord<String, String> producerRecord = new ProducerRecord<String, String>(topicName, URL);
+        ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topicName, URL);
         producer.send(producerRecord);
     }
 
@@ -81,13 +81,13 @@ public class DistributedQueue extends Thread implements URLQueue {
         while (!isInterrupted()) {
             if (arrayBlockingQueue.size() > 100000)
                 continue;
-
             ConsumerRecords<String, String> records = consumer.poll(10000);
+            System.out.println("Outside for");
             for (ConsumerRecord<String, String> record : records) {
                 try {
-   		    System.out.println("NO");
+   		            System.out.println("Inside for Beginning");
                     arrayBlockingQueue.put(record.value());
-		    System.out.println("YES");
+		            System.out.println("Inside for End");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

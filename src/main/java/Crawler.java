@@ -54,7 +54,6 @@ class Crawler
 
     public void start()
     {
-	System.out.println("BAD");
         new ProperUrlFilter(queue, properUrls).startFetchingThreads();
         new NewUrlFilter(dataStore, properUrls, newUrls).startCheckingThreads();
         new HtmlCollector(newUrls, downloadedData/*, queue*/).startDownloadThreads();

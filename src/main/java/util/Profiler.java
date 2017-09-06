@@ -23,23 +23,16 @@ public class Profiler
 
     private static AtomicLong linkedSize = new AtomicLong(0);
     private static AtomicLong kafkaSize = new AtomicLong(0);
+    private static AtomicLong allUrlsSize = new AtomicLong(0);
 
     public static void start() {
         metrics.register(MetricRegistry.name("linked size"),
-                new Gauge<Long>() {
-                    @Override
-                    public Long getValue() {
-                        return linkedSize.get();
-                    }
-                });
+                (Gauge<Long>) () -> linkedSize.get());
 
         metrics.register(MetricRegistry.name("kafka size"),
-                new Gauge<Long>() {
-                    @Override
-                    public Long getValue() {
-                        return kafkaSize.get();
-                    }
-                });
+                (Gauge<Long>) () -> kafkaSize.get());
+        metrics.register(MetricRegistry.name("all urls size"),
+                (Gauge<Long>) () -> allUrlsSize.get());
         ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
                 .convertRatesTo(TimeUnit.SECONDS)
                 .build();
@@ -52,7 +45,10 @@ public class Profiler
     }
 
     public static void setKafkaSize(int size){
-	kafkaSize.set(size);
+    	kafkaSize.set(size);
+    }
+    public static void setAllUrlsSize(int size) {
+        allUrlsSize.set(size);
     }
 
     /*****************************************************************************/
@@ -96,4 +92,5 @@ public class Profiler
     {
         logger.fatal(message);
     }
+
 }
