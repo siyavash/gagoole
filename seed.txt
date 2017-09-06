@@ -51,7 +51,6 @@ stackoverflow.com
 onclkds.com
 wordpress.com
 hao123.com
-livejasmin.com
 github.com
 imdb.com
 amazon.co.jp
@@ -73,7 +72,6 @@ google.co.id
 detail.tmall.com
 gmw.cn
 diply.com
-nicovideo.jp
 adobe.com
 amazon.de
 craigslist.org
@@ -155,7 +153,6 @@ clicksgear.com
 google.cn
 flipkart.com
 github.io
-k618.cn
 force.com
 china.com.cn
 deviantart.com
@@ -485,3 +482,19 @@ iclarified.com
 skidrowreloaded.com
 lenovo.com
 askubuntu.com
+ccm.net
+fifa.com
+ea.com
+easports.com
+metacritic.com
+atpworldtour.com
+ibm.com
+ieee.org
+acm.org
+rollingstone.com
+web.mit.edu
+topuniversities.com
+khanacademy.org
+plumbr.eu
+mkyong.com
+vogella.com

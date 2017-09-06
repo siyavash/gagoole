@@ -20,7 +20,7 @@ public class DistributedQueue extends Thread implements URLQueue {
     private final ArrayBlockingQueue<String> arrayBlockingQueue = new ArrayBlockingQueue<String>(1000000);
     private Properties publishProps = new Properties();
     private Properties consumeProps = new Properties();
-    private final String groupId = "url-consumer";
+    private final String groupId = "EntekhabVahed";
 
     public DistributedQueue(String bootstrapServers, String topicName) {
         this.topicName = topicName;
@@ -85,7 +85,9 @@ public class DistributedQueue extends Thread implements URLQueue {
             ConsumerRecords<String, String> records = consumer.poll(10000);
             for (ConsumerRecord<String, String> record : records) {
                 try {
+   		    System.out.println("NO");
                     arrayBlockingQueue.put(record.value());
+		    System.out.println("YES");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

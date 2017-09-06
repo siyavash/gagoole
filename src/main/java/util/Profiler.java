@@ -22,11 +22,24 @@ public class Profiler
     private static final Meter organized = metrics.meter("Organized");
 
     private static AtomicLong linkedSize = new AtomicLong(0);
+    private static AtomicLong kafkaSize = new AtomicLong(0);
 
     public static void start() {
         metrics.register(MetricRegistry.name("linked size"),
-                (Gauge<Long>) () -> linkedSize.get());
+                new Gauge<Long>() {
+                    @Override
+                    public Long getValue() {
+                        return linkedSize.get();
+                    }
+                });
 
+        metrics.register(MetricRegistry.name("kafka size"),
+                new Gauge<Long>() {
+                    @Override
+                    public Long getValue() {
+                        return kafkaSize.get();
+                    }
+                });
         ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
                 .convertRatesTo(TimeUnit.SECONDS)
                 .build();
@@ -34,9 +47,12 @@ public class Profiler
         reporter.start(1, TimeUnit.SECONDS);
     }
 
-
     public static void setLinkedSize(int size) {
         linkedSize.set(size);
+    }
+
+    public static void setKafkaSize(int size){
+	kafkaSize.set(size);
     }
 
     /*****************************************************************************/

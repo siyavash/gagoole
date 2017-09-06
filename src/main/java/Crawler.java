@@ -24,10 +24,10 @@ class Crawler
     private String topicName;
     private String zookeeperClientPort;
     private String zookeeperQuorum;
-    private ArrayBlockingQueue<String> properUrls = new ArrayBlockingQueue<>(1000000);
-    private ArrayBlockingQueue<String> newUrls = new ArrayBlockingQueue<>(100000);
-    private ArrayBlockingQueue<Pair<String, String>> downloadedData = new ArrayBlockingQueue<>(100000);
-    private ArrayBlockingQueue<PageInfo> organizedData = new ArrayBlockingQueue<>(1000000);
+    private ArrayBlockingQueue<String> properUrls = new ArrayBlockingQueue<>(100000);
+    private ArrayBlockingQueue<String> newUrls = new ArrayBlockingQueue<>(10000);
+    private ArrayBlockingQueue<Pair<String, String>> downloadedData = new ArrayBlockingQueue<>(10000);
+    private ArrayBlockingQueue<PageInfo> organizedData = new ArrayBlockingQueue<>(10000);
 
     public Crawler()
     {
@@ -48,11 +48,13 @@ class Crawler
         } else if (useKafka)
         {
             queue.startThread();
+            Profiler.setKafkaSize(queue.size());
         }
     }
 
     public void start()
     {
+	System.out.println("BAD");
         new ProperUrlFilter(queue, properUrls).startFetchingThreads();
         new NewUrlFilter(dataStore, properUrls, newUrls).startCheckingThreads();
         new HtmlCollector(newUrls, downloadedData/*, queue*/).startDownloadThreads();
@@ -106,7 +108,7 @@ class Crawler
         useKafka = prop.getProperty("use-kafka", "false").equals("true");
         useHbase = prop.getProperty("use-hbase", "false").equals("true");
         bootstrapServer = prop.getProperty("bootstrap-server", "master:9092, slave:9092");
-        topicName = prop.getProperty("topic-name", "test");
+        topicName = prop.getProperty("topic-name", "newtopic");
         zookeeperClientPort = prop.getProperty("zookeeper-client-port", "2181");
         zookeeperQuorum = prop.getProperty("zookeeper-quorum", "master,slave");
     }
@@ -122,7 +124,7 @@ class Crawler
             String line;
             while ((line = bufferedReader.readLine()) != null)
             {
-                seedUrls.add("http://www." + line);
+                seedUrls.add("http://" + line);
             }
             fileReader.close();
             return seedUrls;
