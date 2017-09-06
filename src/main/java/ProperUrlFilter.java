@@ -53,6 +53,7 @@ public class ProperUrlFilter {
                     {
                         Profiler.setAllUrlsSize(allUrlsQueue.size());
                         String urlToVisit = allUrlsQueue.pop();
+                        System.out.println(urlToVisit + " linkk");
                         if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
                         {
                             continue;

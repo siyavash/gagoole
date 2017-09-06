@@ -18,7 +18,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class DistributedQueue extends Thread implements URLQueue {
     private Producer<String, String> producer;
     private String topicName;
-    private final ArrayBlockingQueue<String> arrayBlockingQueue = new ArrayBlockingQueue<String>(1000000);
+    private final ArrayBlockingQueue<String> arrayBlockingQueue = new ArrayBlockingQueue<>(1000000);
     private Properties publishProps = new Properties();
     private Properties consumeProps = new Properties();
 	private final String groupId = UUID.randomUUID().toString();
@@ -83,14 +83,10 @@ public class DistributedQueue extends Thread implements URLQueue {
             if (arrayBlockingQueue.size() > 100000)
                 continue;
             ConsumerRecords<String, String> records = consumer.poll(10000);
-            System.out.println("Outside for");
             for (ConsumerRecord<String, String> record : records) {
                 try {
-			System.out.println(record.value() + " linkk");
-   		            System.out.println("Inside for Beginning");
-                    arrayBlockingQueue.add(record.value());
-		            System.out.println("Inside for End");
-                } catch (IllegalStateException e) {
+                    arrayBlockingQueue.put(record.value());
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
