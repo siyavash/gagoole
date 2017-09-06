@@ -12,6 +12,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class DistributedQueue extends Thread implements URLQueue {
@@ -20,7 +21,7 @@ public class DistributedQueue extends Thread implements URLQueue {
     private final ArrayBlockingQueue<String> arrayBlockingQueue = new ArrayBlockingQueue<String>(1000000);
     private Properties publishProps = new Properties();
     private Properties consumeProps = new Properties();
-    private final String groupId = "khaste";
+	private final String groupId = UUID.randomUUID().toString();
 
     public DistributedQueue(String bootstrapServers, String topicName) {
         this.topicName = topicName;
@@ -85,10 +86,11 @@ public class DistributedQueue extends Thread implements URLQueue {
             System.out.println("Outside for");
             for (ConsumerRecord<String, String> record : records) {
                 try {
+			System.out.println(record.value() + " linkk");
    		            System.out.println("Inside for Beginning");
-                    arrayBlockingQueue.put(record.value());
+                    arrayBlockingQueue.add(record.value());
 		            System.out.println("Inside for End");
-                } catch (InterruptedException e) {
+                } catch (IllegalStateException e) {
                     e.printStackTrace();
                 }
             }
