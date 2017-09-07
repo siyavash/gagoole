@@ -70,6 +70,7 @@ public class ProperUrlFilter {
                             continue;
 
                         //finish
+                        Profiler.politeFound();
                         properUrls.put(urlToVisit);
 
                     } catch (InterruptedException ignored)

@@ -20,6 +20,7 @@ public class Profiler
     private static final Meter failedDownload = metrics.meter("Download failed");
     private static final Meter puts = metrics.meter("Put done");
     private static final Meter organized = metrics.meter("Organized");
+    private static final Meter polite = metrics.meter("Polite links");
 
     private static AtomicLong linkedSize = new AtomicLong(0);
     private static AtomicLong kafkaSize = new AtomicLong(0);
@@ -31,8 +32,10 @@ public class Profiler
 
         metrics.register(MetricRegistry.name("kafka size"),
                 (Gauge<Long>) () -> kafkaSize.get());
+
         metrics.register(MetricRegistry.name("all urls size"),
                 (Gauge<Long>) () -> allUrlsSize.get());
+
         ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
                 .convertRatesTo(TimeUnit.SECONDS)
                 .build();
@@ -83,6 +86,11 @@ public class Profiler
         failedDownload.mark();
     }
 
+    public static void politeFound()
+    {
+        polite.mark();
+    }
+
     public static void error(String message)
     {
         logger.error(message);
@@ -92,5 +100,4 @@ public class Profiler
     {
         logger.fatal(message);
     }
-
 }

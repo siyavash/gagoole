@@ -59,7 +59,7 @@ public class NewUrlFilter
                     try
                     {
                         ArrayList<String> urlsToVisit = new ArrayList<>();
-                        for (int j = 0; j < 200; j++)
+                        for (int j = 0; j < 10; j++)
                         {
                             String urlToVisit = properUrls.take();
                             if (urlToVisit != null)
@@ -71,7 +71,7 @@ public class NewUrlFilter
 
                         boolean[] existInDataStore = urlDatabase.exists(urlsToVisit);
 
-                        for (int j = 0; j < 200; j++)
+                        for (int j = 0; j < 10; j++)
                         {
                             if (!existInDataStore[j])
                             {
