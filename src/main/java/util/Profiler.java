@@ -25,6 +25,7 @@ public class Profiler
     private static AtomicLong linkedSize = new AtomicLong(0);
     private static AtomicLong kafkaSize = new AtomicLong(0);
     private static AtomicLong allUrlsSize = new AtomicLong(0);
+    private static AtomicLong downloadedSize = new AtomicLong(0);
 
     public static void start() {
         metrics.register(MetricRegistry.name("linked size"),
@@ -35,6 +36,9 @@ public class Profiler
 
         metrics.register(MetricRegistry.name("all urls size"),
                 (Gauge<Long>) () -> allUrlsSize.get());
+
+        metrics.register(MetricRegistry.name("downloaded urls size"),
+                (Gauge<Long>) () -> downloadedSize.get());
 
         ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
                 .convertRatesTo(TimeUnit.SECONDS)
@@ -52,6 +56,11 @@ public class Profiler
     }
     public static void setAllUrlsSize(int size) {
         allUrlsSize.set(size);
+    }
+
+    public static void setDownloadedSize(int size)
+    {
+        downloadedSize.set(size);
     }
 
     /*****************************************************************************/

@@ -98,6 +98,7 @@ public class HtmlCollector
     {
         Pair<String, String> dataPair = new Pair<>(urlHtml, url);
         downloadedData.put(dataPair);
+        Profiler.setDownloadedSize(downloadedData.size());
 
         if (dataPair.getKey() != null)
         {

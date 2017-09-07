@@ -67,7 +67,9 @@ public class ProperUrlFilter {
                         //check content type
                         boolean isGoodContentType = isGoodContentType(urlToVisit);
                         if (!isGoodContentType)
+                        {
                             continue;
+                        }
 
                         //finish
                         Profiler.politeFound();
