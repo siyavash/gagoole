@@ -6,6 +6,6 @@ public class Gagoole {
 
         Crawler crawler = new Crawler();
         crawler.start();
-    }
 
+    }
 }
