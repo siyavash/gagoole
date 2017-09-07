@@ -21,6 +21,7 @@ public class Profiler
     private static final Meter puts = metrics.meter("Put done");
     private static final Meter organized = metrics.meter("Organized");
     private static final Meter polite = metrics.meter("Polite links");
+    private static final Meter failedOrganize = metrics.meter("Failed to organize");
 
     private static AtomicLong linkedSize = new AtomicLong(0);
     private static AtomicLong kafkaSize = new AtomicLong(0);
@@ -88,6 +89,10 @@ public class Profiler
     public static void organizeDone()
     {
         organized.mark();
+    }
+
+    public static void organizeFail() {
+        failedOrganize.mark();
     }
 
     public static void downloadFailed()

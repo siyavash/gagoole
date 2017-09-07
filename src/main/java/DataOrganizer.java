@@ -68,17 +68,20 @@ public class DataOrganizer
                         boolean isGoodContent = isGoodContent(link);
                         if (!isGoodContent)
                         {
+                            Profiler.organizeFail();
                             continue;
                         }
 
                         if (text == null)
                         {
+                            Profiler.organizeFail();
                             continue;
                         }
 
 
                         if (!isHtml(text))
                         {
+                            Profiler.organizeFail();
                             continue;
                         }
 
@@ -86,6 +89,7 @@ public class DataOrganizer
 
                         if (!isEnglish(dataDocument))
                         {
+                            Profiler.organizeFail();
                             continue;
                         }
 
