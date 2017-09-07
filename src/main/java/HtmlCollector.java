@@ -50,7 +50,7 @@ public class HtmlCollector
         client = new OkHttpClient();
         client.setReadTimeout(1500, TimeUnit.MILLISECONDS);
         client.setConnectTimeout(1500, TimeUnit.MILLISECONDS);
-        client.setFollowRedirects(false);
+        //client.setFollowRedirects(false);                     //it should be removed
         client.setFollowSslRedirects(false);
         client.setRetryOnConnectionFailure(false);
     }
