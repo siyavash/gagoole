@@ -90,7 +90,9 @@ public class ProperUrlFilter {
     }
 
     private boolean checkIfPolite(String urlToVisit) {
-        return !cache.checkIfExist(getDomain(urlToVisit));
+        int index = urlToVisit.indexOf("/", 8);
+        if (index == -1) index = urlToVisit.length();
+        return !cache.checkIfExist(urlToVisit.substring(0, index));
     }
 
     private String getDomain(String stringUrl) {
