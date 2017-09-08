@@ -75,17 +75,19 @@ public class NewUrlFilter
                         {
                             if (!existInDataStore[j])
                             {
-                                Profiler.existChecked();
+                                Profiler.falseExistence();
                                 newUrls.put(urlsToVisit.get(j));
+                            } else
+                            {
+                                Profiler.exist();
                             }
                         }
 
                     } catch (InterruptedException ignored)
                     {
-
+                        //TODO kill thread
                     } catch (IOException e)
                     {
-                        Profiler.existCheckFail();
                     }
 
 

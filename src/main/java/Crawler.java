@@ -48,7 +48,7 @@ class Crawler
         } else if (useKafka)
         {
             queue.startThread();
-            Profiler.setKafkaSize(queue.size());
+//            Profiler.setKafkaSize(queue.size());
         }
     }
 

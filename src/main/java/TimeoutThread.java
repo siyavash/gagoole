@@ -16,7 +16,7 @@ public class TimeoutThread extends Thread
         long timeDifference = 0;
         while(true) {
             try {
-                Profiler.setLinkedSize(linkedBlockingQueue.size());
+//                Profiler.setLinkedSize(linkedBlockingQueue.size());
                 callPair = linkedBlockingQueue.take();
                 if (callPair != null) {
                     call = callPair.getKey();

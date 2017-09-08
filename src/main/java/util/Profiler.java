@@ -14,27 +14,20 @@ public class Profiler
 {
     private static Logger logger = Logger.getLogger(Class.class.getName());
     private static final MetricRegistry metrics = new MetricRegistry();
-    private static final Meter existChecks = metrics.meter("Exist checked");
-    private static final Meter existCheckFails = metrics.meter("Exist check failed");
+    private static final Meter notExist = metrics.meter("Did not exist");
+    private static final Meter existNum = metrics.meter("Existed");
     private static final Meter downloaded = metrics.meter("Download done");
     private static final Meter failedDownload = metrics.meter("Download failed");
     private static final Meter puts = metrics.meter("Put done");
     private static final Meter organized = metrics.meter("Organized");
     private static final Meter polite = metrics.meter("Polite links");
     private static final Meter failedOrganize = metrics.meter("Failed to organize");
+    private static final Meter fetchedUrls = metrics.meter("Fetched urls");
 
-    private static AtomicLong linkedSize = new AtomicLong(0);
-    private static AtomicLong kafkaSize = new AtomicLong(0);
     private static AtomicLong allUrlsSize = new AtomicLong(0);
     private static AtomicLong downloadedSize = new AtomicLong(0);
 
     public static void start() {
-        metrics.register(MetricRegistry.name("linked size"),
-                (Gauge<Long>) () -> linkedSize.get());
-
-        metrics.register(MetricRegistry.name("kafka size"),
-                (Gauge<Long>) () -> kafkaSize.get());
-
         metrics.register(MetricRegistry.name("all urls size"),
                 (Gauge<Long>) () -> allUrlsSize.get());
 
@@ -48,13 +41,6 @@ public class Profiler
         reporter.start(1, TimeUnit.SECONDS);
     }
 
-    public static void setLinkedSize(int size) {
-        linkedSize.set(size);
-    }
-
-    public static void setKafkaSize(int size){
-    	kafkaSize.set(size);
-    }
     public static void setAllUrlsSize(int size) {
         allUrlsSize.set(size);
     }
@@ -66,14 +52,14 @@ public class Profiler
 
     /*****************************************************************************/
 
-    public static void existChecked()
+    public static void falseExistence()
     {
-        existChecks.mark();
+        notExist.mark();
     }
 
-    public static void existCheckFail()
+    public static void exist()
     {
-        existCheckFails.mark();
+        existNum.mark();
     }
 
     public static void downloadDone()
@@ -103,6 +89,11 @@ public class Profiler
     public static void politeFound()
     {
         polite.mark();
+    }
+
+    public static void fetched()
+    {
+        fetchedUrls.mark();
     }
 
     public static void error(String message)
