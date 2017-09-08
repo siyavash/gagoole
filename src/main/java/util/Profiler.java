@@ -23,7 +23,6 @@ public class Profiler
     private static final Meter polite = metrics.meter("Polite links");
     private static final Meter failedOrganize = metrics.meter("Failed to organize");
     private static final Meter fetchedUrls = metrics.meter("Fetched urls");
-    private static final Meter notPolite = metrics.meter("not polite");
 
     private static AtomicLong allUrlsSize = new AtomicLong(0);
     private static AtomicLong downloadedSize = new AtomicLong(0);
@@ -107,7 +106,4 @@ public class Profiler
         logger.fatal(message);
     }
 
-    public static void notPolite() {
-        notPolite.mark();
-    }
 }

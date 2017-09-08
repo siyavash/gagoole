@@ -66,17 +66,16 @@ public class ProperUrlFilter {
                         boolean isPolite = checkIfPolite(urlToVisit);
                         if (!isPolite) {
                             allUrlsQueue.push(urlToVisit);
-                            Profiler.notPolite();
                             continue;
                         }
 
-                        Profiler.politeFound();
                         //check content type
                         boolean isGoodContentType = isGoodContentType(urlToVisit);
                         if (!isGoodContentType)
                         {
                             continue;
                         }
+                        Profiler.politeFound();
 
                         //finish
                         properUrls.put(urlToVisit);

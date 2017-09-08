@@ -107,7 +107,7 @@ class Crawler
         useKafka = prop.getProperty("use-kafka", "false").equals("true");
         useHbase = prop.getProperty("use-hbase", "false").equals("true");
         bootstrapServer = prop.getProperty("bootstrap-server", "master:9092, slave:9092");
-        topicName = prop.getProperty("topic-name", "newtopic");
+        topicName = prop.getProperty("topic-name", "shahrivar17th");
         zookeeperClientPort = prop.getProperty("zookeeper-client-port", "2181");
         zookeeperQuorum = prop.getProperty("zookeeper-quorum", "master,slave");
     }
@@ -123,7 +123,7 @@ class Crawler
             String line;
             while ((line = bufferedReader.readLine()) != null)
             {
-                seedUrls.add("http://www." + line);
+                seedUrls.add("http://" + line);
             }
             fileReader.close();
             return seedUrls;
