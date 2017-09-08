@@ -60,6 +60,7 @@ public class ProperUrlFilter {
 
                         if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
                         {
+                            Profiler.nullFetched();
                             continue;
                         }
                         //check politeness
