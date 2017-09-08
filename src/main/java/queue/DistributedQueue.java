@@ -12,7 +12,6 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class DistributedQueue extends Thread implements URLQueue {

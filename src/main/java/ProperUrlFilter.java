@@ -1,9 +1,12 @@
+import com.google.common.net.InternetDomainName;
 import queue.URLQueue;
 import util.Profiler;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -87,10 +90,21 @@ public class ProperUrlFilter {
     }
 
     private boolean checkIfPolite(String urlToVisit) {
-        int index = urlToVisit.indexOf("/", 8);
-        if (index == -1) index = urlToVisit.length();
-        return !cache.checkIfExist(urlToVisit.substring(0, index));
+        return !cache.checkIfExist(getDomain(urlToVisit));
     }
+
+    private String getDomain(String stringUrl) {
+        try {
+            if (!stringUrl.startsWith("http")) { stringUrl = "http://" + stringUrl; }
+            URL url = new URL(stringUrl);
+            String hostName = url.getHost();
+            return InternetDomainName.from(hostName).topPrivateDomain().toString();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 
     private boolean isGoodContentType(String url) {
         url = url.toLowerCase();
