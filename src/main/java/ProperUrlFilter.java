@@ -60,16 +60,17 @@ public class ProperUrlFilter {
 
                         if (urlToVisit == null || urlToVisit.startsWith("ftp") || urlToVisit.startsWith("mailto"))
                         {
-                            Profiler.nullFetched();
                             continue;
                         }
                         //check politeness
                         boolean isPolite = checkIfPolite(urlToVisit);
                         if (!isPolite) {
                             allUrlsQueue.push(urlToVisit);
+                            Profiler.notPolite();
                             continue;
                         }
 
+                        Profiler.politeFound();
                         //check content type
                         boolean isGoodContentType = isGoodContentType(urlToVisit);
                         if (!isGoodContentType)
@@ -78,7 +79,6 @@ public class ProperUrlFilter {
                         }
 
                         //finish
-                        Profiler.politeFound();
                         properUrls.put(urlToVisit);
 
                     } catch (InterruptedException ignored)
