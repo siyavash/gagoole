@@ -24,7 +24,7 @@ public class HtmlCollector
     private ArrayBlockingQueue<Pair<String, String>> downloadedData;
 //    private OkHttpClient client;
     private CloseableHttpAsyncClient client;
-    private Semaphore semaphore = new Semaphore(1000);
+    private Semaphore semaphore = new Semaphore(2000);
     private final int THREAD_NUMBER;
 
 
@@ -53,11 +53,11 @@ public class HtmlCollector
 
     private void createAndConfigClient()
     {
-        RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(5000).setConnectTimeout(5000)
-                .setCircularRedirectsAllowed(false).setSocketTimeout(1700).setContentCompressionEnabled(false)
+        RequestConfig requestConfig = RequestConfig.custom()
                 .build();
 
         client = HttpAsyncClientBuilder.create().setDefaultRequestConfig(requestConfig).build(); //TODO check other configs
+        client.start();
 //        client = new OkHttpClient();
 //        client.setReadTimeout(5000, TimeUnit.MILLISECONDS);
 //        client.setConnectTimeout(5000, TimeUnit.MILLISECONDS);
@@ -150,17 +150,19 @@ public class HtmlCollector
             @Override
             public void failed(Exception ex)
             {
+                semaphore.release();
                 Profiler.downloadFailed();
             }
 
             @Override
             public void cancelled()
             {
+                semaphore.release();
                 Profiler.downloadCanceled();
             }
         });
         semaphore.acquire();
-        timeoutThread.addResponse(futureResponse, System.currentTimeMillis());
+        timeoutThread.addResponse(get, System.currentTimeMillis());
 
 //        Request request = new Request.Builder().url(url).build();
 //        Response response = null;

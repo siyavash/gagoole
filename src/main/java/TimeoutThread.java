@@ -1,6 +1,7 @@
 import com.squareup.okhttp.Call;
 import javafx.util.Pair;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import util.Profiler;
 
 import java.util.concurrent.Future;
@@ -9,7 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class TimeoutThread extends Thread
 {
 //    private LinkedBlockingQueue<Pair<Call, Long>> linkedBlockingQueue = new LinkedBlockingQueue<>();
-    private LinkedBlockingQueue<Pair<Future<HttpResponse>, Long>> linkedBlockingQueue = new LinkedBlockingQueue<>();
+    private LinkedBlockingQueue<Pair<HttpGet, Long>> linkedBlockingQueue = new LinkedBlockingQueue<>();
 
     @Override
     public void run()
@@ -36,8 +37,8 @@ public class TimeoutThread extends Thread
 //
 //            }
 //        }
-        Pair<Future<HttpResponse>, Long> futurePair;
-        Future<HttpResponse> futureResponse = null;
+        Pair<HttpGet, Long> futurePair;
+        HttpGet get = null;
         long timeDifference = 0;
 
         while (!isInterrupted())
@@ -50,7 +51,7 @@ public class TimeoutThread extends Thread
                     continue;
                 }
 
-                futureResponse = futurePair.getKey();
+                get = futurePair.getKey();
                 timeDifference = System.currentTimeMillis() - futurePair.getValue();
 
                 if (timeDifference <= 5000)
@@ -58,23 +59,23 @@ public class TimeoutThread extends Thread
                     Thread.sleep(5000 - timeDifference);
                 }
 
-                if (futureResponse != null && !futureResponse.isCancelled())
+                if (get != null)
                 {
-                    futureResponse.cancel(true);
+                    get.releaseConnection();
                 }
 
             } catch (InterruptedException e)
             {
-                e.printStackTrace();
+                break;
             }
         }
     }
 
-    public void addResponse(Future<HttpResponse> futureResponse, Long time)
+    public void addResponse(HttpGet get, Long time)
     {
         try
         {
-            this.linkedBlockingQueue.put(new Pair<>(futureResponse, time));
+            this.linkedBlockingQueue.put(new Pair<>(get, time));
         } catch (InterruptedException ignored)
         {
 
