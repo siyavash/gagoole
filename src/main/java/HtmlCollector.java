@@ -3,19 +3,40 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import javafx.util.Pair;
-import org.apache.http.HttpResponse;
+import org.apache.http.*;
+import org.apache.http.auth.AuthOption;
+import org.apache.http.auth.AuthScheme;
+import org.apache.http.auth.MalformedChallengeException;
+import org.apache.http.client.AuthenticationStrategy;
+import org.apache.http.client.RedirectStrategy;
+import org.apache.http.client.UserTokenHandler;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.concurrent.FutureCallback;
+import org.apache.http.config.ConnectionConfig;
+import org.apache.http.conn.ConnectionKeepAliveStrategy;
+import org.apache.http.conn.routing.HttpRoute;
+import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.apache.http.impl.nio.reactor.IOReactorConfig;
+import org.apache.http.nio.NHttpClientEventHandler;
+import org.apache.http.nio.conn.NHttpClientConnectionManager;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.protocol.HttpProcessor;
+import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.util.EntityUtils;
 import util.Profiler;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.*;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Queue;
 import java.util.concurrent.*;
 
 public class HtmlCollector
@@ -55,6 +76,17 @@ public class HtmlCollector
     {
         RequestConfig requestConfig = RequestConfig.custom()
                 .build();
+
+        ConnectionReuseStrategy connectionReuseStrategy = (response, context) -> false;
+
+        ConnectionConfig connectionConfig = ConnectionConfig.custom().setBufferSize(16 * 1024).build();
+
+        IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setConnectTimeout(5000).setIoThreadCount(10).setSoKeepAlive(false).setSoReuseAddress(false)
+                .setSoTimeout(1700).build();
+
+        HttpAsyncClientBuilder.create().disableAuthCaching().disableConnectionState().disableCookieManagement()
+                .setConnectionReuseStrategy(connectionReuseStrategy).setDefaultConnectionConfig(connectionConfig)
+                .setDefaultIOReactorConfig(ioReactorConfig).setMaxConnPerRoute(10).build();
 
         client = HttpAsyncClientBuilder.create().setDefaultRequestConfig(requestConfig).build(); //TODO check other configs
         client.start();
@@ -97,7 +129,13 @@ public class HtmlCollector
 
                     } catch (InterruptedException ignored)
                     {
-
+                        break;
+                    } catch (URISyntaxException e)
+                    {
+                        Profiler.error("Wrong URI syntax");
+                    } catch (MalformedURLException e)
+                    {
+                        Profiler.error("Error in creating URL");
                     }
                 }
             });
@@ -119,9 +157,9 @@ public class HtmlCollector
 
     }
 
-    private void getPureHtmlFromLink(String url, TimeoutThread timeoutThread) throws InterruptedException
+    private void getPureHtmlFromLink(String url, TimeoutThread timeoutThread) throws InterruptedException, MalformedURLException, URISyntaxException
     {
-        HttpGet get = new HttpGet(url);
+        HttpGet get = new HttpGet(new URL(url).toURI());
         Future<HttpResponse> futureResponse = client.execute(get, new FutureCallback<HttpResponse>()
         {
             @Override
