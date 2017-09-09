@@ -74,21 +74,21 @@ public class HtmlCollector
 
     private void createAndConfigClient()
     {
-        RequestConfig requestConfig = RequestConfig.custom()
-                .build();
+//        RequestConfig requestConfig = RequestConfig.custom()
+//                .build();
 
         ConnectionReuseStrategy connectionReuseStrategy = (response, context) -> false;
 
-        ConnectionConfig connectionConfig = ConnectionConfig.custom().setBufferSize(16 * 1024).build();
+        ConnectionConfig connectionConfig = ConnectionConfig.custom().setBufferSize(4 * 1024).build();
 
-        IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setConnectTimeout(5000).setIoThreadCount(10).setSoKeepAlive(false).setSoReuseAddress(false)
+        IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setConnectTimeout(5000).setIoThreadCount(20).setSoKeepAlive(false).setSoReuseAddress(false)
                 .setSoTimeout(1700).build();
 
-        HttpAsyncClientBuilder.create().disableAuthCaching().disableConnectionState().disableCookieManagement()
+        client = HttpAsyncClientBuilder.create().disableAuthCaching().disableConnectionState().disableCookieManagement()
                 .setConnectionReuseStrategy(connectionReuseStrategy).setDefaultConnectionConfig(connectionConfig)
-                .setDefaultIOReactorConfig(ioReactorConfig).setMaxConnPerRoute(10).build();
+                .setDefaultIOReactorConfig(ioReactorConfig).setMaxConnPerRoute(20).build();
 
-        client = HttpAsyncClientBuilder.create().setDefaultRequestConfig(requestConfig).build(); //TODO check other configs
+//        client = HttpAsyncClientBuilder.create().setDefaultRequestConfig(requestConfig).build(); //TODO check other configs
         client.start();
 //        client = new OkHttpClient();
 //        client.setReadTimeout(5000, TimeUnit.MILLISECONDS);
