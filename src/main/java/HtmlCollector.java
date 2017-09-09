@@ -22,10 +22,12 @@ import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpClientEventHandler;
+import org.apache.http.nio.client.HttpPipeliningClient;
 import org.apache.http.nio.conn.NHttpClientConnectionManager;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOReactorException;
@@ -79,11 +81,12 @@ public class HtmlCollector
 
     private void createAndConfigClient()
     {
-//        RequestConfig requestConfig = RequestConfig.custom()
-//                .build();
+        RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(15000).setConnectTimeout(20000)
+                .setSocketTimeout(15000)
+                .build();
         ConnectionReuseStrategy connectionReuseStrategy = (response, context) -> false;
 
-        ConnectionConfig connectionConfig = ConnectionConfig.custom().setBufferSize(8 * 1024).build();
+        ConnectionConfig connectionConfig = ConnectionConfig.custom().setBufferSize(4 * 1024).build();
         ConnectingIOReactor connectingIOReactor = null;
         try
         {
@@ -94,15 +97,18 @@ public class HtmlCollector
         }
         PoolingNHttpClientConnectionManager poolingNHttpClientConnectionManager = new PoolingNHttpClientConnectionManager(connectingIOReactor);
         poolingNHttpClientConnectionManager.setDefaultConnectionConfig(connectionConfig);
-        poolingNHttpClientConnectionManager.setDefaultMaxPerRoute(50);
-        poolingNHttpClientConnectionManager.setMaxTotal(50);
+        poolingNHttpClientConnectionManager.setDefaultMaxPerRoute(1000);
+        poolingNHttpClientConnectionManager.setMaxTotal(1000);
 
-        IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setConnectTimeout(10000).setIoThreadCount(20).setSoKeepAlive(false).setSoReuseAddress(false)
-                .setSoTimeout(10000).build();
+        IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setConnectTimeout(20000).setIoThreadCount(2000).setSoKeepAlive(false).setSoReuseAddress(false)
+                .setSoTimeout(20000).build();
 
         client = HttpAsyncClientBuilder.create().disableAuthCaching().disableConnectionState().disableCookieManagement()
                 .setConnectionReuseStrategy(connectionReuseStrategy).setDefaultConnectionConfig(connectionConfig)
-                .setDefaultIOReactorConfig(ioReactorConfig).setMaxConnPerRoute(20).setConnectionManager(poolingNHttpClientConnectionManager).build();
+                .setDefaultIOReactorConfig(ioReactorConfig).setMaxConnPerRoute(2000).setMaxConnTotal(2000).setDefaultRequestConfig(requestConfig)
+                .setConnectionManager(poolingNHttpClientConnectionManager).build();
+
+
 
 //        client = HttpAsyncClientBuilder.create().setDefaultRequestConfig(requestConfig).build(); //TODO check other configs
         client.start();
