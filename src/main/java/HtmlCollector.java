@@ -3,22 +3,28 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import javafx.util.Pair;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.concurrent.FutureCallback;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.apache.http.util.EntityUtils;
 import util.Profiler;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class HtmlCollector
 {
     private ArrayBlockingQueue<String> newUrls;
     private ArrayBlockingQueue<Pair<String, String>> downloadedData;
-    private OkHttpClient client;
+//    private OkHttpClient client;
+    private CloseableHttpAsyncClient client;
+    private Semaphore semaphore = new Semaphore(1000);
     private final int THREAD_NUMBER;
 
 
@@ -47,12 +53,17 @@ public class HtmlCollector
 
     private void createAndConfigClient()
     {
-        client = new OkHttpClient();
-        client.setReadTimeout(5000, TimeUnit.MILLISECONDS);
-        client.setConnectTimeout(5000, TimeUnit.MILLISECONDS);
+        RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(5000).setConnectTimeout(5000)
+                .setCircularRedirectsAllowed(false).setSocketTimeout(1700).setContentCompressionEnabled(false)
+                .build();
+
+        client = HttpAsyncClientBuilder.create().setDefaultRequestConfig(requestConfig).build(); //TODO check other configs
+//        client = new OkHttpClient();
+//        client.setReadTimeout(5000, TimeUnit.MILLISECONDS);
+//        client.setConnectTimeout(5000, TimeUnit.MILLISECONDS);
         //client.setFollowRedirects(false);                     //it should be removed
         //client.setFollowSslRedirects(false);
-        client.setRetryOnConnectionFailure(false);
+//        client.setRetryOnConnectionFailure(false);
     }
 
     public void startDownloadThreads()
@@ -76,12 +87,13 @@ public class HtmlCollector
                         String htmlBody;
                         String url = newUrls.take();
 
-                        htmlBody = getPureHtmlFromLink(url, timeoutThread);
-
-                        if (htmlBody != null)
-                        {
-                            putUrlBody(htmlBody, url);
-                        }
+//                        htmlBody = getPureHtmlFromLink(url, timeoutThread);
+//
+//                        if (htmlBody != null)
+//                        {
+//                            putUrlBody(htmlBody, url);
+//                        }
+                        getPureHtmlFromLink(url, timeoutThread);
 
                     } catch (InterruptedException ignored)
                     {
@@ -107,42 +119,83 @@ public class HtmlCollector
 
     }
 
-    private String getPureHtmlFromLink(String url, TimeoutThread timeoutThread)
+    private void getPureHtmlFromLink(String url, TimeoutThread timeoutThread) throws InterruptedException
     {
-        Request request = new Request.Builder().url(url).build();
-        Response response = null;
-        String body = null;
-        try
+        HttpGet get = new HttpGet(url);
+        Future<HttpResponse> futureResponse = client.execute(get, new FutureCallback<HttpResponse>()
         {
-            Call call = client.newCall(request);
-            timeoutThread.addCall(call, System.currentTimeMillis());
-            response = call.execute();
-
-            if (!response.isSuccessful())
-            {
-                throw new IOException();
-            }
-
-            body = response.body().string();
-            response.body().close();
-        } catch (IOException e)
-        {
-            Profiler.downloadFailed();
-        } finally
-        {
-            if (response != null && response.body() != null)
+            @Override
+            public void completed(HttpResponse result)
             {
                 try
                 {
-                    response.body().close();
+                    String body = EntityUtils.toString(result.getEntity());
+                    if (body == null)
+                    {
+                        Profiler.error("Null body");
+                        return;
+                    }
+                    semaphore.release();
+                    get.releaseConnection();
+                    putUrlBody(body, url);
+                } catch (InterruptedException ignored)
+                {
+
                 } catch (IOException e)
                 {
-                    e.printStackTrace();
+                    Profiler.error("Error while reading page body");
                 }
             }
-        }
 
-        return body;
+            @Override
+            public void failed(Exception ex)
+            {
+                Profiler.downloadFailed();
+            }
+
+            @Override
+            public void cancelled()
+            {
+                Profiler.downloadCanceled();
+            }
+        });
+        semaphore.acquire();
+        timeoutThread.addResponse(futureResponse, System.currentTimeMillis());
+
+//        Request request = new Request.Builder().url(url).build();
+//        Response response = null;
+//        String body = null;
+//        try
+//        {
+//            Call call = client.newCall(request);
+//            timeoutThread.addCall(call, System.currentTimeMillis());
+//            response = call.execute();
+//
+//            if (!response.isSuccessful())
+//            {
+//                throw new IOException();
+//            }
+//
+//            body = response.body().string();
+//            response.body().close();
+//        } catch (IOException e)
+//        {
+//            Profiler.downloadFailed();
+//        } finally
+//        {
+//            if (response != null && response.body() != null)
+//            {
+//                try
+//                {
+//                    response.body().close();
+//                } catch (IOException e)
+//                {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//
+//        return body;
     }
 
 }

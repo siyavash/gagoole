@@ -23,6 +23,7 @@ public class Profiler
     private static final Meter polite = metrics.meter("Polite links");
     private static final Meter failedOrganize = metrics.meter("Failed to organize");
     private static final Meter fetchedUrls = metrics.meter("Fetched urls");
+    private static final Meter canceledDownload = metrics.meter("Download canceled");
 
     private static AtomicLong allUrlsSize = new AtomicLong(0);
     private static AtomicLong downloadedSize = new AtomicLong(0);
@@ -94,6 +95,11 @@ public class Profiler
     public static void fetched()
     {
         fetchedUrls.mark();
+    }
+
+    public static void downloadCanceled()
+    {
+        canceledDownload.mark();
     }
 
     public static void error(String message)
