@@ -17,9 +17,13 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.conn.routing.HttpRoutePlanner;
+import org.apache.http.conn.ssl.BrowserCompatHostnameVerifier;
+import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
@@ -29,14 +33,19 @@ import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpClientEventHandler;
 import org.apache.http.nio.client.HttpPipeliningClient;
 import org.apache.http.nio.conn.NHttpClientConnectionManager;
+import org.apache.http.nio.conn.NoopIOSessionStrategy;
+import org.apache.http.nio.conn.SchemeIOSessionStrategy;
+import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
+import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.EntityUtils;
 import util.Profiler;
 
+import javax.net.ssl.SSLContext;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,9 +59,9 @@ public class HtmlCollector
 {
     private ArrayBlockingQueue<String> newUrls;
     private ArrayBlockingQueue<Pair<String, String>> downloadedData;
-//    private OkHttpClient client;
-    private CloseableHttpAsyncClient client;
-    private Semaphore semaphore = new Semaphore(2000);
+    //    private OkHttpClient client;
+//    private CloseableHttpAsyncClient client;
+//    private Semaphore semaphore = new Semaphore(2000);
     private final int THREAD_NUMBER;
 
 
@@ -61,7 +70,7 @@ public class HtmlCollector
         this.downloadedData = downloadedData;
         this.newUrls = newUrls;
         THREAD_NUMBER = readProperty();
-        createAndConfigClient();
+//        createAndConfigClient();
     }
 
     private int readProperty()
@@ -79,10 +88,10 @@ public class HtmlCollector
         return Integer.parseInt(prop.getProperty("download-html-threads-number", "200"));
     }
 
-    private void createAndConfigClient()
+    private CloseableHttpAsyncClient createAndConfigClient()
     {
-        RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(15000).setConnectTimeout(20000)
-                .setSocketTimeout(15000)
+        RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(10000).setConnectTimeout(10000)
+                .setSocketTimeout(10000)
                 .build();
         ConnectionReuseStrategy connectionReuseStrategy = (response, context) -> false;
 
@@ -100,18 +109,42 @@ public class HtmlCollector
         poolingNHttpClientConnectionManager.setDefaultMaxPerRoute(1000);
         poolingNHttpClientConnectionManager.setMaxTotal(1000);
 
-        IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setConnectTimeout(20000).setIoThreadCount(2000).setSoKeepAlive(false).setSoReuseAddress(false)
-                .setSoTimeout(20000).build();
+        IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setConnectTimeout(10000).setIoThreadCount(50).setSoKeepAlive(false).setSoReuseAddress(false)
+                .setSoTimeout(10000).build();
 
-        client = HttpAsyncClientBuilder.create().disableAuthCaching().disableConnectionState().disableCookieManagement()
+        CloseableHttpAsyncClient client = HttpAsyncClientBuilder.create().disableAuthCaching().disableConnectionState().disableCookieManagement()
                 .setConnectionReuseStrategy(connectionReuseStrategy).setDefaultConnectionConfig(connectionConfig)
                 .setDefaultIOReactorConfig(ioReactorConfig).setMaxConnPerRoute(2000).setMaxConnTotal(2000).setDefaultRequestConfig(requestConfig)
                 .setConnectionManager(poolingNHttpClientConnectionManager).build();
 
+//        try
+//        {
+//            IOReactorConfig ioReactorConfig = IOReactorConfig.custom()
+//                    .setIoThreadCount(Runtime.getRuntime().availableProcessors())
+//                    .setConnectTimeout(30_000)
+//                    .setSoTimeout(30_000)
+//                    .build();
+//
+//            ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor(ioReactorConfig);
+//
+//
+////            Registry<SchemeIOSessionStrategy> sessionStrategyRegistry = RegistryBuilder.<SchemeIOSessionStrategy>create()
+////                    .register("http", NoopIOSessionStrategy.INSTANCE)
+////                    .register("https", )
+////                    .build();
+//
+//        } catch (Exception e)
+//        {
+//
+//        }
 
+
+        return client;
 
 //        client = HttpAsyncClientBuilder.create().setDefaultRequestConfig(requestConfig).build(); //TODO check other configs
-        client.start();
+
+//        client.start();
+
 //        client = new OkHttpClient();
 //        client.setReadTimeout(5000, TimeUnit.MILLISECONDS);
 //        client.setConnectTimeout(5000, TimeUnit.MILLISECONDS);
@@ -134,6 +167,8 @@ public class HtmlCollector
             downloadPool.submit((Runnable) () -> {
                 TimeoutThread timeoutThread = new TimeoutThread();
                 timeoutThread.start();
+                CloseableHttpAsyncClient client = createAndConfigClient();
+                Semaphore semaphore = new Semaphore(2);
                 while (true)
                 {
                     try
@@ -147,7 +182,7 @@ public class HtmlCollector
 //                        {
 //                            putUrlBody(htmlBody, url);
 //                        }
-                        getPureHtmlFromLink(url, timeoutThread);
+                        getPureHtmlFromLink(url, timeoutThread, client, semaphore);
 
                     } catch (InterruptedException ignored)
                     {
@@ -179,7 +214,7 @@ public class HtmlCollector
 
     }
 
-    private void getPureHtmlFromLink(String url, TimeoutThread timeoutThread) throws InterruptedException, MalformedURLException, URISyntaxException
+    private void getPureHtmlFromLink(String url, TimeoutThread timeoutThread, CloseableHttpAsyncClient client, Semaphore semaphore) throws InterruptedException, MalformedURLException, URISyntaxException
     {
         HttpGet get = new HttpGet(new URL(url).toURI());
         Future<HttpResponse> futureResponse = client.execute(get, new FutureCallback<HttpResponse>()
@@ -196,7 +231,7 @@ public class HtmlCollector
                         return;
                     }
                     semaphore.release();
-                    get.releaseConnection();
+//                    get.releaseConnection();
                     putUrlBody(body, url);
                 } catch (InterruptedException ignored)
                 {

@@ -54,9 +54,9 @@ public class TimeoutThread extends Thread
                 get = futurePair.getKey();
                 timeDifference = System.currentTimeMillis() - futurePair.getValue();
 
-                if (timeDifference <= 20000)
+                if (timeDifference <= 10000)
                 {
-                    Thread.sleep(20000 - timeDifference);
+                    Thread.sleep(10000 - timeDifference);
                 }
 
                 if (get != null)
