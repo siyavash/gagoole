@@ -31,6 +31,7 @@ import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpClientEventHandler;
+import org.apache.http.nio.client.HttpAsyncClient;
 import org.apache.http.nio.client.HttpPipeliningClient;
 import org.apache.http.nio.conn.NHttpClientConnectionManager;
 import org.apache.http.nio.conn.NoopIOSessionStrategy;
@@ -50,6 +51,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Queue;
@@ -90,32 +92,32 @@ public class HtmlCollector
 
     private CloseableHttpAsyncClient createAndConfigClient()
     {
-        RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(10000).setConnectTimeout(10000)
-                .setSocketTimeout(10000)
-                .build();
-        ConnectionReuseStrategy connectionReuseStrategy = (response, context) -> false;
-
-        ConnectionConfig connectionConfig = ConnectionConfig.custom().setBufferSize(4 * 1024).build();
-        ConnectingIOReactor connectingIOReactor = null;
-        try
-        {
-            connectingIOReactor = new DefaultConnectingIOReactor();
-        } catch (IOReactorException e)
-        {
-            e.printStackTrace();
-        }
-        PoolingNHttpClientConnectionManager poolingNHttpClientConnectionManager = new PoolingNHttpClientConnectionManager(connectingIOReactor);
-        poolingNHttpClientConnectionManager.setDefaultConnectionConfig(connectionConfig);
-        poolingNHttpClientConnectionManager.setDefaultMaxPerRoute(1000);
-        poolingNHttpClientConnectionManager.setMaxTotal(1000);
-
-        IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setConnectTimeout(10000).setIoThreadCount(50).setSoKeepAlive(false).setSoReuseAddress(false)
-                .setSoTimeout(10000).build();
-
-        CloseableHttpAsyncClient client = HttpAsyncClientBuilder.create().disableAuthCaching().disableConnectionState().disableCookieManagement()
-                .setConnectionReuseStrategy(connectionReuseStrategy).setDefaultConnectionConfig(connectionConfig)
-                .setDefaultIOReactorConfig(ioReactorConfig).setMaxConnPerRoute(2000).setMaxConnTotal(2000).setDefaultRequestConfig(requestConfig)
-                .setConnectionManager(poolingNHttpClientConnectionManager).build();
+//        RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(10000).setConnectTimeout(10000)
+//                .setSocketTimeout(10000)
+//                .build();
+//        ConnectionReuseStrategy connectionReuseStrategy = (response, context) -> false;
+//
+//        ConnectionConfig connectionConfig = ConnectionConfig.custom().setBufferSize(4 * 1024).build();
+//        ConnectingIOReactor connectingIOReactor = null;
+//        try
+//        {
+//            connectingIOReactor = new DefaultConnectingIOReactor();
+//        } catch (IOReactorException e)
+//        {
+//            e.printStackTrace();
+//        }
+//        PoolingNHttpClientConnectionManager poolingNHttpClientConnectionManager = new PoolingNHttpClientConnectionManager(connectingIOReactor);
+//        poolingNHttpClientConnectionManager.setDefaultConnectionConfig(connectionConfig);
+//        poolingNHttpClientConnectionManager.setDefaultMaxPerRoute(1000);
+//        poolingNHttpClientConnectionManager.setMaxTotal(1000);
+//
+//        IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setConnectTimeout(10000).setIoThreadCount(50).setSoKeepAlive(false).setSoReuseAddress(false)
+//                .setSoTimeout(10000).build();
+//
+//        CloseableHttpAsyncClient client = HttpAsyncClientBuilder.create().disableAuthCaching().disableConnectionState().disableCookieManagement()
+//                .setConnectionReuseStrategy(connectionReuseStrategy).setDefaultConnectionConfig(connectionConfig)
+//                .setDefaultIOReactorConfig(ioReactorConfig).setMaxConnPerRoute(2000).setMaxConnTotal(2000).setDefaultRequestConfig(requestConfig)
+//                .setConnectionManager(poolingNHttpClientConnectionManager).build();
 
 //        try
 //        {
@@ -137,9 +139,11 @@ public class HtmlCollector
 //        {
 //
 //        }
-
-
-        return client;
+//        client = HttpAsyncClientBuilder.create().setMaxConnPerRoute(20).setMaxConnTotal(1000).build();
+//
+//
+//        return client;
+        return HttpAsyncClientBuilder.create().setMaxConnTotal(1000).setMaxConnPerRoute(20).build();
 
 //        client = HttpAsyncClientBuilder.create().setDefaultRequestConfig(requestConfig).build(); //TODO check other configs
 
@@ -168,36 +172,72 @@ public class HtmlCollector
                 TimeoutThread timeoutThread = new TimeoutThread();
                 timeoutThread.start();
                 CloseableHttpAsyncClient client = createAndConfigClient();
-                Semaphore semaphore = new Semaphore(2);
+                client.start();
+//                Semaphore semaphore = new Semaphore(2);
                 while (true)
                 {
                     try
                     {
                         String htmlBody;
-                        String url = newUrls.take();
+                        ArrayList<String> urls = new ArrayList<>();
 
-//                        htmlBody = getPureHtmlFromLink(url, timeoutThread);
+                        for (int j = 0; j < 200; j++)
+                        {
+                            urls.add(newUrls.take());
+                        }
+//                        String url = newUrls.take();
 //
+//                        getPureHtmlFromLink(url, timeoutThread);
+
 //                        if (htmlBody != null)
 //                        {
 //                            putUrlBody(htmlBody, url);
 //                        }
-                        getPureHtmlFromLink(url, timeoutThread, client, semaphore);
+//                        getPureHtmlFromLink(url, timeoutThread, client, semaphore);
+                        performRequests(urls, client);
+
 
                     } catch (InterruptedException ignored)
                     {
                         break;
                     } catch (URISyntaxException e)
                     {
+                        Profiler.downloadFailed();
                         Profiler.error("Wrong URI syntax");
                     } catch (MalformedURLException e)
                     {
+                        Profiler.downloadFailed();
                         Profiler.error("Error in creating URL");
+                    } /*catch (ExecutionException | IOException | TimeoutException e)
+                    {
+                        Profiler.downloadFailed();
+                        e.printStackTrace();
+                    }*/ catch (Exception e)
+                    {
+                        Profiler.downloadFailed();
+                        e.printStackTrace();
                     }
                 }
             });
         }
         downloadPool.shutdown();
+    }
+
+    private void performRequests(ArrayList<String> urls, CloseableHttpAsyncClient client) throws IOException, URISyntaxException, InterruptedException, ExecutionException, TimeoutException
+    {
+        ArrayList<Future<HttpResponse>> futures = new ArrayList<>();
+        client.start();
+        for (String url : urls)
+        {
+            HttpGet get = new HttpGet(new URL(url).toURI());
+            futures.add(client.execute(get, null));
+        }
+
+        for (int i = 0; i < futures.size(); i++)
+        {
+            String body = EntityUtils.toString(futures.get(i).get(10, TimeUnit.SECONDS).getEntity());
+            putUrlBody(body, urls.get(i));
+        }
     }
 
 
@@ -214,85 +254,85 @@ public class HtmlCollector
 
     }
 
-    private void getPureHtmlFromLink(String url, TimeoutThread timeoutThread, CloseableHttpAsyncClient client, Semaphore semaphore) throws InterruptedException, MalformedURLException, URISyntaxException
-    {
-        HttpGet get = new HttpGet(new URL(url).toURI());
-        Future<HttpResponse> futureResponse = client.execute(get, new FutureCallback<HttpResponse>()
-        {
-            @Override
-            public void completed(HttpResponse result)
-            {
-                try
-                {
-                    String body = EntityUtils.toString(result.getEntity());
-                    if (body == null)
-                    {
-                        Profiler.error("Null body");
-                        return;
-                    }
-                    semaphore.release();
-//                    get.releaseConnection();
-                    putUrlBody(body, url);
-                } catch (InterruptedException ignored)
-                {
-
-                } catch (IOException e)
-                {
-                    Profiler.error("Error while reading page body");
-                }
-            }
-
-            @Override
-            public void failed(Exception ex)
-            {
-                semaphore.release();
-                Profiler.downloadFailed();
-            }
-
-            @Override
-            public void cancelled()
-            {
-                semaphore.release();
-                Profiler.downloadCanceled();
-            }
-        });
-        semaphore.acquire();
-        timeoutThread.addResponse(get, System.currentTimeMillis());
-
-//        Request request = new Request.Builder().url(url).build();
-//        Response response = null;
-//        String body = null;
-//        try
+//    private void getPureHtmlFromLink(String url, TimeoutThread timeoutThread) throws InterruptedException, MalformedURLException, URISyntaxException
+//    {
+//        HttpGet get = new HttpGet(new URL(url).toURI());
+//        Future<HttpResponse> futureResponse = client.execute(get, new FutureCallback<HttpResponse>()
 //        {
-//            Call call = client.newCall(request);
-//            timeoutThread.addCall(call, System.currentTimeMillis());
-//            response = call.execute();
-//
-//            if (!response.isSuccessful())
-//            {
-//                throw new IOException();
-//            }
-//
-//            body = response.body().string();
-//            response.body().close();
-//        } catch (IOException e)
-//        {
-//            Profiler.downloadFailed();
-//        } finally
-//        {
-//            if (response != null && response.body() != null)
+//            @Override
+//            public void completed(HttpResponse result)
 //            {
 //                try
 //                {
-//                    response.body().close();
+//                    String body = EntityUtils.toString(result.getEntity());
+//                    if (body == null)
+//                    {
+//                        Profiler.error("Null body");
+//                        return;
+//                    }
+//                    semaphore.release();
+////                    get.releaseConnection();
+//                    putUrlBody(body, url);
+//                } catch (InterruptedException ignored)
+//                {
+//
 //                } catch (IOException e)
 //                {
-//                    e.printStackTrace();
+//                    Profiler.error("Error while reading page body");
 //                }
 //            }
-//        }
 //
-//        return body;
-    }
+//            @Override
+//            public void failed(Exception ex)
+//            {
+//                semaphore.release();
+//                Profiler.downloadFailed();
+//            }
+//
+//            @Override
+//            public void cancelled()
+//            {
+//                semaphore.release();
+//                Profiler.downloadCanceled();
+//            }
+//        });
+//        semaphore.acquire();
+//        timeoutThread.addResponse(get, System.currentTimeMillis());
+//
+////        Request request = new Request.Builder().url(url).build();
+////        Response response = null;
+////        String body = null;
+////        try
+////        {
+////            Call call = client.newCall(request);
+////            timeoutThread.addCall(call, System.currentTimeMillis());
+////            response = call.execute();
+////
+////            if (!response.isSuccessful())
+////            {
+////                throw new IOException();
+////            }
+////
+////            body = response.body().string();
+////            response.body().close();
+////        } catch (IOException e)
+////        {
+////            Profiler.downloadFailed();
+////        } finally
+////        {
+////            if (response != null && response.body() != null)
+////            {
+////                try
+////                {
+////                    response.body().close();
+////                } catch (IOException e)
+////                {
+////                    e.printStackTrace();
+////                }
+////            }
+////        }
+////
+////        return body;
+//    }
 
 }
