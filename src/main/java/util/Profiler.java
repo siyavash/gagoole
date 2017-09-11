@@ -53,6 +53,13 @@ public class Profiler
 
     /*****************************************************************************/
 
+    public static void fetched()
+    {
+        fetchedUrls.mark();
+    }
+
+    public static void politeFound() { polite.mark(); }
+
     public static void falseExistence()
     {
         notExist.mark();
@@ -68,9 +75,14 @@ public class Profiler
         downloaded.mark();
     }
 
-    public static void putDone(long numberOfPuts)
+    public static void downloadFailed()
     {
-        puts.mark(numberOfPuts);
+        failedDownload.mark();
+    }
+
+    public static void downloadCanceled()
+    {
+        canceledDownload.mark();
     }
 
     public static void organizeDone()
@@ -82,24 +94,9 @@ public class Profiler
         failedOrganize.mark();
     }
 
-    public static void downloadFailed()
+    public static void putDone(long numberOfPuts)
     {
-        failedDownload.mark();
-    }
-
-    public static void politeFound()
-    {
-        polite.mark();
-    }
-
-    public static void fetched()
-    {
-        fetchedUrls.mark();
-    }
-
-    public static void downloadCanceled()
-    {
-        canceledDownload.mark();
+        puts.mark(numberOfPuts);
     }
 
     public static void error(String message)
