@@ -85,7 +85,7 @@ public class HtmlCollector
                             String htmlBody;
 
                             String url = newUrls.take();
-//
+
                             htmlBody = getPureHtmlFromLink(url, timeoutThread);
 
                             if (htmlBody != null)
