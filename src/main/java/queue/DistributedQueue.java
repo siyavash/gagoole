@@ -15,15 +15,17 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 
-public class DistributedQueue extends Thread implements URLQueue {
+public class DistributedQueue extends Thread implements URLQueue
+{
     private Producer<String, String> producer;
     private String topicName;
     private final ArrayBlockingQueue<String> arrayBlockingQueue = new ArrayBlockingQueue<>(5000);
     private Properties publishProps = new Properties();
     private Properties consumeProps = new Properties();
-	private final String groupId = "Perspolis";
+    private final String groupId = "Perspolis";
 
-    public DistributedQueue(String bootstrapServers, String topicName) {
+    public DistributedQueue(String bootstrapServers, String topicName)
+    {
         this.topicName = topicName;
         //below is for publish
         publishProps.put("bootstrap.servers", bootstrapServers);
@@ -47,48 +49,58 @@ public class DistributedQueue extends Thread implements URLQueue {
         consumeProps.put("auto.offset.reset", "earliest");
     }
 
-    public void startThread() {
+    public void startThread()
+    {
         this.start();
     }
 
-    public String pop() throws InterruptedException{
+    public String pop() throws InterruptedException
+    {
         return arrayBlockingQueue.take();
     }
 
-    public void push(ArrayList<String> arrayURLs) {
+    public void push(ArrayList<String> arrayURLs)
+    {
         for (String URL : arrayURLs)
             push(URL);
     }
 
-    public void push(String URL) {
+    public void push(String URL)
+    {
         ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topicName, URL);
         producer.send(producerRecord);
     }
 
     @Override
-    public int size() {
+    public int size()
+    {
         return arrayBlockingQueue.size();
     }
 
     @Override
-    public void close() {
+    public void close()
+    {
         producer.close();
     }
 
     @Override
-    public void run() {
+    public void run()
+    {
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumeProps);
         consumer.subscribe(Arrays.asList(topicName));
-        while (!isInterrupted()) {
-            ConsumerRecords<String, String> records = consumer.poll(3000);
-            for (ConsumerRecord<String, String> record : records) {
-                try {
+        while (!isInterrupted())
+        {
+            try
+            {
+                ConsumerRecords<String, String> records = consumer.poll(3000);
+                for (ConsumerRecord<String, String> record : records)
+                {
                     arrayBlockingQueue.put(record.value());
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
                 }
+            } catch (InterruptedException e)
+            {
+                break;
             }
-
         }
         consumer.close();
     }
