@@ -55,8 +55,6 @@ public class HtmlCollector
         client = new OkHttpClient();
         client.setReadTimeout(5000, TimeUnit.MILLISECONDS);
         client.setConnectTimeout(5000, TimeUnit.MILLISECONDS);
-//        client.setFollowRedirects(false);                     //it should be removed
-//        client.setFollowSslRedirects(false);
         client.setRetryOnConnectionFailure(false);
     }
 
@@ -131,7 +129,7 @@ public class HtmlCollector
     private void putUrlBody(String urlHtml, String url) throws InterruptedException
     {
         Pair<String, String> dataPair = new Pair<>(urlHtml, url);
-//        downloadedData.put(dataPair);
+        downloadedData.put(dataPair);
         Profiler.setDownloadedSize(downloadedData.size());
 
         if (dataPair.getKey() != null)

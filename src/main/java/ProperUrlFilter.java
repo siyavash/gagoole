@@ -97,18 +97,6 @@ public class ProperUrlFilter {
         return !cache.checkIfExist(urlToVisit.substring(0, index));
     }
 
-    private String getDomain(String stringUrl) {
-        try {
-            if (!stringUrl.startsWith("http")) { stringUrl = "http://" + stringUrl; }
-            URL url = new URL(stringUrl);
-            String hostName = url.getHost();
-            return InternetDomainName.from(hostName).topPrivateDomain().toString();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
 
     private boolean isGoodContentType(String url) {
         url = url.toLowerCase();

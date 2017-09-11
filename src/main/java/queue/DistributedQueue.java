@@ -21,7 +21,7 @@ public class DistributedQueue extends Thread implements URLQueue {
     private final ArrayBlockingQueue<String> arrayBlockingQueue = new ArrayBlockingQueue<>(5000);
     private Properties publishProps = new Properties();
     private Properties consumeProps = new Properties();
-	private final String groupId = "HAHAHA";
+	private final String groupId = UUID.randomUUID().toString();
 
     public DistributedQueue(String bootstrapServers, String topicName) {
         this.topicName = topicName;
@@ -80,7 +80,7 @@ public class DistributedQueue extends Thread implements URLQueue {
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumeProps);
         consumer.subscribe(Arrays.asList(topicName));
         while (!isInterrupted()) {
-            ConsumerRecords<String, String> records = consumer.poll(10000);
+            ConsumerRecords<String, String> records = consumer.poll(3000);
             for (ConsumerRecord<String, String> record : records) {
                 try {
                     arrayBlockingQueue.put(record.value());
