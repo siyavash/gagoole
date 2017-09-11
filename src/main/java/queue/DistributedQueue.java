@@ -84,7 +84,6 @@ public class DistributedQueue extends Thread implements URLQueue {
             for (ConsumerRecord<String, String> record : records) {
                 try {
                     arrayBlockingQueue.put(record.value());
-                    System.out.println(record.value());
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
