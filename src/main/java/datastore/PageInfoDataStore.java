@@ -18,7 +18,8 @@ public class PageInfoDataStore implements DataStore
 {
     private Connection hbaseConnection;
     private static final TableName TABLE_NAME = TableName.valueOf("wb");
-    private static final byte[] COLUMN_FAMILY = Bytes.toBytes("cf");
+    private static final byte[] MAIN_COLUMN_FAMILY = Bytes.toBytes("cf");
+    private static final byte[] SUBLINKS_COLUMN_FAMILY = Bytes.toBytes("sl");
     private ArrayBlockingQueue<Put> waitingPuts = new ArrayBlockingQueue<>(10000);
     private ConcurrentHashMap<String, Object> waitingPutsStorage = new ConcurrentHashMap<>(10000);
     private ConcurrentHashMap<String, Object> waitingPutsMiniStorage = new ConcurrentHashMap<>(100);
@@ -121,14 +122,13 @@ public class PageInfoDataStore implements DataStore
             byte[] urlBytes = Bytes.toBytes(pageInfo.getUrl());
             Put put = new Put(urlBytes);
 
-            addColumnToPut(put, Bytes.toBytes("authorMeta"), pageInfo.getAuthorMeta());
-            addColumnToPut(put, Bytes.toBytes("descriptionMeta"), pageInfo.getDescriptionMeta());
-            addColumnToPut(put, Bytes.toBytes("titleMeta"), pageInfo.getTitleMeta());
-            addColumnToPut(put, Bytes.toBytes("contentTypeMeta"), pageInfo.getContentTypeMeta());
-            addColumnToPut(put, Bytes.toBytes("keyWordsMeta"), pageInfo.getKeyWordsMeta());
-            addColumnToPut(put, Bytes.toBytes("bodyText"), pageInfo.getBodyText());
-            addColumnToPut(put, Bytes.toBytes("title"), pageInfo.getTitle());
-            addColumnToPut(put, Bytes.toBytes("subLinks"), subLinks);
+            addColumnToPut(put, MAIN_COLUMN_FAMILY, Bytes.toBytes("authorMeta"), pageInfo.getAuthorMeta());
+            addColumnToPut(put, MAIN_COLUMN_FAMILY, Bytes.toBytes("descriptionMeta"), pageInfo.getDescriptionMeta());
+            addColumnToPut(put, MAIN_COLUMN_FAMILY, Bytes.toBytes("contentTypeMeta"), pageInfo.getContentTypeMeta());
+            addColumnToPut(put, MAIN_COLUMN_FAMILY, Bytes.toBytes("keyWordsMeta"), pageInfo.getKeyWordsMeta());
+            addColumnToPut(put, MAIN_COLUMN_FAMILY, Bytes.toBytes("bodyText"), pageInfo.getBodyText());
+            addColumnToPut(put, MAIN_COLUMN_FAMILY, Bytes.toBytes("title"), pageInfo.getTitle());
+            addColumnToPut(put, SUBLINKS_COLUMN_FAMILY, Bytes.toBytes("subLinks"), subLinks);
 
             waitingPuts.put(put);
             waitingPutsStorage.put(new String(put.getRow()), new Object());
@@ -138,14 +138,14 @@ public class PageInfoDataStore implements DataStore
         }
     }
 
-    private void addColumnToPut(Put put, byte[] columnName, String value)
+    private void addColumnToPut(Put put, byte[] columnFamily, byte[] columnName, String value)
     {
         if (value == null)
         {
             return;
         }
 
-        put.addColumn(COLUMN_FAMILY, columnName, Bytes.toBytes(value));
+        put.addColumn(columnFamily, columnName, Bytes.toBytes(value));
     }
 
     private String turnSubLinksToString(ArrayList<Pair<String, String>> subLinks)
