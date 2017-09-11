@@ -187,7 +187,7 @@ public class PageInfoDataStore implements DataStore
             while (true)
             {
                 ArrayList<Put> puts = new ArrayList<>();
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < 50; i++)
                 {
                     try
                     {
@@ -213,6 +213,15 @@ public class PageInfoDataStore implements DataStore
                 {
                     logger.error("Failed to put in hbase"); //TODO
                 }
+
+                try(BufferedMutator bufferedMutator = hbaseConnection.getBufferedMutator(TABLE_NAME))
+                {
+                    bufferedMutator.flush();
+                } catch (IOException e)
+                {
+                    logger.error("Error in getting buffered mutator");
+                }
+
             }
         }).start();
     }
