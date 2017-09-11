@@ -131,7 +131,7 @@ public class HtmlCollector
     private void putUrlBody(String urlHtml, String url) throws InterruptedException
     {
         Pair<String, String> dataPair = new Pair<>(urlHtml, url);
-        downloadedData.put(dataPair);
+//        downloadedData.put(dataPair);
         Profiler.setDownloadedSize(downloadedData.size());
 
         if (dataPair.getKey() != null)
