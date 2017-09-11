@@ -18,7 +18,7 @@ public class Profiler
 //    private static final Meter existNum = metrics.meter("Existed");
     private static final Meter downloaded = metrics.meter("Download done");
 //    private static final Meter failedDownload = metrics.meter("Download failed");
-//    private static final Meter puts = metrics.meter("Put done");
+    private static final Meter puts = metrics.meter("Put done");
 //    private static final Meter organized = metrics.meter("Organized");
 //    private static final Meter polite = metrics.meter("Polite links");
 //    private static final Meter failedOrganize = metrics.meter("Failed to organize");
@@ -70,7 +70,7 @@ public class Profiler
 
     public static void putDone(long numberOfPuts)
     {
-//        puts.mark(numberOfPuts);
+        puts.mark(numberOfPuts);
     }
 
     public static void organizeDone()
