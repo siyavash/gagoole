@@ -53,8 +53,8 @@ public class HtmlCollector
     private void createAndConfigClient()
     {
         client = new OkHttpClient();
-        client.setReadTimeout(5000, TimeUnit.MILLISECONDS);
-        client.setConnectTimeout(5000, TimeUnit.MILLISECONDS);
+        client.setReadTimeout(2000, TimeUnit.MILLISECONDS);
+        client.setConnectTimeout(2000, TimeUnit.MILLISECONDS);
 //        client.setFollowRedirects(false);                     //it should be removed
 //        client.setFollowSslRedirects(false);
         client.setRetryOnConnectionFailure(false);
@@ -73,7 +73,7 @@ public class HtmlCollector
         {
             downloadPool.submit(new Runnable()
             {
-                private AtomicInteger downloadCounter = new AtomicInteger(0);
+                private int downloadCounter = 0;
 
                 @Override
                 public void run()
@@ -93,10 +93,14 @@ public class HtmlCollector
                             if (htmlBody != null)
                             {
                                 putUrlBody(htmlBody, url);
-                                if (downloadCounter.incrementAndGet() % 1000 == 0)
+                                if (++downloadCounter % 10 == 0)
                                 {
-                                    Thread.sleep(500);
-                                    downloadCounter.set(0);
+                                    Thread.sleep(5000);
+                                }
+                                if (++downloadCounter % 100 == 0)
+                                {
+                                    Thread.sleep(10000);
+
                                 }
                             }
 
@@ -112,14 +116,10 @@ public class HtmlCollector
                         {
                             Profiler.downloadFailed();
                             Profiler.error("Error in creating URL");
-                        } /*catch (ExecutionException | IOException | TimeoutException e)
-                    {
-                        Profiler.downloadFailed();
-                        e.printStackTrace();
-                    }*/ catch (Exception e)
+                        } catch (Exception e)
                         {
                             Profiler.downloadFailed();
-                            e.printStackTrace();
+                            Profiler.error(e.getMessage());
                         }
                     }
                 }

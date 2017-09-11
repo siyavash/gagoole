@@ -24,8 +24,8 @@ public class TimeoutThread extends Thread
                     call = callPair.getKey();
                     timeDifference = System.currentTimeMillis() - callPair.getValue();
                 }
-                if (timeDifference <= 5000){
-                    Thread.sleep(5000 - timeDifference);
+                if (timeDifference <= 2000){
+                    Thread.sleep(2000 - timeDifference);
                 }
                 if (call != null && !call.isCanceled()) {
                     call.cancel();

@@ -24,10 +24,10 @@ class Crawler
     private String topicName;
     private String zookeeperClientPort;
     private String zookeeperQuorum;
-    private ArrayBlockingQueue<String> properUrls = new ArrayBlockingQueue<>(100000);
-    private ArrayBlockingQueue<String> newUrls = new ArrayBlockingQueue<>(10000);
-    private ArrayBlockingQueue<Pair<String, String>> downloadedData = new ArrayBlockingQueue<>(10000);
-    private ArrayBlockingQueue<PageInfo> organizedData = new ArrayBlockingQueue<>(10000);
+    private ArrayBlockingQueue<String> properUrls = new ArrayBlockingQueue<>(5000);
+    private ArrayBlockingQueue<String> newUrls = new ArrayBlockingQueue<>(500);
+    private ArrayBlockingQueue<Pair<String, String>> downloadedData = new ArrayBlockingQueue<>(400);
+    private ArrayBlockingQueue<PageInfo> organizedData = new ArrayBlockingQueue<>(400);
 
     public Crawler()
     {
