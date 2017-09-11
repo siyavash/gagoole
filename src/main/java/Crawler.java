@@ -28,12 +28,19 @@ class Crawler
     private ArrayBlockingQueue<String> newUrls = new ArrayBlockingQueue<>(500);
     private ArrayBlockingQueue<Pair<String, String>> downloadedData = new ArrayBlockingQueue<>(400);
     private ArrayBlockingQueue<PageInfo> organizedData = new ArrayBlockingQueue<>(400);
+    private ArrayList<CrawlerPart> crawlerParts = new ArrayList<>();
 
     public Crawler()
     {
         loadProperties();
         loadQueue();
         loadDataStore();
+        addCrawlerParts();
+        startURLQueueThread();
+    }
+
+    private void startURLQueueThread()
+    {
         if (initialMode && useKafka)
         {
             ArrayList<String> seeds = loadSeeds();
@@ -48,17 +55,24 @@ class Crawler
         } else if (useKafka)
         {
             queue.startThread();
-//            Profiler.setKafkaSize(queue.size());
         }
+    }
+
+    private void addCrawlerParts()
+    {
+        crawlerParts.add(new ProperUrlFilter(queue, properUrls));
+        crawlerParts.add(new NewUrlFilter(dataStore, properUrls, newUrls));
+        crawlerParts.add(new HtmlCollector(newUrls, downloadedData));
+        crawlerParts.add(new DataOrganizer(downloadedData, organizedData));
+        crawlerParts.add(new DataSender(dataStore, queue, organizedData));
     }
 
     public void start()
     {
-        new ProperUrlFilter(queue, properUrls).startFetchingThreads();
-        new NewUrlFilter(dataStore, properUrls, newUrls).startCheckingThreads();
-        new HtmlCollector(newUrls, downloadedData/*, queue*/).startDownloadThreads();
-        new DataOrganizer(downloadedData, organizedData).startOrganizing();
-        new DataSender(dataStore, queue, organizedData).startSending();
+        for (CrawlerPart crawlerPart : crawlerParts)
+        {
+            crawlerPart.startThreads();
+        }
     }
 
     private void loadQueue()
@@ -135,4 +149,11 @@ class Crawler
         }
     }
 
+    public void close()
+    {
+        for (CrawlerPart crawlerPart : crawlerParts)
+        {
+            crawlerPart.close();
+        }
+    }
 }

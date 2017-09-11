@@ -16,7 +16,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class DataOrganizer
+public class DataOrganizer extends CrawlerPart
 {
     private ArrayBlockingQueue<Pair<String, String>> downloadedData;
     private ArrayBlockingQueue<PageInfo> organizedData;
@@ -43,7 +43,8 @@ public class DataOrganizer
         return Integer.parseInt(prop.getProperty("organizer-thread-number", "8"));
     }
 
-    public void startOrganizing()
+    @Override
+    public void startThreads()
     {
         if (THREAD_NUMBER == 0)
         {
@@ -98,15 +99,16 @@ public class DataOrganizer
 
                         organizedData.put(pageInfo);
 
-                    } catch (InterruptedException ignored)
+                    } catch (InterruptedException e)
                     {
-
+                        break;
                     }
                 }
             });
         }
 
         executorService.shutdown();
+        setExecutorService(executorService);
     }
 
     private boolean isGoodContent(String url) {

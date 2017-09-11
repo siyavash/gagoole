@@ -17,7 +17,7 @@ public class LocalQueue implements URLQueue {
                 try {
                     queue.put(url);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    break;
                 }
         }
     }
@@ -26,8 +26,8 @@ public class LocalQueue implements URLQueue {
         if (queue.size() < 900 * 1000)
             try {
                 queue.put(URL);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            } catch (InterruptedException ignored) {
+
             }
     }
 

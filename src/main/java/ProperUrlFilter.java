@@ -2,6 +2,7 @@ import com.google.common.net.InternetDomainName;
 import queue.URLQueue;
 import util.Profiler;
 
+import java.io.Closeable;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +13,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class ProperUrlFilter {
+public class ProperUrlFilter extends CrawlerPart{
 
     private URLQueue allUrlsQueue;
     private final LruCache cache = new LruCache();
@@ -40,7 +41,9 @@ public class ProperUrlFilter {
         return Integer.parseInt(prop.getProperty("fetch-url-threads-number", "8"));
     }
 
-    public void startFetchingThreads() {
+    @Override
+    public void startThreads()
+    {
         if (THREAD_NUMBER == 0)
         {
             return;
@@ -82,13 +85,15 @@ public class ProperUrlFilter {
 
                     } catch (InterruptedException ignored)
                     {
-
+                        break;
                     }
 
                 }
             });
         }
         fetchingPool.shutdown();
+
+        setExecutorService(fetchingPool);
     }
 
     private boolean checkIfPolite(String urlToVisit) {
@@ -96,7 +101,6 @@ public class ProperUrlFilter {
         if (index == -1) index = urlToVisit.length();
         return !cache.checkIfExist(urlToVisit.substring(0, index));
     }
-
 
     private boolean isGoodContentType(String url) {
         url = url.toLowerCase();

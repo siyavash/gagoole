@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class DataSender
+public class DataSender extends CrawlerPart
 {
     private DataStore dataStore;
     private URLQueue urlQueue;
@@ -45,7 +45,8 @@ public class DataSender
         return Integer.parseInt(prop.getProperty("sender-thread-number", "100"));
     }
 
-    public void startSending()
+    @Override
+    public void startThreads()
     {
         if (THREAD_NUMBER == 0)
         {
@@ -56,7 +57,7 @@ public class DataSender
 
         for (int i = 0; i < THREAD_NUMBER; i++)
         {
-            executorService.submit(() -> {
+            executorService.submit((Runnable) () -> {
                 while (true)
                 {
                     try
@@ -65,14 +66,18 @@ public class DataSender
                         dataStore.put(pageInfo);
                         pushSubLinksToQueue(pageInfo);
                         Profiler.putDone(1);
-                    } catch (InterruptedException ignored)
+                    } catch (InterruptedException e)
                     {
-
+                        break;
+                    } catch (IOException e)
+                    {
+                        Profiler.error("Error in putting pageInfo to hbase");
                     }
                 }
             });
         }
         executorService.shutdown();
+        setExecutorService(executorService);
     }
 
     private void pushSubLinksToQueue(PageInfo pageInfo)
