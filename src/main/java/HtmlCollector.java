@@ -15,6 +15,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class HtmlCollector
 {
@@ -70,44 +71,56 @@ public class HtmlCollector
 
         for (int i = 0; i < THREAD_NUMBER; i++)
         {
-            downloadPool.submit((Runnable) () -> {
-                TimeoutThread timeoutThread = new TimeoutThread();
-                timeoutThread.start();
-                while (true)
+            downloadPool.submit(new Runnable()
+            {
+                private AtomicInteger downloadCounter = new AtomicInteger(0);
+
+                @Override
+                public void run()
                 {
-                    try
+                    TimeoutThread timeoutThread = new TimeoutThread();
+                    timeoutThread.start();
+                    while (true)
                     {
-                        String htmlBody;
-
-                        String url = newUrls.take();
-//
-                        htmlBody = getPureHtmlFromLink(url, timeoutThread);
-
-                        if (htmlBody != null)
+                        try
                         {
-                            putUrlBody(htmlBody, url);
-                        }
+                            String htmlBody;
+
+                            String url = newUrls.take();
+//
+                            htmlBody = getPureHtmlFromLink(url, timeoutThread);
+
+                            if (htmlBody != null)
+                            {
+                                putUrlBody(htmlBody, url);
+                                if (downloadCounter.incrementAndGet() % 1000 == 0)
+                                {
+                                    Thread.sleep(500);
+                                    downloadCounter.set(0);
+                                }
+                            }
 
 
-                    } catch (InterruptedException ignored)
-                    {
-                        break;
-                    } catch (URISyntaxException e)
-                    {
-                        Profiler.downloadFailed();
-                        Profiler.error("Wrong URI syntax");
-                    } catch (MalformedURLException e)
-                    {
-                        Profiler.downloadFailed();
-                        Profiler.error("Error in creating URL");
-                    } /*catch (ExecutionException | IOException | TimeoutException e)
+                        } catch (InterruptedException ignored)
+                        {
+                            break;
+                        } catch (URISyntaxException e)
+                        {
+                            Profiler.downloadFailed();
+                            Profiler.error("Wrong URI syntax");
+                        } catch (MalformedURLException e)
+                        {
+                            Profiler.downloadFailed();
+                            Profiler.error("Error in creating URL");
+                        } /*catch (ExecutionException | IOException | TimeoutException e)
                     {
                         Profiler.downloadFailed();
                         e.printStackTrace();
                     }*/ catch (Exception e)
-                    {
-                        Profiler.downloadFailed();
-                        e.printStackTrace();
+                        {
+                            Profiler.downloadFailed();
+                            e.printStackTrace();
+                        }
                     }
                 }
             });

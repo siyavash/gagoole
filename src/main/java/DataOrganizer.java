@@ -166,6 +166,7 @@ public class DataOrganizer
             for (Element tag : elements)
             {
                 String href = tag.absUrl("href");
+                href = normalizeUrl(href);
                 if (isGoodContent(href) && !href.equals("") && !href.startsWith("mailto") && !href.startsWith("ftp"))
                 {
                     String anchor = tag.text();
