@@ -22,8 +22,6 @@ public class HtmlCollector
     private ArrayBlockingQueue<String> newUrls;
     private ArrayBlockingQueue<Pair<String, String>> downloadedData;
     private OkHttpClient client;
-//    private CloseableHttpAsyncClient client;
-//    private Semaphore semaphore = new Semaphore(2000);
     private final int THREAD_NUMBER;
 
 
