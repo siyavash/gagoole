@@ -18,10 +18,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class DistributedQueue extends Thread implements URLQueue {
     private Producer<String, String> producer;
     private String topicName;
-    private final ArrayBlockingQueue<String> arrayBlockingQueue = new ArrayBlockingQueue<>(1000000);
+    private final ArrayBlockingQueue<String> arrayBlockingQueue = new ArrayBlockingQueue<>(5000);
     private Properties publishProps = new Properties();
     private Properties consumeProps = new Properties();
-	private final String groupId = UUID.randomUUID().toString();
+	private final String groupId = "OMG";
 
     public DistributedQueue(String bootstrapServers, String topicName) {
         this.topicName = topicName;
@@ -80,8 +80,6 @@ public class DistributedQueue extends Thread implements URLQueue {
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumeProps);
         consumer.subscribe(Arrays.asList(topicName));
         while (!isInterrupted()) {
-            if (arrayBlockingQueue.size() > 100000)
-                continue;
             ConsumerRecords<String, String> records = consumer.poll(10000);
             for (ConsumerRecord<String, String> record : records) {
                 try {

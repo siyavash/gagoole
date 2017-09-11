@@ -29,12 +29,12 @@ public class Profiler
     private static AtomicLong downloadedSize = new AtomicLong(0);
 
     public static void start() {
-        metrics.register(MetricRegistry.name("all urls size"),
-                (Gauge<Long>) () -> allUrlsSize.get());
-
-        metrics.register(MetricRegistry.name("downloaded urls size"),
-                (Gauge<Long>) () -> downloadedSize.get());
-
+//        metrics.register(MetricRegistry.name("all urls size"),
+//                (Gauge<Long>) () -> allUrlsSize.get());
+//
+//        metrics.register(MetricRegistry.name("downloaded urls size"),
+//                (Gauge<Long>) () -> downloadedSize.get());
+//
         ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
                 .convertRatesTo(TimeUnit.SECONDS)
                 .build();
@@ -55,12 +55,12 @@ public class Profiler
 
     public static void falseExistence()
     {
-        notExist.mark();
+//        notExist.mark();
     }
 
     public static void exist()
     {
-        existNum.mark();
+//        existNum.mark();
     }
 
     public static void downloadDone()
@@ -70,36 +70,36 @@ public class Profiler
 
     public static void putDone(long numberOfPuts)
     {
-        puts.mark(numberOfPuts);
+//        puts.mark(numberOfPuts);
     }
 
     public static void organizeDone()
     {
-        organized.mark();
+//        organized.mark();
     }
 
     public static void organizeFail() {
-        failedOrganize.mark();
+//        failedOrganize.mark();
     }
 
     public static void downloadFailed()
     {
-        failedDownload.mark();
+//        failedDownload.mark();
     }
 
     public static void politeFound()
     {
-        polite.mark();
+//        polite.mark();
     }
 
     public static void fetched()
     {
-        fetchedUrls.mark();
+//        fetchedUrls.mark();
     }
 
     public static void downloadCanceled()
     {
-        canceledDownload.mark();
+//        canceledDownload.mark();
     }
 
     public static void error(String message)

@@ -53,8 +53,8 @@ public class HtmlCollector
     private void createAndConfigClient()
     {
         client = new OkHttpClient();
-        client.setReadTimeout(2000, TimeUnit.MILLISECONDS);
-        client.setConnectTimeout(2000, TimeUnit.MILLISECONDS);
+        client.setReadTimeout(5000, TimeUnit.MILLISECONDS);
+        client.setConnectTimeout(5000, TimeUnit.MILLISECONDS);
 //        client.setFollowRedirects(false);                     //it should be removed
 //        client.setFollowSslRedirects(false);
         client.setRetryOnConnectionFailure(false);
