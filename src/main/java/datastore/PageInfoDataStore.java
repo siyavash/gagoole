@@ -20,9 +20,9 @@ public class PageInfoDataStore implements DataStore
     private static final TableName TABLE_NAME = TableName.valueOf("wb");
     private static final byte[] MAIN_COLUMN_FAMILY = Bytes.toBytes("cf");
     private static final byte[] SUBLINKS_COLUMN_FAMILY = Bytes.toBytes("sl");
-    private ArrayBlockingQueue<Put> waitingPuts = new ArrayBlockingQueue<>(10000);
-    private ConcurrentHashMap<String, Object> waitingPutsStorage = new ConcurrentHashMap<>(10000);
-    private ConcurrentHashMap<String, Object> waitingPutsMiniStorage = new ConcurrentHashMap<>(100);
+    private ArrayBlockingQueue<Put> waitingPuts = new ArrayBlockingQueue<>(1000);
+    private ConcurrentHashMap<String, Object> waitingPutsStorage = new ConcurrentHashMap<>(1000);
+    private ConcurrentHashMap<String, Object> waitingPutsMiniStorage = new ConcurrentHashMap<>(20);
     private Logger logger = Logger.getLogger(Class.class.getName());
 
     public PageInfoDataStore(String zookeeperClientPort, String zookeeperQuorum) throws IOException
@@ -187,7 +187,7 @@ public class PageInfoDataStore implements DataStore
             while (true)
             {
                 ArrayList<Put> puts = new ArrayList<>();
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < 20; i++)
                 {
                     try
                     {
