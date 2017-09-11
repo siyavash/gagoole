@@ -14,19 +14,19 @@ public class Profiler
 {
     private static Logger logger = Logger.getLogger(Class.class.getName());
     private static final MetricRegistry metrics = new MetricRegistry();
-    private static final Meter notExist = metrics.meter("Did not exist");
-    private static final Meter existNum = metrics.meter("Existed");
+//    private static final Meter notExist = metrics.meter("Did not exist");
+//    private static final Meter existNum = metrics.meter("Existed");
     private static final Meter downloaded = metrics.meter("Download done");
-    private static final Meter failedDownload = metrics.meter("Download failed");
-    private static final Meter puts = metrics.meter("Put done");
-    private static final Meter organized = metrics.meter("Organized");
-    private static final Meter polite = metrics.meter("Polite links");
-    private static final Meter failedOrganize = metrics.meter("Failed to organize");
-    private static final Meter fetchedUrls = metrics.meter("Fetched urls");
-    private static final Meter canceledDownload = metrics.meter("Download canceled");
+//    private static final Meter failedDownload = metrics.meter("Download failed");
+//    private static final Meter puts = metrics.meter("Put done");
+//    private static final Meter organized = metrics.meter("Organized");
+//    private static final Meter polite = metrics.meter("Polite links");
+//    private static final Meter failedOrganize = metrics.meter("Failed to organize");
+//    private static final Meter fetchedUrls = metrics.meter("Fetched urls");
+//    private static final Meter canceledDownload = metrics.meter("Download canceled");
 
-    private static AtomicLong allUrlsSize = new AtomicLong(0);
-    private static AtomicLong downloadedSize = new AtomicLong(0);
+//    private static AtomicLong allUrlsSize = new AtomicLong(0);
+//    private static AtomicLong downloadedSize = new AtomicLong(0);
 
     public static void start() {
 //        metrics.register(MetricRegistry.name("all urls size"),
@@ -43,12 +43,12 @@ public class Profiler
     }
 
     public static void setAllUrlsSize(int size) {
-        allUrlsSize.set(size);
+//        allUrlsSize.set(size);
     }
 
     public static void setDownloadedSize(int size)
     {
-        downloadedSize.set(size);
+//        downloadedSize.set(size);
     }
 
     /*****************************************************************************/
