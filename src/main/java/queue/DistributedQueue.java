@@ -23,7 +23,7 @@ public class DistributedQueue extends Thread implements URLQueue
     private Properties publishProps = new Properties();
     private Properties consumeProps = new Properties();
 
-    private final String groupId = UUID.randomUUID().toString();
+    private final String groupId = "Perspolis";
 
     public DistributedQueue(String bootstrapServers, String topicName)
     {

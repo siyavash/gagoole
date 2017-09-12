@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PageInfoDataStore implements DataStore
 {
     private Connection hbaseConnection;
-    private static final TableName TABLE_NAME = TableName.valueOf("w");
+    private static final TableName TABLE_NAME = TableName.valueOf("wb");
     private static final byte[] MAIN_COLUMN_FAMILY = Bytes.toBytes("cf");
     private static final byte[] SUBLINKS_COLUMN_FAMILY = Bytes.toBytes("sl");
     private ArrayBlockingQueue<Put> waitingPuts = new ArrayBlockingQueue<>(1000);
