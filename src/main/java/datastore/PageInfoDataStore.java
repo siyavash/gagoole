@@ -43,11 +43,13 @@ public class PageInfoDataStore implements DataStore
 
         Table table = null;
         boolean result;
-        try {
+        try
+        {
             table = hbaseConnection.getTable(TABLE_NAME);
             Get get = new Get(Bytes.toBytes(url));
             result = table.exists(get);
-        } finally {
+        } finally
+        {
             if (table != null)
                 table.close();
         }
@@ -77,7 +79,7 @@ public class PageInfoDataStore implements DataStore
     {
         boolean[] mainStorageExistResult;
 
-        try(Table table = hbaseConnection.getTable(TABLE_NAME))
+        try (Table table = hbaseConnection.getTable(TABLE_NAME))
         {
             mainStorageExistResult = table.existsAll(gets);
         }
@@ -116,7 +118,8 @@ public class PageInfoDataStore implements DataStore
             return;
         }
 
-        try {
+        try
+        {
             String subLinks = turnSubLinksToString(pageInfo.getSubLinks());
 
             byte[] urlBytes = Bytes.toBytes(pageInfo.getUrl());
@@ -186,32 +189,35 @@ public class PageInfoDataStore implements DataStore
         new Thread(() -> {
             while (true)
             {
-                ArrayList<Put> puts = new ArrayList<>();
-                for (int i = 0; i < 50; i++)
+                try
                 {
-                    try
+
+                    ArrayList<Put> puts = new ArrayList<>();
+                    for (int i = 0; i < 50; i++)
                     {
+
                         Put put = waitingPuts.take();
                         puts.add(put);
                         waitingPutsMiniStorage.put(new String(put.getRow()), new Object());
                         waitingPutsStorage.remove(new String(put.getRow()));
-                    } catch (InterruptedException e)
-                    {
-                        logger.error("Failed to get from ArrayBlockingQueue in DataStore");
+
                     }
-                }
 
-                try(Table table = hbaseConnection.getTable(TABLE_NAME))
-                {
+                    try (Table table = hbaseConnection.getTable(TABLE_NAME))
+                    {
 
-                    table.put(puts);
-                    waitingPutsMiniStorage.clear();
-                } catch (IllegalArgumentIOException e)
+                        table.put(puts);
+                        waitingPutsMiniStorage.clear();
+                    } catch (IllegalArgumentIOException e)
+                    {
+                        logger.error("KeyValue size is too big. Change default settings");
+                    } catch (IOException e)
+                    {
+                        logger.error("Failed to put in hbase");
+                    }
+                } catch (InterruptedException e)
                 {
-                    logger.error("KeyValue size is too big. Change default settings");
-                } catch (IOException e) //TODO IllegalArgumentException
-                {
-                    logger.error("Failed to put in hbase"); //TODO
+                    break;
                 }
 
             }

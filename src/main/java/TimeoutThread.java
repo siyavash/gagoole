@@ -31,8 +31,8 @@ public class TimeoutThread extends Thread
                     call.cancel();
                 }
 
-            } catch (InterruptedException ignored) {
-
+            } catch (InterruptedException e) {
+                break;
             }
         }
     }
@@ -43,8 +43,7 @@ public class TimeoutThread extends Thread
         try {
             this.linkedBlockingQueue.put(new Pair<>(call, time));
         } catch (InterruptedException e) {
-            e.printStackTrace();
-            //TODO: catch deciding
+            Profiler.error(e.getMessage());
         }
     }
 }

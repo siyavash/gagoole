@@ -10,7 +10,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class NewUrlFilter
+public class NewUrlFilter extends CrawlerPart
 {
 
     private DataStore urlDatabase;
@@ -41,7 +41,8 @@ public class NewUrlFilter
         return Integer.parseInt(prop.getProperty("check-exist-threads-number", "200"));
     }
 
-    public void startCheckingThreads()
+    @Override
+    public void startThreads()
     {
         if (THREAD_NUMBER == 0)
         {
@@ -85,9 +86,10 @@ public class NewUrlFilter
 
                     } catch (InterruptedException ignored)
                     {
-                        //TODO kill thread
+                        break;
                     } catch (IOException e)
                     {
+                        Profiler.error("Error in checking the existence of a url");
                     }
 
 
@@ -96,5 +98,6 @@ public class NewUrlFilter
         }
         checkingPool.shutdown();
 
+        setExecutorService(checkingPool);
     }
 }

@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class HtmlCollector
+public class HtmlCollector extends CrawlerPart
 {
     private ArrayBlockingQueue<String> newUrls;
     private ArrayBlockingQueue<Pair<String, String>> downloadedData;
@@ -56,7 +56,8 @@ public class HtmlCollector
         client.setRetryOnConnectionFailure(false);
     }
 
-    public void startDownloadThreads()
+    @Override
+    public void startThreads()
     {
         if (THREAD_NUMBER == 0)
         {
@@ -89,19 +90,19 @@ public class HtmlCollector
                             if (htmlBody != null)
                             {
                                 putUrlBody(htmlBody, url);
-                                if (++downloadCounter % 10 == 0)
+                                if (++downloadCounter == 10)
                                 {
                                     Thread.sleep(5000);
                                 }
-                                if (++downloadCounter % 100 == 0)
+                                if (++downloadCounter == 100)
                                 {
                                     Thread.sleep(10000);
-
+                                    downloadCounter = 0;
                                 }
                             }
 
 
-                        } catch (InterruptedException ignored)
+                        } catch (InterruptedException e)
                         {
                             break;
                         } catch (URISyntaxException e)
@@ -122,6 +123,8 @@ public class HtmlCollector
             });
         }
         downloadPool.shutdown();
+
+        setExecutorService(downloadPool);
     }
 
     private void putUrlBody(String urlHtml, String url) throws InterruptedException
@@ -167,12 +170,11 @@ public class HtmlCollector
                     response.body().close();
                 } catch (IOException e)
                 {
-                    e.printStackTrace();
+                    Profiler.error("Error while closing response body");
                 }
             }
         }
 
         return body;
     }
-
 }
